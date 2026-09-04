@@ -78,6 +78,25 @@ describe("analyzeShellCommand", () => {
     expect(result.commands[0].argv).toEqual(["echo", "ok", "out.txt"]);
   });
 
+  it("does not treat discarded output or read-only system paths as writes", () => {
+    const result = analyzeShellCommand(
+      'grep -r "marketplace" /etc 2>/dev/null',
+    );
+
+    expect(result.redirections).toEqual([
+      { operator: ">", commandIndex: 0, target: "/dev/null" },
+    ]);
+    expect(result.riskHints.map((risk) => risk.code)).not.toContain(
+      "system_path_modification",
+    );
+    expect(analyzeShellCommand("cmd /c dir 2>NUL").riskHints).toEqual([]);
+    expect(analyzeShellCommand("echo bad >/etc/hosts").riskHints).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "system_path_modification" }),
+      ]),
+    );
+  });
+
   it("fails structurally on unclosed quotes and trailing control operators", () => {
     expect(analyzeShellCommand('echo "unfinished').error).toBe(
       "unclosed_quote",

@@ -23,6 +23,9 @@ describe("checkHardSafety command invariants", () => {
   it("allows ordinary commands and scoped build-directory cleanup for later permission evaluation", () => {
     expect(command("git status").allowed).toBe(true);
     expect(command("npm test && npm run lint").allowed).toBe(true);
+    expect(command("grep -r marketplace /etc 2>/dev/null").allowed).toBe(true);
+    expect(command("echo noise >/dev/null").allowed).toBe(true);
+    expect(command("cmd /c dir 2>NUL").allowed).toBe(true);
     expect(command("rm -rf ./dist").allowed).toBe(true);
     expect(command("Remove-Item .\\dist -Recurse").allowed).toBe(true);
   });

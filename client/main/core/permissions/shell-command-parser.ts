@@ -33,6 +33,7 @@ export interface ShellOperatorMatch {
 export interface ShellRedirectionMatch {
   operator: "<" | "<<" | ">" | ">>";
   commandIndex: number;
+  target?: string;
 }
 
 export interface ShellRiskHint {
@@ -110,9 +111,14 @@ export function analyzeShellCommand(command: string): ShellCommandAnalysis {
   let segmentStart = 0;
   let lastOperator: ShellChainOperator | undefined;
   let parseError: ShellCommandAnalysis["error"];
+  let pendingRedirection: ShellRedirectionMatch | undefined;
 
   const pushCurrent = (): void => {
     if (!hasCurrent) return;
+    if (pendingRedirection) {
+      pendingRedirection.target = current;
+      pendingRedirection = undefined;
+    }
     argv.push(current);
     current = "";
     hasCurrent = false;
@@ -207,6 +213,7 @@ export function analyzeShellCommand(command: string): ShellCommandAnalysis {
         lastOperator = chain.operator;
       }
       index += chain.length - 1;
+      pendingRedirection = undefined;
       segmentStart = index + 1;
       continue;
     }
@@ -214,10 +221,12 @@ export function analyzeShellCommand(command: string): ShellCommandAnalysis {
     const redirection = readRedirection(command, index);
     if (redirection) {
       pushCurrent();
-      redirections.push({
+      const match: ShellRedirectionMatch = {
         operator: redirection.operator,
         commandIndex: commands.length,
-      });
+      };
+      redirections.push(match);
+      pendingRedirection = match;
       index += redirection.length - 1;
       continue;
     }
@@ -446,9 +455,11 @@ function detectRiskHints(analysis: ShellCommandAnalysis): ShellRiskHint[] {
       analysis.redirections.some(
         (redirection) =>
           redirection.commandIndex === commandIndex &&
-          (redirection.operator === ">" || redirection.operator === ">>"),
-      ) &&
-      args.some(isSystemPath)
+          (redirection.operator === ">" || redirection.operator === ">>") &&
+          typeof redirection.target === "string" &&
+          isSystemPath(redirection.target) &&
+          !isDiscardDevice(redirection.target),
+      )
     ) {
       add(
         "system_path_modification",
@@ -627,6 +638,11 @@ function isSystemPath(value: string): boolean {
       normalized,
     )
   );
+}
+
+function isDiscardDevice(value: string): boolean {
+  const normalized = value.trim().replace(/^['"]|['"]$/g, "");
+  return /^\/dev\/null$/i.test(normalized) || /^nul:?$/i.test(normalized);
 }
 
 function isWriteLikeCommand(executable: string): boolean {
