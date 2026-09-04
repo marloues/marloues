@@ -16,6 +16,20 @@ import { notify } from "@/lib/notifications";
 import type { AgentSettings } from "@shared/types";
 import type { PendingModelChangeNotice } from "./workflow-chat-helpers";
 
+export function isModelChangeDuringStreaming(input: {
+  previousModelId: string | null;
+  currentModelId: string;
+  wasStreaming: boolean;
+  isStreaming: boolean;
+}): boolean {
+  return (
+    input.previousModelId !== null &&
+    input.previousModelId !== input.currentModelId &&
+    input.wasStreaming &&
+    input.isStreaming
+  );
+}
+
 export function useModelChangeTracking(
   activeSessionId: string | null | undefined,
   activeSessionIsStreaming: boolean,
@@ -34,12 +48,15 @@ export function useModelChangeTracking(
     useState(false);
 
   const lastModelRef = useRef<{ id: string; label: string } | null>(null);
+  const wasStreamingRef = useRef(false);
   const modelSwitchWarningTimerRef = useRef<number | null>(null);
 
   // Reset model change notice + warning when switching sessions.
   useEffect(() => {
     setPendingModelChangeNotice(null);
     setModelSwitchWarningVisible(false);
+    lastModelRef.current = null;
+    wasStreamingRef.current = false;
   }, [activeSessionId]);
 
   // Cleanup warning timer on unmount.
@@ -59,9 +76,21 @@ export function useModelChangeTracking(
       label: modelName,
     };
     const previousModel = lastModelRef.current;
+    const wasStreaming = wasStreamingRef.current;
+    wasStreamingRef.current = activeSessionIsStreaming;
     lastModelRef.current = currentModel;
-    if (!previousModel || previousModel.id === currentModel.id) return;
-    if (!activeSessionIsStreaming) return;
+    if (!previousModel) return;
+
+    // A model change that arrives in the same render as turn start is a
+    // request-time selection, not a mid-turn switch. Only warn when the model
+    // changed after streaming was already established.
+    const isMidTurnModelChange = isModelChangeDuringStreaming({
+      previousModelId: previousModel?.id ?? null,
+      currentModelId: currentModel.id,
+      wasStreaming,
+      isStreaming: activeSessionIsStreaming,
+    });
+    if (!isMidTurnModelChange) return;
 
     setPendingModelChangeNotice((existing) => {
       if (
