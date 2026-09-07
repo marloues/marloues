@@ -226,8 +226,8 @@ function normalizeToolList(tools: unknown): string[] | undefined {
 
 function normalizeMarketplaceEndpoint(
   endpoint: SkillMarketplaceEndpoint | McpMarketplaceEndpoint | undefined,
-  fallback: SkillMarketplaceEndpoint | McpMarketplaceEndpoint,
-): SkillMarketplaceEndpoint | McpMarketplaceEndpoint {
+  fallback: SkillMarketplaceEndpoint | McpMarketplaceEndpoint | undefined,
+): SkillMarketplaceEndpoint | McpMarketplaceEndpoint | undefined {
   if (!endpoint || typeof endpoint !== "object") return fallback;
   const normalizedBaseUrl = endpoint.baseUrl?.trim().replace(/\/+$/, "") || "";
   const baseUrl =
