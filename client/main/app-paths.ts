@@ -16,6 +16,14 @@ export function getSettingsPath(): string {
   return join(getConfigDir(), "settings.json");
 }
 
+export function getUserModelsPath(): string {
+  return join(getConfigDir(), "models.json");
+}
+
+export function getIntegrationsPath(): string {
+  return join(getConfigDir(), "integrations.json");
+}
+
 export function getWorkspaceSettingsPath(): string {
   return join(getConfigDir(), "workspaces.json");
 }

@@ -35,11 +35,7 @@ import type {
   SkillMarketplaceListRequest,
   WorkspaceInfo,
 } from "@shared/types";
-import {
-  getEnterpriseSkillsDir,
-  getMarlouesHome,
-  getUserSkillsDir,
-} from "../app-paths";
+import { getEnterpriseSkillsDir, getUserSkillsDir } from "../app-paths";
 import { logInfo } from "../core/logging/app-logger";
 import {
   getAgentSettings,
@@ -93,39 +89,9 @@ interface SkillCacheEntry {
 
 let skillCache: SkillCacheEntry | null = null;
 
-/** 迁移旧技能目录（~/.marloues-dev/skills → runtime-config/skills）一次。 */
-let skillDirMigrationDone = false;
-function migrateLegacySkillDirs(): void {
-  if (skillDirMigrationDone) return;
-  skillDirMigrationDone = true;
-  const legacyPairs: Array<[string, string]> = [
-    [join(getMarlouesHome(), "skills"), getUserSkillsDir()],
-    [join(getMarlouesHome(), "enterprise-skills"), getEnterpriseSkillsDir()],
-  ];
-  for (const [legacyDir, targetDir] of legacyPairs) {
-    if (!existsSync(legacyDir)) continue;
-    if (existsSync(targetDir) && readdirSync(targetDir).length > 0) continue;
-    const entries = readdirSync(legacyDir);
-    if (entries.length === 0) continue;
-    mkdirSync(targetDir, { recursive: true });
-    for (const name of entries) {
-      cpSync(join(legacyDir, name), join(targetDir, name), {
-        recursive: true,
-        force: true,
-      });
-    }
-    logInfo("skills.migratedLegacyDir", {
-      from: legacyDir,
-      to: targetDir,
-      count: entries.length,
-    });
-  }
-}
-
 export function listInstalledSkills(
   workspace: WorkspaceInfo | null = null,
 ): SkillInfo[] {
-  migrateLegacySkillDirs();
   const signature = buildSkillCacheSignature(workspace);
   const now = Date.now();
   if (
@@ -370,9 +336,6 @@ function describeLocalSkillImport(
     throw new Error("仅支持 Skill 文件夹、ZIP 或 SKILL.md。");
   const extension = extname(sourcePath).toLowerCase();
   if (basename(sourcePath).toLowerCase() === "skill.md") {
-    if (stats.size > MAX_MARKETPLACE_FILE_SIZE_BYTES) {
-      throw new Error("SKILL.md 超过 512 KB 大小限制。");
-    }
     const metadata = parseSkillMetadata(readFileSync(sourcePath, "utf8"));
     const name = metadata.name || basename(dirname(sourcePath));
     const directoryName = safeImportedDirectoryName(name, "local-skill");
@@ -395,9 +358,6 @@ function describeLocalSkillImport(
   if (extension !== ".zip") {
     throw new Error("仅支持 Skill 文件夹、.zip 或名为 SKILL.md 的文件。");
   }
-  if (stats.size > MAX_MARKETPLACE_TOTAL_SIZE_BYTES) {
-    throw new Error("ZIP 文件超过 5 MB 大小限制。");
-  }
   return describeLocalSkillArchive(sourcePath, targetRoot);
 }
 
@@ -405,26 +365,15 @@ function describeLocalSkillArchive(
   sourcePath: string,
   targetRoot: string,
 ): LocalSkillImportDescriptor {
-  let declaredFileCount = 0;
-  let declaredTotalBytes = 0;
   let unzipped: Record<string, Uint8Array>;
   try {
     unzipped = unzipSync(readFileSync(sourcePath), {
       filter: (file) => {
         if (file.name.endsWith("/")) return false;
-        declaredFileCount += 1;
-        declaredTotalBytes += file.originalSize;
-        if (file.originalSize > MAX_MARKETPLACE_FILE_SIZE_BYTES) {
-          throw new Error("ZIP 中包含超过 512 KB 的单个文件。");
-        }
-        assertSkillInstallLimits(declaredFileCount, declaredTotalBytes);
         return true;
       },
     });
   } catch (error) {
-    if (error instanceof Error && /(?:超过|exceeds)/i.test(error.message)) {
-      throw error;
-    }
     throw new Error("无法读取 ZIP，请确认压缩包未损坏。", {
       cause: error,
     });
@@ -530,12 +479,8 @@ function measureLocalSkillDirectory(rootDir: string): {
       }
       if (!entry.isFile()) continue;
       const size = statSync(absolutePath).size;
-      if (size > MAX_MARKETPLACE_FILE_SIZE_BYTES) {
-        throw new Error(`Skill 文件过大：${relative(root, absolutePath)}`);
-      }
       fileCount += 1;
       totalBytes += size;
-      assertSkillInstallLimits(fileCount, totalBytes);
     }
   }
   return { fileCount, totalBytes };

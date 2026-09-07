@@ -188,19 +188,8 @@ class SimpleStore {
         const customProviders = (parsed.providers || []).filter(
           (p) => !defaults.providers.find((d) => d.id === p.id),
         );
-        const sessions = (parsed.sessions || []).map((session) => {
-          const legacyThreadId = (
-            session as StoredSession & Record<string, unknown>
-          )["co" + "dexThreadId"];
-          return typeof legacyThreadId === "string" && !session.runtimeThreadId
-            ? {
-                ...session,
-                runtimeThreadId: legacyThreadId,
-                runtimeThreadIds: { binary: legacyThreadId },
-              }
-            : session;
-        });
 
+        const sessions = parsed.sessions || [];
         return {
           ...defaults,
           ...parsed,

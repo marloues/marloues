@@ -1,0 +1,104 @@
+{
+  "version": 1,
+  "providers": [
+    {
+      "id": "deepseek",
+      "name": "DeepSeek",
+      "endpoints": [
+        {
+          "id": "deepseek-anthropic",
+          "name": "Anthropic",
+          "protocol": "anthropic",
+          "baseUrl": "https://api.deepseek.com/anthropic",
+          "priority": 10
+        },
+        {
+          "id": "deepseek-openai",
+          "name": "OpenAI Chat",
+          "protocol": "openai-chat",
+          "baseUrl": "https://api.deepseek.com",
+          "priority": 20
+        }
+      ],
+      "models": [
+        {
+          "id": "deepseek-v4-flash",
+          "label": "DeepSeek V4 Flash",
+          "contextWindowTokens": 1000000,
+          "maxOutputTokens": 384000,
+          "supportsThinking": true,
+          "supportsVision": false
+        },
+        {
+          "id": "deepseek-v4-pro",
+          "label": "DeepSeek V4 Pro",
+          "contextWindowTokens": 1000000,
+          "maxOutputTokens": 384000,
+          "supportsThinking": true,
+          "supportsVision": false
+        }
+      ]
+    },
+    {
+      "id": "minimax",
+      "name": "MiniMax",
+      "endpoints": [
+        {
+          "id": "minimax-anthropic",
+          "name": "Anthropic",
+          "protocol": "anthropic",
+          "baseUrl": "https://api.minimaxi.com/anthropic",
+          "priority": 10
+        },
+        {
+          "id": "minimax-openai",
+          "name": "OpenAI Chat",
+          "protocol": "openai-chat",
+          "baseUrl": "https://api.minimaxi.com/v1",
+          "priority": 20
+        }
+      ],
+      "models": [
+        {
+          "id": "MiniMax-M2.7-highspeed",
+          "label": "MiniMax M2.7 Highspeed",
+          "contextWindowTokens": 200000,
+          "maxOutputTokens": 48000,
+          "supportsThinking": true,
+          "supportsVision": true
+        },
+        {
+          "id": "MiniMax-M3",
+          "label": "MiniMax M3",
+          "contextWindowTokens": 512000,
+          "maxOutputTokens": 48000,
+          "supportsThinking": true,
+          "supportsVision": true
+        }
+      ]
+    },
+    {
+      "id": "zhipu",
+      "name": "智谱 GLM",
+      "endpoints": [
+        {
+          "id": "zhipu-openai",
+          "name": "OpenAI Chat",
+          "protocol": "openai-chat",
+          "baseUrl": "https://open.bigmodel.cn/api/coding/paas/v4",
+          "priority": 10
+        }
+      ],
+      "models": [
+        {
+          "id": "glm-5.2",
+          "label": "GLM-5.2",
+          "contextWindowTokens": 200000,
+          "maxOutputTokens": 48000,
+          "supportsThinking": true,
+          "supportsVision": true
+        }
+      ]
+    }
+  ]
+}

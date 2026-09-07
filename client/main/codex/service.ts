@@ -558,14 +558,9 @@ export class CodexService {
 
     // Check if we should resume an existing thread
     const existingSession = store.getSession(sessionId);
-    const legacyThreadId = existingSession
-      ? (existingSession as typeof existingSession & Record<string, unknown>)[
-          "co" + "dexThreadId"
-        ]
-      : undefined;
     const existingThreadId =
       existingSession?.runtimeThreadIds?.binary ??
-      (typeof legacyThreadId === "string" ? legacyThreadId : undefined);
+      existingSession?.runtimeThreadId;
     if (existingThreadId) {
       svcLog("[svc] Resuming existing thread:", existingThreadId);
       try {

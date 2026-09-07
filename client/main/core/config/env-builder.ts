@@ -1,6 +1,7 @@
 import { getRuntimeConfigDir } from "../../app-paths";
 import type { AgentSettings, ModelSelection } from "@shared/types";
 import { resolveModelProvider } from "./model-provider";
+import { join } from "node:path";
 
 export function buildSdkEnv(
   settings: AgentSettings,
@@ -24,7 +25,10 @@ export function buildSdkEnv(
     ANTHROPIC_AUTH_TOKEN: connection?.apiKey ?? resolved.apiKey,
     ANTHROPIC_BASE_URL: connection?.baseUrl,
     ANTHROPIC_MODEL: connection?.model ?? resolved.model,
-    CLAUDE_CONFIG_DIR: settings.runtimeConfigDir || getRuntimeConfigDir(),
+    CLAUDE_CONFIG_DIR: join(
+      settings.runtimeConfigDir || getRuntimeConfigDir(),
+      "claude",
+    ),
     DISABLE_TELEMETRY: "1",
     CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1",
   };

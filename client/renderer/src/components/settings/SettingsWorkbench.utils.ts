@@ -1,6 +1,8 @@
 import type { McpServerConfig, ModelOption } from "@shared/types";
 import type { SessionInitInfo } from "@/stores/unified-chat-store";
 import { STRINGS } from "@shared/strings.zh";
+import { modelMetadataPreset } from "@shared/builtin-provider-metadata";
+
 export interface RuntimeSnapshot {
   skills: string[];
   mcpTools: string[];
@@ -204,19 +206,6 @@ export function normalizeModelMetadataPatch(model: ModelOption): ModelOption {
     contextWindowTokens: normalizePositiveInteger(model.contextWindowTokens),
     maxOutputTokens: normalizePositiveInteger(model.maxOutputTokens),
   };
-}
-
-export function modelMetadataPreset(modelId: string): Partial<ModelOption> {
-  const id = modelId.toLowerCase();
-  if (id === "deepseek-v4-flash" || id === "deepseek-v4-pro") {
-    return {
-      contextWindowTokens: 1_000_000,
-      maxOutputTokens: 384_000,
-      supportsThinking: true,
-      supportsVision: false,
-    };
-  }
-  return {};
 }
 
 export function normalizePositiveInteger(value: unknown): number | undefined {

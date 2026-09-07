@@ -1,26 +1,31 @@
 /**
- * Config service for ~/.marloues-dev/config/settings.json.
- * API keys are encrypted with Electron safeStorage in providers[].apiKey.
+ * Facade over the split config domain services.
+ *
+ * - Model config (providers, defaultModel, runtime) -> model-config-service -> models.json
+ * - Integration config (MCP, tools, IM, skills) -> integration-config-service -> integrations.json
+ * - App behavior (workMode, security, thinking, etc.) -> settings.json
+ * - Enterprise overlay -> marloues.enterprise.json
+ *
+ * Maintains backward compat with legacy { agentSettings: {...} } format in settings.json.
+ * On first save with the new code, legacy data is split into the three domain files.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname } from "node:path";
 import type {
   AgentSettings,
+  AppSettings,
   ContextManagementSettings,
   ImBotBindingsConfig,
+  IntegrationSettings,
   ModelProviderConfig,
-  McpServerConfig,
-  McpMarketplaceEndpoint,
-  SkillMarketplaceEndpoint,
-  ModelOption,
   ModelSelection,
+  McpServerConfig,
   ToolProfile,
 } from "@shared/types";
 import {
   getEnterpriseConfigPath,
   getLegacyStorePath,
   getSettingsPath,
-  getRuntimeConfigDir,
 } from "../app-paths";
 import {
   decryptSecret,
@@ -28,10 +33,36 @@ import {
   isEncryptedSecret,
 } from "./secure-storage.service";
 import { logInfo, logWarn } from "../core/logging/app-logger";
-import { resolveModelProvider } from "../core/config/model-provider";
 import { setRedactionRules } from "../core/security/redaction";
+import {
+  getModelConfig,
+  saveModelConfig,
+  normalizeModelOption,
+  preserveEncryptedApiKeys,
+} from "./model-config-service";
+import {
+  getIntegrationSettings,
+  saveIntegrationSettings,
+  normalizeIntegrationSettings,
+} from "./integration-config-service";
 
-const DEFAULT_MODEL = "default";
+// Re-export for convenience.
+export {
+  getModelConfig,
+  saveModelConfig,
+  normalizeModelOption,
+  preserveEncryptedApiKeys,
+} from "./model-config-service";
+export {
+  getIntegrationSettings,
+  saveIntegrationSettings,
+  normalizeIntegrationSettings,
+} from "./integration-config-service";
+export { buildSdkEnv } from "../core/config/env-builder";
+
+// ── Types ──────────────────────────────────────────────────────
+
+type LegacyAgentSettings = Partial<AgentSettings>;
 type ToolPermissionRuleConfig = {
   pattern: string;
   action: "deny" | "ask" | "allow";
@@ -42,7 +73,6 @@ type ExtendedToolPermissionPolicy = NonNullable<
 > & {
   rules?: ToolPermissionRuleConfig[];
 };
-type LegacyAgentSettings = Partial<AgentSettings>;
 
 interface EnterpriseConfig {
   agentSettings?: LegacyAgentSettings;
@@ -50,34 +80,16 @@ interface EnterpriseConfig {
   policy?: AgentSettings["enterprisePolicy"];
 }
 
-function defaultProviders(): ModelProviderConfig[] {
-  return [
-    {
-      id: "unconfigured-provider",
-      name: "未配置供应商",
-      kind: "custom",
-      enabled: true,
-      purpose: "prod",
-      endpoints: [],
-      models: [
-        normalizeModelOption({
-          id: DEFAULT_MODEL,
-          label: "未配置（请设置模型端点）",
-          enabled: true,
-        }),
-      ],
-    },
-  ];
+interface AppStoreShape {
+  appSettings?: Partial<AppSettings>;
+  // Legacy: everything was in agentSettings.
+  agentSettings?: LegacyAgentSettings;
 }
 
-function defaultAgentSettings(): AgentSettings {
+// ── Defaults ───────────────────────────────────────────────────
+
+function defaultAppSettings(): AppSettings {
   return {
-    providers: defaultProviders(),
-    defaultModel: {
-      providerId: "unconfigured-provider",
-      modelId: DEFAULT_MODEL,
-    },
-    activeRuntimeId: "sdk",
     maxTurns: 50,
     workMode: "execute",
     securityMode: "request",
@@ -105,7 +117,28 @@ function defaultAgentSettings(): AgentSettings {
     autoMemoryEnabled: true,
     thinkingEnabled: true,
     maxThinkingTokens: 10240,
+    sandboxEnabled: true,
+    sandboxMode: "workspace-write",
+  };
+}
+
+function defaultAgentSettings(): AgentSettings {
+  return {
+    ...defaultAppSettings(),
+    providers: [],
+    defaultModel: { providerId: "unconfigured-provider", modelId: "default" },
+    activeRuntimeId: "sdk",
     activeToolProfileId: "default-tool-policy",
+    toolProfiles: [
+      {
+        id: "default-tool-policy",
+        name: "Default",
+        description: "Default tool policy",
+        permissionMode: "default",
+        allowedTools: ["Read", "Glob", "Grep", "TodoWrite"],
+        disallowedTools: [],
+      },
+    ],
     toolPermissionPolicy: {
       rules: [
         {
@@ -124,16 +157,6 @@ function defaultAgentSettings(): AgentSettings {
       sensitiveToolAllowlist: ["Read", "Glob", "Grep", "LS", "TodoWrite"],
       requireConfirmationForSensitiveTools: true,
     } satisfies ExtendedToolPermissionPolicy,
-    toolProfiles: [
-      {
-        id: "default-tool-policy",
-        name: "Default",
-        description: "Default tool policy",
-        permissionMode: "default",
-        allowedTools: ["Read", "Glob", "Grep", "TodoWrite"],
-        disallowedTools: [],
-      },
-    ],
     mcpServers: [],
     skillMarketplaceEndpoint: {
       baseUrl: "https://clawhub.ai",
@@ -145,43 +168,49 @@ function defaultAgentSettings(): AgentSettings {
       enabled: true,
       lastStatus: "untested",
     },
-    imBotBindings: defaultImBotBindingsConfig(),
+    imBotBindings: { bots: [] },
     skillDirectories: [],
     disabledSkills: [],
-    sandboxEnabled: true,
-    sandboxMode: "workspace-write",
   };
 }
 
-function defaultImBotBindingsConfig(): ImBotBindingsConfig {
-  return {
-    bots: [],
-  };
-}
+// ── App store I/O (settings.json) ──────────────────────────────
 
-interface StoreShape {
-  agentSettings: AgentSettings;
-}
-
-function readStore(): StoreShape {
+function readAppStore(): AppStoreShape {
   const settingsPath = getSettingsPath();
   migrateSettingsIfNeeded(settingsPath);
-  if (!existsSync(settingsPath)) {
-    return { agentSettings: defaultAgentSettings() };
-  }
+  if (!existsSync(settingsPath)) return {};
   try {
     const raw = readFileSync(settingsPath, "utf-8");
-    const parsed = JSON.parse(raw) as Partial<StoreShape>;
-    const settings = normalizeAgentSettings(
-      decryptAgentSettings(parsed.agentSettings),
-    );
-    return { agentSettings: settings };
+    const parsed = JSON.parse(raw) as Partial<AppStoreShape>;
+    return {
+      appSettings: parsed.appSettings,
+      agentSettings: decryptLegacyAgentSettings(parsed.agentSettings),
+    };
   } catch (error) {
     logWarn("config.readFailed", {
       settingsPath,
       error: error instanceof Error ? error.message : String(error),
     });
-    return { agentSettings: defaultAgentSettings() };
+    return {};
+  }
+}
+
+function writeAppStore(appSettings: AppSettings): void {
+  const settingsPath = getSettingsPath();
+  try {
+    mkdirSync(dirname(settingsPath), { recursive: true });
+    writeFileSync(
+      settingsPath,
+      JSON.stringify({ appSettings }, null, 2),
+      "utf-8",
+    );
+  } catch (error) {
+    logWarn("config.writeFailed", {
+      settingsPath,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
   }
 }
 
@@ -197,13 +226,16 @@ function migrateSettingsIfNeeded(settingsPath: string): void {
     writeFileSync(
       settingsPath,
       JSON.stringify(
-        { agentSettings: encryptAgentSettings(legacy.agentSettings) },
+        { agentSettings: encryptLegacyAgentSettings(legacy.agentSettings) },
         null,
         2,
       ),
       "utf-8",
     );
-    logInfo("config.settings.migrated", { legacyStorePath, settingsPath });
+    logInfo("config.settings.migrated", {
+      legacyStorePath,
+      settingsPath,
+    });
   } catch (error) {
     logWarn("config.settings.migrationFailed", {
       legacyStorePath,
@@ -213,34 +245,20 @@ function migrateSettingsIfNeeded(settingsPath: string): void {
   }
 }
 
-function readSettingsFromLegacy(rawStore: string): StoreShape {
-  const parsed = JSON.parse(rawStore) as Partial<
-    Omit<StoreShape, "agentSettings">
-  > & {
+function readSettingsFromLegacy(rawStore: string): {
+  agentSettings: AgentSettings;
+} {
+  const parsed = JSON.parse(rawStore) as Partial<{
     agentSettings?: LegacyAgentSettings;
-  };
+  }>;
   return {
     agentSettings: normalizeAgentSettings(
-      decryptAgentSettings(parsed.agentSettings),
+      decryptLegacyAgentSettings(parsed.agentSettings),
     ),
   };
 }
-function writeStore(store: StoreShape): void {
-  const settingsPath = getSettingsPath();
-  try {
-    mkdirSync(dirname(settingsPath), { recursive: true });
-    const forDisk = {
-      agentSettings: encryptAgentSettings(store.agentSettings),
-    };
-    writeFileSync(settingsPath, JSON.stringify(forDisk, null, 2), "utf-8");
-  } catch (error) {
-    logWarn("config.writeFailed", {
-      settingsPath,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    throw error;
-  }
-}
+
+// ── Enterprise config ──────────────────────────────────────────
 
 function readEnterpriseConfig(): EnterpriseConfig | null {
   const enterprisePath = getEnterpriseConfigPath();
@@ -251,7 +269,7 @@ function readEnterpriseConfig(): EnterpriseConfig | null {
     ) as EnterpriseConfig;
     return {
       ...parsed,
-      agentSettings: decryptAgentSettings(parsed.agentSettings),
+      agentSettings: decryptLegacyAgentSettings(parsed.agentSettings),
     };
   } catch (error) {
     logWarn("config.enterprise.readFailed", {
@@ -277,9 +295,6 @@ function applyEnterprisePolicy(settings: AgentSettings): AgentSettings {
     settings,
     readEnterpriseConfig(),
   );
-  // Inject enterprise redaction rules into the redaction module so every
-  // redactSensitiveText/Value call honors policy.redactionRules. Idempotent
-  // (setRedactionRules skips when unchanged), safe on the hot getAgentSettings path.
   setRedactionRules(merged.enterprisePolicy?.redactionRules);
   return merged;
 }
@@ -348,21 +363,24 @@ export function applyEnterpriseConfigToAgentSettings(
       disabledSkills: enterprise.disabledSkills,
     }),
     providers: enterpriseProviders.length
-      ? mergeProviders(
+      ? mergeArrays(
           local.providers,
           enterpriseProviders.map(markEnterpriseProvider),
+          ["id", "name"],
         )
       : local.providers,
     mcpServers: enterpriseMcpServers.length
-      ? mergeMcpServers(
+      ? mergeArrays(
           local.mcpServers,
           enterpriseMcpServers.map(markEnterpriseMcpServer),
+          ["id", "name"],
         )
       : local.mcpServers,
     toolProfiles: enterpriseToolProfiles.length
-      ? mergeToolProfiles(
+      ? mergeArrays(
           local.toolProfiles,
           enterpriseToolProfiles.map(markEnterpriseToolProfile),
+          ["id"],
         )
       : local.toolProfiles,
   };
@@ -376,70 +394,256 @@ export function applyEnterpriseConfigToAgentSettings(
   };
 }
 
-function stripUtf8Bom(value: string): string {
-  return value.charCodeAt(0) === 0xfeff ? value.slice(1) : value;
+// ── Public API: get / save ──────────────────────────────────────
+
+export function getAgentSettings(): AgentSettings {
+  const store = readAppStore();
+
+  // Legacy format: everything was in agentSettings.
+  if (store.agentSettings) {
+    return applyEnterprisePolicy(normalizeAgentSettings(store.agentSettings));
+  }
+
+  // New format: combine three domain services.
+  const modelConfig = getModelConfig();
+  const integration = getIntegrationSettings();
+  const appSettings = normalizeAppSettings(store.appSettings);
+
+  return applyEnterprisePolicy({
+    ...defaultAgentSettings(),
+    ...appSettings,
+    ...modelConfig,
+    ...integration,
+  });
 }
-function decryptAgentSettings(
-  settings: LegacyAgentSettings | undefined,
-): LegacyAgentSettings {
-  if (!settings) return {};
+
+export function saveAgentSettings(settings: AgentSettings): void {
+  const sanitized = sanitizeLocalAgentSettingsForSave(
+    settings,
+    getAgentSettings(),
+    readEnterpriseConfig(),
+  );
+
+  // Write model config first (most likely to throw on encryption).
+  saveModelConfig({
+    providers: preserveEncryptedApiKeys(
+      stripTransientFromProviders(sanitized.providers),
+    ),
+    defaultModel: sanitized.defaultModel,
+    activeRuntimeId: sanitized.activeRuntimeId,
+    runtimeConfigDir: sanitized.runtimeConfigDir,
+  });
+
+  // Integration config next.
+  saveIntegrationSettings(extractIntegrationSettings(sanitized));
+
+  // App behavior last (no encryption, cannot fail).
+  writeAppStore(extractAppSettings(sanitized));
+
+  logInfo("config.saved", { settingsPath: getSettingsPath() });
+}
+
+// ── Sanitization for save ─────────────────────────────────────
+
+export function sanitizeLocalAgentSettingsForSave(
+  submitted: AgentSettings,
+  currentLocal: AgentSettings,
+  enterpriseConfig: EnterpriseConfig | null,
+): AgentSettings {
+  if (!enterpriseConfig) {
+    return stripTransientPolicyFields(submitted);
+  }
+
+  const enterprise = enterpriseConfig.agentSettings ?? {};
+  const policy = enterpriseConfig.policy ?? {};
+  const enterpriseProviders = enterprise.providers?.length
+    ? normalizeEnterpriseProviders(enterprise.providers)
+    : [];
+  const enterpriseMcpServers = enterprise.mcpServers?.length
+    ? enterprise.mcpServers
+    : [];
+  const enterpriseToolProfiles = enterprise.toolProfiles ?? [];
+  const next = stripTransientPolicyFields(submitted);
+
   return {
-    ...settings,
-    providers: settings.providers?.map((provider) => ({
-      ...provider,
-      apiKey: decryptSecret(provider.apiKey),
-    })),
-    imBotBindings: decryptImBotBindingsConfig(settings.imBotBindings),
+    ...next,
+    ...preserveEnterpriseControlledScalars(next, currentLocal, enterprise),
+    providers:
+      policy.allowLocalEndpointProfiles === false
+        ? currentLocal.providers
+        : filterEnterpriseItems(next.providers, enterpriseProviders, (item) => [
+            item.id,
+            item.name,
+          ]),
+    mcpServers:
+      policy.allowLocalMcpServers === false
+        ? currentLocal.mcpServers
+        : filterEnterpriseItems(
+            next.mcpServers,
+            enterpriseMcpServers,
+            (item) => [item.id, item.name],
+          ),
+    toolProfiles:
+      policy.allowLocalToolProfiles === false
+        ? currentLocal.toolProfiles
+        : filterEnterpriseItems(
+            next.toolProfiles,
+            enterpriseToolProfiles,
+            (item) => [item.id],
+          ),
+    disabledSkills:
+      policy.allowLocalSkillDisable === false
+        ? currentLocal.disabledSkills
+        : next.disabledSkills,
   };
 }
 
-function encryptAgentSettings(settings: AgentSettings): AgentSettings {
+function stripTransientPolicyFields(settings: AgentSettings): AgentSettings {
   const {
-    enterprisePolicy: _enterprisePolicy,
-    enterpriseControlledSettings: _enterpriseControlledSettings,
-    ...settingsForDisk
+    enterprisePolicy: _ep,
+    enterpriseControlledSettings: _ec,
+    ...rest
   } = settings;
   return {
-    ...settingsForDisk,
-    providers: settingsForDisk.providers.map(materializeProviderForDisk),
-    mcpServers: settingsForDisk.mcpServers.map(stripMcpServerForDisk),
-    imBotBindings: encryptImBotBindingsConfig(settingsForDisk.imBotBindings),
-    toolProfiles: settingsForDisk.toolProfiles.map(stripPolicyMetadata),
+    ...rest,
+    providers: rest.providers.map(
+      (p) => stripPolicyMetadata(p) as ModelProviderConfig,
+    ),
+    mcpServers: rest.mcpServers.map(stripPolicyMetadata),
+    toolProfiles: rest.toolProfiles.map(stripPolicyMetadata),
   };
 }
 
-function materializeProviderForDisk(
-  provider: ModelProviderConfig,
-): ModelProviderConfig {
-  const stripped = stripPolicyMetadata(provider);
-  return stripUndefined({
-    ...stripped,
-    apiKey: encryptSecret(stripped.apiKey),
-  }) as ModelProviderConfig;
+function stripTransientFromProviders(
+  providers: ModelProviderConfig[],
+): ModelProviderConfig[] {
+  return providers.map((p) => stripPolicyMetadata(p) as ModelProviderConfig);
 }
 
-function stripMcpServerForDisk(
-  server: AgentSettings["mcpServers"][number],
-): AgentSettings["mcpServers"][number] {
-  return stripUndefined(
-    stripPolicyMetadata(server),
-  ) as AgentSettings["mcpServers"][number];
+function preserveEnterpriseControlledScalars(
+  submitted: AgentSettings,
+  currentLocal: AgentSettings,
+  enterprise: Partial<AgentSettings>,
+): Partial<AgentSettings> {
+  const preserved: Partial<AgentSettings> = {};
+  const keys = [
+    "activeRuntimeId",
+    "runtimeConfigDir",
+    "defaultModel",
+    "maxTurns",
+    "workMode",
+    "securityMode",
+    "securityRules",
+    "permissionMode",
+    "permissionApprovalTimeoutMs",
+    "desktopNotificationsEnabled",
+    "friendlyTone",
+    "customInstructions",
+    "memoryMode",
+    "contextManagement",
+    "toolPermissionPolicy",
+    "autoMemoryEnabled",
+    "autoMemoryDirectory",
+    "autoDreamEnabled",
+    "thinkingEnabled",
+    "maxThinkingTokens",
+    "activeToolProfileId",
+    "skillMarketplaceEndpoint",
+    "mcpMarketplaceEndpoint",
+    "imBotBindings",
+    "skillDirectories",
+  ] as const;
+  for (const key of keys) {
+    preserved[key] = (
+      enterprise[key] !== undefined ? currentLocal[key] : submitted[key]
+    ) as never;
+  }
+  return preserved;
 }
 
-function stripPolicyMetadata<T extends { source?: unknown; locked?: unknown }>(
-  value: T,
-): Omit<T, "source" | "locked"> {
-  const { source: _source, locked: _locked, ...rest } = value;
-  return rest;
+function filterEnterpriseItems<T>(
+  submittedItems: T[],
+  enterpriseItems: T[],
+  keyReader: (item: T) => string[],
+): T[] {
+  const enterpriseKeys = new Set(enterpriseItems.flatMap(keyReader));
+  return submittedItems.filter((item) => {
+    const maybePolicyItem = item as { source?: unknown; locked?: unknown };
+    if (
+      maybePolicyItem.source === "enterprise" ||
+      maybePolicyItem.locked === true
+    )
+      return false;
+    return keyReader(item).every((key) => !enterpriseKeys.has(key));
+  });
 }
 
-function stripUndefined<T extends Record<string, unknown>>(
-  value: T,
-): Partial<T> {
-  return Object.fromEntries(
-    Object.entries(value).filter(([, item]) => item !== undefined),
-  ) as Partial<T>;
+// ── Domain extraction helpers ──────────────────────────────────
+
+function extractAppSettings(settings: AgentSettings): AppSettings {
+  const {
+    maxTurns,
+    workMode,
+    securityMode,
+    securityRules,
+    permissionMode,
+    permissionApprovalTimeoutMs,
+    desktopNotificationsEnabled,
+    friendlyTone,
+    customInstructions,
+    preventSleep,
+    outputStyle,
+    memoryMode,
+    contextManagement,
+    autoMemoryEnabled,
+    autoMemoryDirectory,
+    autoDreamEnabled,
+    thinkingEnabled,
+    maxThinkingTokens,
+    sandboxEnabled,
+    sandboxMode,
+  } = settings;
+  return {
+    maxTurns,
+    workMode,
+    securityMode,
+    securityRules,
+    permissionMode,
+    permissionApprovalTimeoutMs,
+    desktopNotificationsEnabled,
+    friendlyTone,
+    customInstructions,
+    preventSleep,
+    outputStyle,
+    memoryMode,
+    contextManagement,
+    autoMemoryEnabled,
+    autoMemoryDirectory,
+    autoDreamEnabled,
+    thinkingEnabled,
+    maxThinkingTokens,
+    sandboxEnabled,
+    sandboxMode,
+  };
 }
+
+function extractIntegrationSettings(
+  settings: AgentSettings,
+): IntegrationSettings {
+  return {
+    activeToolProfileId: settings.activeToolProfileId,
+    toolProfiles: settings.toolProfiles,
+    toolPermissionPolicy: settings.toolPermissionPolicy,
+    mcpServers: settings.mcpServers,
+    skillMarketplaceEndpoint: settings.skillMarketplaceEndpoint,
+    mcpMarketplaceEndpoint: settings.mcpMarketplaceEndpoint,
+    imBotBindings: settings.imBotBindings,
+    skillDirectories: settings.skillDirectories,
+    disabledSkills: settings.disabledSkills,
+  };
+}
+
+// ── Enterprise merge helpers ───────────────────────────────────
 
 function normalizeEnterpriseProviders(
   providers: ModelProviderConfig[],
@@ -447,19 +651,18 @@ function normalizeEnterpriseProviders(
   return normalizeAgentSettings({ providers }).providers;
 }
 
-function mergeProviders(
-  local: ModelProviderConfig[],
-  enterprise: ModelProviderConfig[],
-): ModelProviderConfig[] {
+function mergeArrays<T>(local: T[], enterprise: T[], keys: string[]): T[] {
   const enterpriseKeys = new Set(
-    enterprise.flatMap((provider) => [provider.id, provider.name]),
+    enterprise.flatMap((item) =>
+      keys.map((k) => String((item as Record<string, unknown>)[k])),
+    ),
   );
   return [
     ...enterprise,
-    ...local.filter(
-      (provider) =>
-        !enterpriseKeys.has(provider.id) && !enterpriseKeys.has(provider.name),
-    ),
+    ...local.filter((item) => {
+      const record = item as Record<string, unknown>;
+      return keys.every((k) => !enterpriseKeys.has(String(record[k])));
+    }),
   ];
 }
 
@@ -477,33 +680,46 @@ function markEnterpriseToolProfile(profile: ToolProfile): ToolProfile {
   return { ...profile, source: "enterprise", locked: true };
 }
 
-function mergeMcpServers(
-  local: McpServerConfig[],
-  enterprise: McpServerConfig[],
-): McpServerConfig[] {
-  const enterpriseKeys = new Set(
-    enterprise.flatMap((server) => [server.id, server.name]),
-  );
-  return [
-    ...enterprise,
-    ...local.filter(
-      (server) =>
-        !enterpriseKeys.has(server.id) && !enterpriseKeys.has(server.name),
-    ),
-  ];
+// ── Legacy encrypt / decrypt (for backward-compat reads) ───────
+
+function decryptLegacyAgentSettings(
+  settings: LegacyAgentSettings | undefined,
+): LegacyAgentSettings | undefined {
+  if (!settings) return undefined;
+  return {
+    ...settings,
+    providers: settings.providers?.map((provider) => ({
+      ...provider,
+      apiKey: decryptSecret(provider.apiKey),
+    })),
+    imBotBindings: decryptImBotBindingsConfig(settings.imBotBindings),
+  };
 }
 
-function mergeToolProfiles(
-  local: ToolProfile[],
-  enterprise: ToolProfile[],
-): ToolProfile[] {
-  const enterpriseKeys = new Set(enterprise.map((profile) => profile.id));
-  return [
-    ...enterprise,
-    ...local.filter((profile) => !enterpriseKeys.has(profile.id)),
-  ];
+function encryptLegacyAgentSettings(settings: AgentSettings): AgentSettings {
+  const {
+    enterprisePolicy: _ep,
+    enterpriseControlledSettings: _ec,
+    ...rest
+  } = settings;
+  return {
+    ...rest,
+    providers: rest.providers.map(
+      (p) =>
+        stripUndefined({
+          ...stripPolicyMetadata(p),
+          apiKey: encryptSecret(p.apiKey),
+        }) as ModelProviderConfig,
+    ),
+    mcpServers: rest.mcpServers.map(stripPolicyMetadata),
+    imBotBindings: encryptImBotBindingsConfig(rest.imBotBindings),
+    toolProfiles: rest.toolProfiles.map(stripPolicyMetadata),
+  };
 }
-function normalizeAgentSettings(
+
+// ── Normalization: composite (for legacy + enterprise merge) ───
+
+export function normalizeAgentSettings(
   settings: LegacyAgentSettings | undefined,
 ): AgentSettings {
   const defaults = defaultAgentSettings();
@@ -518,16 +734,17 @@ function normalizeAgentSettings(
     providers,
     defaults.defaultModel,
   );
-  const toolProfiles = settings.toolProfiles?.length
-    ? settings.toolProfiles
-    : defaults.toolProfiles;
-  const activeToolProfileId = resolveActiveToolProfileId(
-    toolProfiles,
-    settings.activeToolProfileId,
-  );
-  const activeToolProfile = toolProfiles.find(
-    (profile) => profile.id === activeToolProfileId,
-  );
+  const integration = normalizeIntegrationSettings({
+    activeToolProfileId: settings.activeToolProfileId,
+    toolProfiles: settings.toolProfiles,
+    toolPermissionPolicy: settings.toolPermissionPolicy,
+    mcpServers: settings.mcpServers,
+    skillMarketplaceEndpoint: settings.skillMarketplaceEndpoint,
+    mcpMarketplaceEndpoint: settings.mcpMarketplaceEndpoint,
+    imBotBindings: settings.imBotBindings,
+    skillDirectories: settings.skillDirectories,
+    disabledSkills: settings.disabledSkills,
+  });
   const securityMode = normalizeSecurityMode(settings.securityMode);
   const normalizedSandboxMode = normalizeSandboxMode(
     settings.sandboxMode,
@@ -544,6 +761,7 @@ function normalizeAgentSettings(
       (typeof legacyRuntimeConfigDir === "string"
         ? legacyRuntimeConfigDir
         : undefined),
+    ...integration,
     providers,
     defaultModel,
     workMode: normalizeWorkMode(settings.workMode, settings.permissionMode),
@@ -557,26 +775,6 @@ function normalizeAgentSettings(
     contextManagement: normalizeContextManagementSettings(
       settings.contextManagement,
     ),
-    activeToolProfileId,
-    toolProfiles,
-    toolPermissionPolicy: normalizeToolPermissionPolicy(
-      settings.toolPermissionPolicy,
-      activeToolProfile,
-    ),
-    mcpServers: settings.mcpServers ?? [],
-    skillMarketplaceEndpoint: normalizeSkillMarketplaceEndpoint(
-      settings.skillMarketplaceEndpoint ??
-        readLegacyMarketplaceEndpoint(settings, "skill"),
-      defaultAgentSettings().skillMarketplaceEndpoint,
-    ),
-    mcpMarketplaceEndpoint: normalizeMcpMarketplaceEndpoint(
-      settings.mcpMarketplaceEndpoint ??
-        readLegacyMarketplaceEndpoint(settings, "mcp"),
-      defaultAgentSettings().mcpMarketplaceEndpoint,
-    ),
-    imBotBindings: normalizeImBotBindingsConfig(settings.imBotBindings),
-    skillDirectories: settings.skillDirectories ?? [],
-    disabledSkills: settings.disabledSkills ?? [],
     sandboxEnabled: fullAccess ? false : true,
     sandboxMode: fullAccess
       ? "danger-full-access"
@@ -586,73 +784,240 @@ function normalizeAgentSettings(
   };
 }
 
-function normalizeSkillMarketplaceEndpoint(
-  endpoint: SkillMarketplaceEndpoint | LegacyMarketplaceEndpoint | undefined,
-  fallback?: SkillMarketplaceEndpoint,
-): SkillMarketplaceEndpoint {
-  if (!endpoint || typeof endpoint !== "object") {
-    if (!fallback) throw new Error("Skill marketplace endpoint is required.");
-    return fallback;
-  }
-  return normalizeMarketplaceEndpoint(endpoint);
-}
-
-function normalizeMcpMarketplaceEndpoint(
-  endpoint: McpMarketplaceEndpoint | LegacyMarketplaceEndpoint | undefined,
-  fallback?: McpMarketplaceEndpoint,
-): McpMarketplaceEndpoint | undefined {
-  if (!endpoint || typeof endpoint !== "object") return fallback;
-  return normalizeMarketplaceEndpoint(endpoint);
-}
-
-function normalizeMarketplaceEndpoint(
-  endpoint:
-    | SkillMarketplaceEndpoint
-    | McpMarketplaceEndpoint
-    | LegacyMarketplaceEndpoint,
-): SkillMarketplaceEndpoint & McpMarketplaceEndpoint {
-  const normalizedBaseUrl = endpoint.baseUrl?.trim().replace(/\/+$/, "") || "";
-  const baseUrl =
-    normalizedBaseUrl === "https:" || normalizedBaseUrl === "http:"
-      ? ""
-      : normalizedBaseUrl;
-  const configured = Boolean(baseUrl);
+/** Normalize only app-behavior fields (for new-format reads). */
+function normalizeAppSettings(
+  raw: Partial<AppSettings> | undefined,
+): AppSettings {
+  const defaults = defaultAppSettings();
+  if (!raw) return defaults;
+  const securityMode = normalizeSecurityMode(raw.securityMode);
+  const fullAccess = securityMode === "full-access";
+  const normalizedSandboxMode = normalizeSandboxMode(
+    raw.sandboxMode,
+    raw.sandboxEnabled,
+    defaults.sandboxMode,
+  );
   return {
-    baseUrl,
-    enabled: endpoint.enabled !== false,
-    lastStatus: configured ? endpoint.lastStatus : "untested",
-    lastError: configured ? endpoint.lastError : undefined,
-    lastCheckedAt: endpoint.lastCheckedAt,
+    ...defaults,
+    ...raw,
+    workMode: normalizeWorkMode(raw.workMode, raw.permissionMode),
+    securityMode,
+    securityRules: normalizeSecurityRules(raw.securityRules),
+    permissionMode: fullAccess ? "bypassPermissions" : "default",
+    permissionApprovalTimeoutMs: normalizePermissionApprovalTimeoutMs(
+      raw.permissionApprovalTimeoutMs,
+    ),
+    memoryMode: normalizeMemoryMode(raw.memoryMode),
+    contextManagement: normalizeContextManagementSettings(
+      raw.contextManagement,
+    ),
+    sandboxEnabled: fullAccess ? false : true,
+    sandboxMode: fullAccess
+      ? "danger-full-access"
+      : normalizedSandboxMode === "danger-full-access"
+        ? "workspace-write"
+        : normalizedSandboxMode,
   };
 }
 
-interface LegacyMarketplaceEndpoint {
-  baseUrl?: string;
-  enabled?: boolean;
-  lastStatus?: "untested" | "ok" | "error";
-  lastError?: string;
-  lastCheckedAt?: number;
+// ── App behavior normalizers ──────────────────────────────────
+
+function normalizeWorkMode(
+  mode: unknown,
+  legacyPermissionMode: unknown,
+): AgentSettings["workMode"] {
+  return mode === "plan" || legacyPermissionMode === "plan"
+    ? "plan"
+    : "execute";
 }
 
-function readLegacyMarketplaceEndpoint(
-  settings: Partial<AgentSettings>,
-  capability: "skill" | "mcp",
-): LegacyMarketplaceEndpoint | undefined {
-  const legacy = (
-    settings as Partial<AgentSettings> & {
-      marketplaceEndpoints?: unknown;
-    }
-  ).marketplaceEndpoints;
-  if (!Array.isArray(legacy)) return undefined;
-  const endpoint = legacy.find(
-    (item): item is LegacyMarketplaceEndpoint =>
-      Boolean(item) &&
-      typeof item === "object" &&
-      Array.isArray((item as { capabilities?: unknown }).capabilities) &&
-      (item as { capabilities: unknown[] }).capabilities.includes(capability),
-  );
-  return endpoint;
+function normalizeSecurityMode(mode: unknown): AgentSettings["securityMode"] {
+  if (mode === "request" || mode === "auto-review" || mode === "full-access") {
+    return mode;
+  }
+  return "request";
 }
+
+function normalizeSecurityRules(
+  rules: Partial<AgentSettings["securityRules"]> | undefined,
+): AgentSettings["securityRules"] {
+  const strings = (value: unknown): string[] =>
+    Array.isArray(value)
+      ? Array.from(
+          new Set(
+            value
+              .filter((item): item is string => typeof item === "string")
+              .map((item) => item.trim())
+              .filter(Boolean),
+          ),
+        )
+      : [];
+  return {
+    autoAllowPaths: strings(rules?.autoAllowPaths),
+    protectedPaths: strings(rules?.protectedPaths),
+    commandAllowlist: strings(rules?.commandAllowlist),
+    commandAsklist: strings(rules?.commandAsklist),
+    networkAccess:
+      rules?.networkAccess === "allow" || rules?.networkAccess === "deny"
+        ? rules.networkAccess
+        : "ask",
+    allowedDomains: strings(rules?.allowedDomains),
+    deniedDomains: strings(rules?.deniedDomains),
+  };
+}
+
+function normalizeSandboxMode(
+  mode: unknown,
+  legacySandboxEnabled: unknown,
+  fallback: AgentSettings["sandboxMode"],
+): AgentSettings["sandboxMode"] {
+  if (
+    mode === "read-only" ||
+    mode === "workspace-write" ||
+    mode === "workspace-write-network" ||
+    mode === "danger-full-access"
+  ) {
+    return mode;
+  }
+  if (legacySandboxEnabled === false) return "danger-full-access";
+  if (legacySandboxEnabled === true) return "workspace-write";
+  return fallback ?? "workspace-write";
+}
+
+function normalizePermissionMode(
+  mode: unknown,
+): AgentSettings["permissionMode"] {
+  return mode === "acceptEdits" || mode === "bypassPermissions"
+    ? mode
+    : "default";
+}
+
+function normalizeMemoryMode(mode: unknown): AgentSettings["memoryMode"] {
+  return mode === "session" || mode === "off" ? mode : "workspace";
+}
+
+function normalizeContextManagementSettings(
+  value: unknown,
+): ContextManagementSettings {
+  const defaults = defaultAppSettings()
+    .contextManagement as ContextManagementSettings;
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    return defaults;
+  const record = value as Record<string, unknown>;
+  return {
+    warningThresholdPercent: normalizePercent(
+      record.warningThresholdPercent,
+      defaults.warningThresholdPercent,
+    ),
+    compactThresholdPercent: normalizePercent(
+      record.compactThresholdPercent,
+      defaults.compactThresholdPercent,
+    ),
+    restartThresholdPercent: normalizePercent(
+      record.restartThresholdPercent,
+      defaults.restartThresholdPercent,
+    ),
+    autoCompactEnabled: record.autoCompactEnabled === true,
+  };
+}
+
+function normalizePercent(value: unknown, fallback: number): number {
+  const number = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.min(Math.max(number, 1), 99);
+}
+
+function normalizePermissionApprovalTimeoutMs(value: unknown): number {
+  const timeout = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(timeout)) return 120_000;
+  return Math.min(Math.max(Math.trunc(timeout), 10_000), 3_600_000);
+}
+
+// ── Provider normalization (for legacy + enterprise) ──────────
+
+function normalizeProviders(
+  settings: LegacyAgentSettings,
+  defaults: ModelProviderConfig[],
+): ModelProviderConfig[] {
+  if (settings.providers?.length) {
+    return settings.providers.map(normalizeProvider);
+  }
+  return defaults;
+}
+
+function normalizeProvider(provider: ModelProviderConfig): ModelProviderConfig {
+  const common = {
+    id: provider.id,
+    name: provider.name,
+    enabled: provider.enabled !== false,
+    source: provider.source,
+    locked: provider.locked,
+    apiKey: provider.apiKey,
+    apiKeyEnv: provider.apiKeyEnv,
+    purpose: provider.purpose,
+    models: provider.models?.length
+      ? provider.models.map(normalizeModelOption)
+      : [],
+  };
+  if (provider.kind === "builtin" && compactString(provider.presetId)) {
+    return { ...common, kind: "builtin", presetId: provider.presetId };
+  }
+  return {
+    ...common,
+    kind: "custom",
+    endpoints:
+      provider.kind === "custom" && Array.isArray(provider.endpoints)
+        ? provider.endpoints
+            .map((endpoint, index) => ({
+              id: compactString(endpoint.id) ?? `endpoint-${index + 1}`,
+              name: compactString(endpoint.name),
+              protocol: normalizeEndpointProtocol(endpoint.protocol),
+              baseUrl: compactString(endpoint.baseUrl) ?? "",
+              enabled: endpoint.enabled !== false,
+              priority:
+                Number.isFinite(endpoint.priority) && endpoint.priority >= 0
+                  ? Math.trunc(endpoint.priority)
+                  : (index + 1) * 10,
+            }))
+            .filter((endpoint) => endpoint.baseUrl)
+        : [],
+  };
+}
+
+function normalizeDefaultModel(
+  settings: LegacyAgentSettings,
+  providers: ModelProviderConfig[],
+  fallback: ModelSelection,
+): ModelSelection {
+  if (!providers.length) return settings.defaultModel ?? fallback;
+  const requested = settings.defaultModel;
+  const provider =
+    providers.find(
+      (item) => item.id === requested?.providerId && item.enabled,
+    ) ??
+    providers.find((item) => item.enabled) ??
+    providers[0];
+  const model =
+    provider.models.find(
+      (item) => item.id === requested?.modelId && item.enabled,
+    ) ??
+    provider.models.find((item) => item.enabled) ??
+    provider.models[0];
+  return {
+    providerId: provider.id,
+    modelId: model?.id ?? fallback.modelId,
+  };
+}
+
+function normalizeEndpointProtocol(
+  protocol: unknown,
+): "openai-chat" | "openai-responses" | "anthropic" {
+  return protocol === "openai-responses" || protocol === "anthropic"
+    ? protocol
+    : "openai-chat";
+}
+
+// ── IM bot bindings (for legacy compat) ────────────────────────
 
 function normalizeImBotBindingsConfig(
   channels: Partial<ImBotBindingsConfig> | undefined,
@@ -661,17 +1026,15 @@ function normalizeImBotBindingsConfig(
     channels && typeof channels === "object"
       ? (channels as Record<string, unknown>)
       : {};
-  const explicitBots = Array.isArray(raw.bots)
+  const bots = Array.isArray(raw.bots)
     ? raw.bots
         .map((item, index) => normalizeImBotInstance(item, index))
         .filter((item): item is ImBotBindingsConfig["bots"][number] =>
           Boolean(item),
         )
     : [];
-  const bots = explicitBots;
   const defaultWorkspacePath = compactString(raw.defaultWorkspacePath);
   const defaultToolProfileId = compactString(raw.defaultToolProfileId);
-
   return {
     bots: dedupeImBots(bots),
     ...(defaultWorkspacePath ? { defaultWorkspacePath } : {}),
@@ -753,7 +1116,6 @@ function normalizeImBotInstance(
           typeof capability === "string" && IM_BOT_CAPABILITIES.has(capability),
       )
     : [];
-
   return stripUndefined({
     id,
     channel,
@@ -791,7 +1153,28 @@ function dedupeImBots(
 }
 
 function channelLabel(channel: string): string {
-  return channel === "wecom" ? "企业微信" : "飞书";
+  return channel === "wecom" ? "\u4f01\u4e1a\u5fae\u4fe1" : "\u98de\u4e66";
+}
+
+// ── Small utilities ────────────────────────────────────────────
+
+function stripUtf8Bom(value: string): string {
+  return value.charCodeAt(0) === 0xfeff ? value.slice(1) : value;
+}
+
+function stripPolicyMetadata<T extends { source?: unknown; locked?: unknown }>(
+  value: T,
+): Omit<T, "source" | "locked"> {
+  const { source: _source, locked: _locked, ...rest } = value;
+  return rest;
+}
+
+function stripUndefined<T extends Record<string, unknown>>(
+  value: T,
+): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, item]) => item !== undefined),
+  ) as Partial<T>;
 }
 
 function nonEmptyString(value: unknown): string | undefined {
@@ -810,294 +1193,19 @@ function compactString(value: unknown): string | undefined {
   return trimmed || undefined;
 }
 
-function normalizeProviders(
-  settings: LegacyAgentSettings,
-  defaults: ModelProviderConfig[],
-): ModelProviderConfig[] {
-  if (settings.providers?.length) {
-    return settings.providers.map(normalizeProvider);
-  }
-  return defaults;
-}
+// ── Legacy raw reader (for encrypted-key preservation) ─────────
 
-function normalizeProvider(provider: ModelProviderConfig): ModelProviderConfig {
-  const common = {
-    id: provider.id,
-    name: provider.name,
-    enabled: provider.enabled !== false,
-    source: provider.source,
-    locked: provider.locked,
-    apiKey: provider.apiKey,
-    apiKeyEnv: provider.apiKeyEnv,
-    purpose: provider.purpose,
-    models: provider.models?.length
-      ? provider.models.map(normalizeModelOption)
-      : [],
-  };
-  if (provider.kind === "builtin" && compactString(provider.presetId)) {
-    const { presetId } = provider;
-    return { ...common, kind: "builtin", presetId };
-  }
-  return {
-    ...common,
-    kind: "custom",
-    endpoints:
-      provider.kind === "custom" && Array.isArray(provider.endpoints)
-        ? provider.endpoints
-            .map((endpoint, index) => ({
-              id: compactString(endpoint.id) ?? `endpoint-${index + 1}`,
-              name: compactString(endpoint.name),
-              protocol: normalizeEndpointProtocol(endpoint.protocol),
-              baseUrl: compactString(endpoint.baseUrl) ?? "",
-              enabled: endpoint.enabled !== false,
-              priority:
-                Number.isFinite(endpoint.priority) && endpoint.priority >= 0
-                  ? Math.trunc(endpoint.priority)
-                  : (index + 1) * 10,
-            }))
-            .filter((endpoint) => endpoint.baseUrl)
-        : [],
-  };
-}
-
-function normalizeDefaultModel(
-  settings: LegacyAgentSettings,
-  providers: ModelProviderConfig[],
-  fallback: ModelSelection,
-): ModelSelection {
-  if (!providers.length) return settings.defaultModel ?? fallback;
-  const requested = settings.defaultModel;
-  const provider =
-    providers.find(
-      (item) => item.id === requested?.providerId && item.enabled,
-    ) ??
-    providers.find((item) => item.enabled) ??
-    providers[0];
-  const model =
-    provider.models.find(
-      (item) => item.id === requested?.modelId && item.enabled,
-    ) ??
-    provider.models.find((item) => item.enabled) ??
-    provider.models[0];
-  return {
-    providerId: provider.id,
-    modelId: model?.id ?? fallback.modelId,
-  };
-}
-function resolveActiveToolProfileId(
-  toolProfiles: ToolProfile[],
-  requestedId: string | undefined,
-): string {
-  if (requestedId && toolProfiles.some((profile) => profile.id === requestedId))
-    return requestedId;
-  return toolProfiles[0]?.id ?? "default-tool-policy";
-}
-
-function normalizeToolPermissionPolicy(
-  policy: AgentSettings["toolPermissionPolicy"],
-  fallbackProfile: ToolProfile | undefined,
-): AgentSettings["toolPermissionPolicy"] {
-  const defaults = defaultAgentSettings()
-    .toolPermissionPolicy as ExtendedToolPermissionPolicy;
-  const rules =
-    (policy as ExtendedToolPermissionPolicy | undefined)?.rules ??
-    defaults.rules;
-  return {
-    rules,
-    allowedTools:
-      normalizeToolList(policy?.allowedTools) ??
-      fallbackProfile?.allowedTools ??
-      defaults.allowedTools,
-    disallowedTools:
-      normalizeToolList(policy?.disallowedTools) ??
-      fallbackProfile?.disallowedTools ??
-      defaults.disallowedTools,
-    sensitiveToolAllowlist:
-      normalizeToolList(policy?.sensitiveToolAllowlist) ??
-      defaults.sensitiveToolAllowlist,
-    requireConfirmationForSensitiveTools:
-      policy?.requireConfirmationForSensitiveTools ??
-      defaults.requireConfirmationForSensitiveTools,
-  };
-}
-
-function normalizeToolList(tools: unknown): string[] | undefined {
-  if (!Array.isArray(tools)) return undefined;
-  const normalized = tools
-    .filter((tool): tool is string => typeof tool === "string")
-    .map((tool) => tool.trim())
-    .filter(Boolean);
-  return normalized.length ? Array.from(new Set(normalized)) : [];
-}
-
-function normalizeEndpointProtocol(
-  protocol: unknown,
-): "openai-chat" | "openai-responses" | "anthropic" {
-  return protocol === "openai-responses" || protocol === "anthropic"
-    ? protocol
-    : "openai-chat";
-}
-function normalizePermissionMode(
-  mode: unknown,
-): AgentSettings["permissionMode"] {
-  return mode === "acceptEdits" || mode === "bypassPermissions"
-    ? mode
-    : "default";
-}
-
-function normalizeSecurityMode(mode: unknown): AgentSettings["securityMode"] {
-  if (mode === "request" || mode === "auto-review" || mode === "full-access") {
-    return mode;
-  }
-  return "request";
-}
-
-function normalizeSecurityRules(
-  rules: Partial<AgentSettings["securityRules"]> | undefined,
-): AgentSettings["securityRules"] {
-  const strings = (value: unknown): string[] =>
-    Array.isArray(value)
-      ? Array.from(
-          new Set(
-            value
-              .filter((item): item is string => typeof item === "string")
-              .map((item) => item.trim())
-              .filter(Boolean),
-          ),
-        )
-      : [];
-  return {
-    autoAllowPaths: strings(rules?.autoAllowPaths),
-    protectedPaths: strings(rules?.protectedPaths),
-    commandAllowlist: strings(rules?.commandAllowlist),
-    commandAsklist: strings(rules?.commandAsklist),
-    networkAccess:
-      rules?.networkAccess === "allow" || rules?.networkAccess === "deny"
-        ? rules.networkAccess
-        : "ask",
-    allowedDomains: strings(rules?.allowedDomains),
-    deniedDomains: strings(rules?.deniedDomains),
-  };
-}
-
-function normalizeSandboxMode(
-  mode: unknown,
-  legacySandboxEnabled: unknown,
-  fallback: AgentSettings["sandboxMode"],
-): AgentSettings["sandboxMode"] {
-  if (
-    mode === "read-only" ||
-    mode === "workspace-write" ||
-    mode === "workspace-write-network" ||
-    mode === "danger-full-access"
-  ) {
-    return mode;
-  }
-  if (legacySandboxEnabled === false) return "danger-full-access";
-  if (legacySandboxEnabled === true) return "workspace-write";
-  return fallback ?? "workspace-write";
-}
-
-function normalizeWorkMode(
-  mode: unknown,
-  legacyPermissionMode: unknown,
-): AgentSettings["workMode"] {
-  return mode === "plan" || legacyPermissionMode === "plan"
-    ? "plan"
-    : "execute";
-}
-
-function normalizeMemoryMode(mode: unknown): AgentSettings["memoryMode"] {
-  return mode === "session" || mode === "off" ? mode : "workspace";
-}
-
-function defaultContextManagementSettings(): ContextManagementSettings {
-  return defaultAgentSettings().contextManagement as ContextManagementSettings;
-}
-
-function normalizeContextManagementSettings(
-  value: unknown,
-): ContextManagementSettings {
-  const defaults = defaultContextManagementSettings();
-  if (!value || typeof value !== "object" || Array.isArray(value))
-    return defaults;
-  const record = value as Record<string, unknown>;
-  return {
-    warningThresholdPercent: normalizePercent(
-      record.warningThresholdPercent,
-      defaults.warningThresholdPercent,
-    ),
-    compactThresholdPercent: normalizePercent(
-      record.compactThresholdPercent,
-      defaults.compactThresholdPercent,
-    ),
-    restartThresholdPercent: normalizePercent(
-      record.restartThresholdPercent,
-      defaults.restartThresholdPercent,
-    ),
-    autoCompactEnabled: record.autoCompactEnabled === true,
-  };
-}
-
-function normalizePercent(value: unknown, fallback: number): number {
-  const number = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(number)) return fallback;
-  return Math.min(Math.max(number, 1), 99);
-}
-
-function normalizePermissionApprovalTimeoutMs(value: unknown): number {
-  const timeout = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(timeout)) return 120_000;
-  return Math.min(Math.max(Math.trunc(timeout), 10_000), 3_600_000);
-}
-
-function normalizeModelOption(model: Partial<ModelOption>): ModelOption {
-  const id = model.id ?? "";
-  const preset = modelMetadataPreset(id);
-  return {
-    id,
-    label: model.label ?? id,
-    enabled: model.enabled !== false,
-    contextWindowTokens:
-      normalizePositiveInteger(model.contextWindowTokens) ??
-      preset.contextWindowTokens,
-    maxOutputTokens:
-      normalizePositiveInteger(model.maxOutputTokens) ?? preset.maxOutputTokens,
-    supportsVision: model.supportsVision ?? preset.supportsVision,
-    supportsThinking: model.supportsThinking ?? preset.supportsThinking,
-  };
-}
-
-function modelMetadataPreset(modelId: string): Partial<ModelOption> {
-  const id = modelId.toLowerCase();
-  if (id === "deepseek-v4-flash" || id === "deepseek-v4-pro") {
-    return {
-      contextWindowTokens: 1_000_000,
-      maxOutputTokens: 384_000,
-      supportsThinking: true,
-      supportsVision: false,
-    };
-  }
-  return {};
-}
-
-function normalizePositiveInteger(value: unknown): number | undefined {
-  if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
-  const normalized = Math.trunc(value);
-  return normalized > 0 ? normalized : undefined;
-}
-
-function readRawAgentSettings(): Partial<AgentSettings> | undefined {
+export function readRawAgentSettings(): Partial<AgentSettings> | undefined {
   try {
     const raw = readFileSync(getSettingsPath(), "utf-8");
-    const parsed = JSON.parse(raw) as Partial<StoreShape>;
+    const parsed = JSON.parse(raw) as Partial<AppStoreShape>;
     return parsed.agentSettings;
   } catch {
     return undefined;
   }
 }
 
-function preserveExistingEncryptedProviderSecrets(
+export function preserveExistingEncryptedProviderSecrets(
   settings: AgentSettings,
   rawSettings: Partial<AgentSettings> | undefined,
 ): AgentSettings {
@@ -1116,182 +1224,5 @@ function preserveExistingEncryptedProviderSecrets(
     }),
   };
 }
-export function getAgentSettings(): AgentSettings {
-  return applyEnterprisePolicy(readStore().agentSettings);
-}
 
-export function saveAgentSettings(settings: AgentSettings): void {
-  const normalized = preserveExistingEncryptedProviderSecrets(
-    normalizeAgentSettings(
-      sanitizeLocalAgentSettingsForSave(
-        settings,
-        readStore().agentSettings,
-        readEnterpriseConfig(),
-      ),
-    ),
-    readRawAgentSettings(),
-  );
-  writeStore({ agentSettings: normalized });
-  logInfo("config.saved", { settingsPath: getSettingsPath() });
-}
-
-export function sanitizeLocalAgentSettingsForSave(
-  submitted: AgentSettings,
-  currentLocal: AgentSettings,
-  enterpriseConfig: EnterpriseConfig | null,
-): AgentSettings {
-  if (!enterpriseConfig) {
-    return stripTransientPolicyFields(submitted);
-  }
-
-  const enterprise = enterpriseConfig.agentSettings ?? {};
-  const policy = enterpriseConfig.policy ?? {};
-  const enterpriseProviders = enterprise.providers?.length
-    ? normalizeEnterpriseProviders(enterprise.providers)
-    : [];
-  const enterpriseMcpServers = enterprise.mcpServers?.length
-    ? enterprise.mcpServers
-    : [];
-  const enterpriseToolProfiles = enterprise.toolProfiles ?? [];
-  const next = stripTransientPolicyFields(submitted);
-
-  return {
-    ...next,
-    ...preserveEnterpriseControlledScalars(next, currentLocal, enterprise),
-    providers:
-      policy.allowLocalEndpointProfiles === false
-        ? currentLocal.providers
-        : filterEnterpriseItems(next.providers, enterpriseProviders, (item) => [
-            item.id,
-            item.name,
-          ]),
-    mcpServers:
-      policy.allowLocalMcpServers === false
-        ? currentLocal.mcpServers
-        : filterEnterpriseItems(
-            next.mcpServers,
-            enterpriseMcpServers,
-            (item) => [item.id, item.name],
-          ),
-    toolProfiles:
-      policy.allowLocalToolProfiles === false
-        ? currentLocal.toolProfiles
-        : filterEnterpriseItems(
-            next.toolProfiles,
-            enterpriseToolProfiles,
-            (item) => [item.id],
-          ),
-    disabledSkills:
-      policy.allowLocalSkillDisable === false
-        ? currentLocal.disabledSkills
-        : next.disabledSkills,
-  };
-}
-
-function stripTransientPolicyFields(settings: AgentSettings): AgentSettings {
-  const {
-    enterprisePolicy: _enterprisePolicy,
-    enterpriseControlledSettings: _enterpriseControlledSettings,
-    ...settingsWithoutPolicy
-  } = settings;
-  return {
-    ...settingsWithoutPolicy,
-    providers: settingsWithoutPolicy.providers.map(
-      (provider) => stripPolicyMetadata(provider) as ModelProviderConfig,
-    ),
-    mcpServers: settingsWithoutPolicy.mcpServers.map(stripPolicyMetadata),
-    imBotBindings: settingsWithoutPolicy.imBotBindings,
-    toolProfiles: settingsWithoutPolicy.toolProfiles.map(stripPolicyMetadata),
-  };
-}
-
-function preserveEnterpriseControlledScalars(
-  submitted: AgentSettings,
-  currentLocal: AgentSettings,
-  enterprise: Partial<AgentSettings>,
-): Partial<AgentSettings> {
-  const preserved: Partial<AgentSettings> = {};
-  for (const key of [
-    "activeRuntimeId",
-    "runtimeConfigDir",
-    "defaultModel",
-    "maxTurns",
-    "workMode",
-    "securityMode",
-    "securityRules",
-    "permissionMode",
-    "permissionApprovalTimeoutMs",
-    "desktopNotificationsEnabled",
-    "friendlyTone",
-    "customInstructions",
-    "memoryMode",
-    "contextManagement",
-    "toolPermissionPolicy",
-    "autoMemoryEnabled",
-    "autoMemoryDirectory",
-    "autoDreamEnabled",
-    "thinkingEnabled",
-    "maxThinkingTokens",
-    "activeToolProfileId",
-    "skillMarketplaceEndpoint",
-    "mcpMarketplaceEndpoint",
-    "imBotBindings",
-    "skillDirectories",
-  ] as const) {
-    preserved[key] = (
-      enterprise[key] !== undefined ? currentLocal[key] : submitted[key]
-    ) as never;
-  }
-  return preserved;
-}
-
-function filterEnterpriseItems<T>(
-  submittedItems: T[],
-  enterpriseItems: T[],
-  keyReader: (item: T) => string[],
-): T[] {
-  const enterpriseKeys = new Set(enterpriseItems.flatMap(keyReader));
-  return submittedItems.filter((item) => {
-    const maybePolicyItem = item as { source?: unknown; locked?: unknown };
-    if (
-      maybePolicyItem.source === "enterprise" ||
-      maybePolicyItem.locked === true
-    )
-      return false;
-    return keyReader(item).every((key) => !enterpriseKeys.has(key));
-  });
-}
-export function buildSdkEnv(
-  settings: AgentSettings,
-  selection?: Partial<ModelSelection> | null,
-  connection?: { baseUrl: string; apiKey: string; model?: string },
-): Record<string, string | undefined> {
-  const resolved = resolveModelProvider(settings, selection);
-
-  const env: Record<string, string | undefined> = {};
-  for (const [key, value] of Object.entries(process.env)) {
-    if (
-      !key.startsWith("ANTHROPIC_") &&
-      !key.startsWith("OPENAI_") &&
-      !key.startsWith("CLAUDE_")
-    ) {
-      env[key] = value;
-    }
-  }
-
-  return {
-    ...env,
-    ANTHROPIC_API_KEY: connection?.apiKey ?? resolved.apiKey,
-    ANTHROPIC_AUTH_TOKEN: connection?.apiKey ?? resolved.apiKey,
-    ANTHROPIC_BASE_URL: connection?.baseUrl,
-    ANTHROPIC_MODEL: connection?.model ?? resolved.model,
-    // 运行时状态统一：sdk 内核的配置/会话落到 runtime-config/claude 子目录，
-    // 与 binary（runtime-config/codex）、self-built（runtime-config/self-built）对称。
-    CLAUDE_CONFIG_DIR: join(
-      settings.runtimeConfigDir || getRuntimeConfigDir(),
-      "claude",
-    ),
-    DISABLE_TELEMETRY: "1",
-    CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1",
-  };
-}
+export type { EnterpriseConfig, AppStoreShape };

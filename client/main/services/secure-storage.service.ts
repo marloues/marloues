@@ -2,7 +2,6 @@ import { safeStorage } from "electron";
 import { SECRET_ENCRYPTION_UNAVAILABLE_CODE } from "@shared/types";
 
 const SAFE_PREFIX = "enc:safe:v1:";
-const LEGACY_FALLBACK_PREFIX = "enc:fallback:v1:";
 
 export interface SecretStorageBackend {
   isEncryptionAvailable(): boolean;
@@ -34,10 +33,7 @@ export function createSecretStorageService(storage: SecretStorageBackend) {
   function encryptSecret(value: string | undefined): string | undefined {
     if (!value || value.startsWith(SAFE_PREFIX)) return value;
 
-    const plaintext = value.startsWith(LEGACY_FALLBACK_PREFIX)
-      ? decodeLegacyFallback(value)
-      : value;
-
+    const plaintext = value;
     try {
       if (!storage.isEncryptionAvailable()) {
         throw new SecretEncryptionUnavailableError();
@@ -58,10 +54,9 @@ export function createSecretStorageService(storage: SecretStorageBackend) {
     if (!value) return value;
     try {
       if (value.startsWith(SAFE_PREFIX)) {
-        return storage.decryptString(Buffer.from(value.slice(SAFE_PREFIX.length), "base64"));
-      }
-      if (value.startsWith(LEGACY_FALLBACK_PREFIX)) {
-        return decodeLegacyFallback(value);
+        return storage.decryptString(
+          Buffer.from(value.slice(SAFE_PREFIX.length), "base64"),
+        );
       }
     } catch {
       return undefined;
@@ -91,13 +86,5 @@ export function decryptSecret(value: string | undefined): string | undefined {
 }
 
 export function isEncryptedSecret(value: string | undefined): boolean {
-  return Boolean(value?.startsWith(SAFE_PREFIX) || value?.startsWith(LEGACY_FALLBACK_PREFIX));
-}
-
-export function isLegacyPlaintextSecret(value: string | undefined): boolean {
-  return Boolean(value?.startsWith(LEGACY_FALLBACK_PREFIX));
-}
-
-function decodeLegacyFallback(value: string): string {
-  return Buffer.from(value.slice(LEGACY_FALLBACK_PREFIX.length), "base64").toString("utf8");
+  return Boolean(value?.startsWith(SAFE_PREFIX));
 }

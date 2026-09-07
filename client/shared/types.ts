@@ -533,11 +533,16 @@ export interface RedactionRule {
   enabled: boolean;
 }
 
-export interface AgentSettings {
+/** Model/provider configuration. Persisted in ~/.marloues[-dev]/config/models.json. */
+export interface ModelConfig {
   providers: ModelProviderConfig[];
   defaultModel: ModelSelection;
   activeRuntimeId?: RuntimeKind;
   runtimeConfigDir?: string;
+}
+
+/** App behavior & security settings. Persisted in ~/.marloues[-dev]/config/settings.json. */
+export interface AppSettings {
   maxTurns: number;
   workMode: AgentWorkMode;
   securityMode: AgentSecurityMode;
@@ -551,14 +556,20 @@ export interface AgentSettings {
   outputStyle?: "default" | "coding" | "explanatory";
   memoryMode?: AgentMemoryMode;
   contextManagement?: ContextManagementSettings;
-  toolPermissionPolicy?: ToolPermissionPolicy;
   autoMemoryEnabled: boolean;
   autoMemoryDirectory?: string;
   autoDreamEnabled?: boolean;
   thinkingEnabled: boolean;
   maxThinkingTokens: number;
+  sandboxEnabled?: boolean;
+  sandboxMode?: AgentSandboxMode;
+}
+
+/** External integrations: tools, MCP, skills, IM bots. Persisted in ~/.marloues[-dev]/config/integrations.json. */
+export interface IntegrationSettings {
   activeToolProfileId: string;
   toolProfiles: ToolProfile[];
+  toolPermissionPolicy?: ToolPermissionPolicy;
   mcpServers: McpServerConfig[];
   skillMarketplaceEndpoint?: SkillMarketplaceEndpoint;
   mcpMarketplaceEndpoint?: McpMarketplaceEndpoint;
@@ -567,9 +578,11 @@ export interface AgentSettings {
   disabledSkills: string[];
   enterprisePolicy?: EnterprisePolicy;
   enterpriseControlledSettings?: string[];
-  sandboxEnabled?: boolean;
-  sandboxMode?: AgentSandboxMode;
 }
+
+/** Composite of all config domains. Existing consumers keep using this type unchanged. */
+export interface AgentSettings
+  extends ModelConfig, AppSettings, IntegrationSettings {}
 
 export interface SkillMarketplaceEndpoint {
   baseUrl: string;

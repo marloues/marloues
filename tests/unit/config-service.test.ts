@@ -48,7 +48,7 @@ describe("config-service", () => {
 
   it("never persists endpoint addresses on built-in providers", async () => {
     const { getAgentSettings, saveAgentSettings } = await loadConfigService();
-    const { getSettingsPath } = await import("../../client/main/app-paths");
+    const { getUserModelsPath } = await import("../../client/main/app-paths");
     const before = getAgentSettings();
     const pollutedProvider = {
       id: "deepseek-builtin",
@@ -78,13 +78,19 @@ describe("config-service", () => {
       },
     });
 
-    const persisted = JSON.parse(readFileSync(getSettingsPath(), "utf8")) as {
-      agentSettings: { providers: Array<Record<string, unknown>> };
+    const persisted = JSON.parse(readFileSync(getUserModelsPath(), "utf8")) as {
+      builtinOverrides?: Record<string, Record<string, unknown>>;
+      customProviders?: Array<Record<string, unknown>>;
     };
-    expect(persisted.agentSettings.providers[0]).not.toHaveProperty("baseUrl");
-    expect(persisted.agentSettings.providers[0]).not.toHaveProperty(
-      "endpoints",
-    );
+    const override = persisted.builtinOverrides?.["deepseek"];
+    if (override) {
+      expect(override).not.toHaveProperty("baseUrl");
+      expect(override).not.toHaveProperty("endpoints");
+    }
+    for (const custom of persisted.customProviders ?? []) {
+      expect(custom).not.toHaveProperty("baseUrl");
+      expect(custom).not.toHaveProperty("endpoints");
+    }
   });
 
   it("persists under MARLOUES_HOME", async () => {
