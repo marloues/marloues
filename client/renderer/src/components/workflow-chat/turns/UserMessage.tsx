@@ -1,4 +1,9 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { WorkflowMarkdownLink } from "../content/MarkdownLink";
+import styles from "./UserMessage.module.css";
+import { useMemo, useState, type FocusEvent, type ReactNode } from "react";
+import { useCopyFeedback } from "../content/use-copy-feedback";
+import { copyConversationContent } from "../content/clipboard";
+import { mediaSource } from "../content/content-target";
 import type { WorkflowUserMessageContent } from "@shared/workflow-read-thread-contract";
 import { formatConversationTime } from "@shared/conversation-time";
 import {
@@ -44,25 +49,19 @@ export function WorkflowUserMessage({
   const [previewImage, setPreviewImage] = useState<WorkflowImagePreview | null>(
     null,
   );
-  const [copied, setCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const copyText = workflowUserMessageCopyText(presentation);
+  const { copied, copy } = useCopyFeedback(copyText);
   const imageGallery = useMemo(
     () => presentation.images.map(imagePreview),
     [presentation.images],
   );
 
-  const copyMessage = async () => {
-    if (!copyText) return;
-    try {
-      if (onCopy) await onCopy(copyText);
-      else await copyToClipboard(copyText);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1_200);
-    } catch {
-      setCopied(false);
-    }
-  };
+  const copyMessage = () =>
+    copyText &&
+    copy(() =>
+      onCopy ? onCopy(copyText) : copyConversationContent({ text: copyText }),
+    );
 
   if (!presentation.protocolContent.length) return null;
   const isLong = userMessageLikelyExceedsCollapsedLines(presentation.text);
@@ -72,30 +71,42 @@ export function WorkflowUserMessage({
       <div className="workflow-user-message" data-kind="user-message">
         {presentation.images.length ? (
           <div
-            className="workflow-user-message-images hide-scrollbar"
+            className={`workflow-user-message-images ${styles.strip}`}
             data-kind="user-message-images"
+            role="region"
+            aria-label="图片附件"
+            tabIndex={0}
+            onFocusCapture={revealFocusedAttachment}
           >
-            {presentation.images.map((image, index) => (
-              <UserImage
-                key={`${image.type}-${imageSourceKey(image)}-${index}`}
-                image={image}
-                onOpenImage={setPreviewImage}
-              />
-            ))}
+            <div className={`${styles.track} ${styles.imageTrack}`}>
+              {presentation.images.map((image, index) => (
+                <UserImage
+                  key={`${image.type}-${imageSourceKey(image)}-${index}`}
+                  image={image}
+                  onOpenImage={setPreviewImage}
+                />
+              ))}
+            </div>
           </div>
         ) : null}
 
         {presentation.attachments.length ? (
           <div
-            className="workflow-user-message-attachments hide-scrollbar"
+            className={`workflow-user-message-attachments ${styles.strip}`}
             data-kind="user-message-attachments"
+            role="region"
+            aria-label="引用与上下文附件"
+            tabIndex={0}
+            onFocusCapture={revealFocusedAttachment}
           >
-            {presentation.attachments.map((attachment, index) => (
-              <UserAttachmentPill
-                key={`${attachment.kind}-${attachmentKey(attachment)}-${index}`}
-                attachment={attachment}
-              />
-            ))}
+            <div className={`workflow-user-attachment-track ${styles.track}`}>
+              {presentation.attachments.map((attachment, index) => (
+                <UserAttachmentPill
+                  key={`${attachment.kind}-${attachmentKey(attachment)}-${index}`}
+                  attachment={attachment}
+                />
+              ))}
+            </div>
           </div>
         ) : null}
 
@@ -152,7 +163,7 @@ export function WorkflowUserMessage({
             ) : null}
             {onEdit ? (
               <UserAction
-                title="编辑这条消息"
+                title="放回输入框"
                 onClick={onEdit}
                 icon={<ConversationEditIcon />}
               />
@@ -204,19 +215,37 @@ function UserAttachmentPill({
   attachment: WorkflowUserMessageAttachment;
 }) {
   const content = attachmentPresentation(attachment);
+  const className = `workflow-user-attachment-pill ${styles.pill}`;
+  const isFileReference =
+    attachment.kind === "file" || attachment.kind === "mention";
   const body = (
     <>
-      <span className="workflow-user-content-icon">{content.icon}</span>
-      <span className="workflow-user-content-label">{content.label}</span>
+      <span className={`workflow-user-content-icon ${styles.icon}`}>
+        {content.icon}
+      </span>
+      <span className={`workflow-user-content-label ${styles.label}`}>
+        {content.label}
+      </span>
       {content.detail ? (
-        <span className="workflow-user-content-detail">{content.detail}</span>
+        <span
+          className={`workflow-user-content-detail ${styles.detail}${isFileReference ? ` ${styles.lineInfo}` : ""}`}
+        >
+          {content.detail}
+        </span>
       ) : null}
     </>
   );
+  if (isFileReference && attachment.path) {
+    return (
+      <WorkflowMarkdownLink href={attachment.path} className={className}>
+        {body}
+      </WorkflowMarkdownLink>
+    );
+  }
   if (attachment.kind === "url") {
     return (
       <a
-        className="workflow-user-attachment-pill is-link"
+        className={className}
         href={attachment.url}
         target="_blank"
         rel="noopener noreferrer"
@@ -226,7 +255,14 @@ function UserAttachmentPill({
       </a>
     );
   }
-  return <span className="workflow-user-attachment-pill">{body}</span>;
+  return (
+    <span
+      className={className}
+      title={[content.label, content.detail].filter(Boolean).join(" · ")}
+    >
+      {body}
+    </span>
+  );
 }
 
 function attachmentPresentation(attachment: WorkflowUserMessageAttachment): {
@@ -263,9 +299,7 @@ function attachmentPresentation(attachment: WorkflowUserMessageAttachment): {
       return {
         icon: <ConversationFileIcon className={iconClass} />,
         label: attachment.name,
-        detail: attachment.path
-          ? basename(attachment.path)
-          : attachment.mimeType,
+        detail: fileLineLabel(attachment.path),
       };
     case "url":
       return {
@@ -283,7 +317,7 @@ function attachmentPresentation(attachment: WorkflowUserMessageAttachment): {
       return {
         icon: <ConversationFileIcon className={iconClass} />,
         label: `@${attachment.name}`,
-        detail: attachment.path ? basename(attachment.path) : undefined,
+        detail: fileLineLabel(attachment.path),
       };
     case "browser-comment":
       return {
@@ -329,6 +363,21 @@ function attachmentPresentation(attachment: WorkflowUserMessageAttachment): {
   }
 }
 
+function revealFocusedAttachment(event: FocusEvent<HTMLDivElement>) {
+  // Chromium may consider a partially visible control sufficiently revealed.
+  // Exclude portal dialogs: their focus events still bubble through this tree.
+  if (
+    event.target !== event.currentTarget &&
+    event.currentTarget.contains(event.target)
+  )
+    event.target.scrollIntoView({ block: "nearest", inline: "nearest" });
+}
+
+function fileLineLabel(path?: string): string | undefined {
+  const match = path?.match(/(?:#L(\d+(?:-L?\d+)?)|:(\d+)(?::\d+)?)$/);
+  return match ? (match[1] ?? match[2]).replace(/L/g, "") : undefined;
+}
+
 function UserAction({
   title,
   icon,
@@ -363,8 +412,7 @@ function imagePreview(image: WorkflowUserMessageImage): WorkflowImagePreview {
 }
 
 function localImageSrc(path: string): string {
-  if (/^(file|https?):\/\//i.test(path)) return path;
-  return `file:///${path.replace(/\\/g, "/")}`;
+  return mediaSource(path);
 }
 
 function basename(filePath: string): string {
@@ -391,24 +439,6 @@ function hostLabel(value: string): string {
     return new URL(value).hostname || value;
   } catch {
     return value;
-  }
-}
-
-async function copyToClipboard(text: string): Promise<void> {
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(text);
-    return;
-  }
-  const textarea = document.createElement("textarea");
-  textarea.value = text;
-  textarea.style.position = "fixed";
-  textarea.style.opacity = "0";
-  document.body.appendChild(textarea);
-  textarea.select();
-  try {
-    document.execCommand("copy");
-  } finally {
-    textarea.remove();
   }
 }
 

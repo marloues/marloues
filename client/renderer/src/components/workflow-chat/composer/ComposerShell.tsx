@@ -52,6 +52,7 @@ export function WorkflowComposerShell({
   onSecurityModeChange,
   onOpenSecuritySettings,
   permissionPanel,
+  planPrompt,
   emptyHeader,
   modelControl,
   placeholder = CONVERSATION_PAGE_CONTRACT.composer.placeholder,
@@ -272,9 +273,20 @@ export function WorkflowComposerShell({
       setSlashOpen(false);
     };
 
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setSecurityOpen(false);
+      setContextOpen(false);
+      setModelOpen(false);
+      setSlashOpen(false);
+      textareaRef.current?.focus();
+    };
     document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
     };
   }, [contextOpen, modelOpen, securityOpen, slashOpen]);
 
@@ -463,6 +475,7 @@ export function WorkflowComposerShell({
 
   return (
     <div ref={dockRef} className="composer-wrap">
+      {planPrompt}
       {emptyHeader ? (
         <div className="composer-empty-header">{emptyHeader}</div>
       ) : null}
@@ -529,13 +542,17 @@ export function WorkflowComposerShell({
                   ref={textareaRef}
                   rows={2}
                   value={input}
-                  onChange={handleInputChange}
+                  onChange={(event) => {
+                    setCaret(event.currentTarget.selectionStart);
+                    handleInputChange(event);
+                  }}
                   onClick={(event) =>
                     setCaret(event.currentTarget.selectionStart)
                   }
-                  onKeyUp={(event) =>
-                    setCaret(event.currentTarget.selectionStart)
-                  }
+                  onKeyUp={(event) => {
+                    if (event.key !== "Escape")
+                      setCaret(event.currentTarget.selectionStart);
+                  }}
                   onKeyDown={handleTextareaKeyDown}
                   onPaste={handlePaste}
                   placeholder={placeholder}
@@ -817,6 +834,7 @@ export function WorkflowComposerShell({
         <FullAccessConfirmDialog
           onConfirm={handleFullAccessConfirm}
           onCancel={handleFullAccessCancel}
+          returnFocusTo={securityMenuRef.current?.querySelector("button")}
         />
       ) : null}
     </div>

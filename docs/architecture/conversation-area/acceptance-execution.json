@@ -1,0 +1,503 @@
+{
+  "recordedAt": "2026-09-05T19:18:11.452Z",
+  "kind": "Actual execution ledger; original acceptance.json remains a historical plan",
+  "scenarios": [
+    {
+      "id": "CA01",
+      "title": "有效工作到最终答复",
+      "ruleIds": [
+        "MR09",
+        "MR10",
+        "MR11",
+        "MR12",
+        "MR14"
+      ],
+      "status": "passed",
+      "groups": [
+        "route"
+      ],
+      "remaining": "",
+      "note": ""
+    },
+    {
+      "id": "CA02",
+      "title": "历史缺时间、裁剪窗口",
+      "ruleIds": [
+        "MR03",
+        "MR09",
+        "MR11",
+        "MR37"
+      ],
+      "status": "passed",
+      "groups": [
+        "route"
+      ],
+      "remaining": "",
+      "note": ""
+    },
+    {
+      "id": "CA03",
+      "title": "命令展开生命周期",
+      "ruleIds": [
+        "MR15",
+        "MR17",
+        "MR18",
+        "MR65",
+        "MR66",
+        "MR67"
+      ],
+      "status": "passed",
+      "groups": [
+        "commands"
+      ],
+      "remaining": "",
+      "note": ""
+    },
+    {
+      "id": "CA04",
+      "title": "MCP 普通/交互卡",
+      "ruleIds": [
+        "MR17",
+        "MR73",
+        "MR74",
+        "MR86"
+      ],
+      "status": "partial",
+      "groups": [
+        "apps"
+      ],
+      "remaining": "未实现 Codex 不可折叠 App 策略。",
+      "note": ""
+    },
+    {
+      "id": "CA05",
+      "title": "取消与 steer",
+      "ruleIds": [
+        "MR02",
+        "MR05",
+        "MR13",
+        "MR14",
+        "MR57"
+      ],
+      "status": "passed",
+      "groups": [
+        "queue",
+        "media"
+      ],
+      "remaining": "",
+      "note": ""
+    },
+    {
+      "id": "CA06",
+      "title": "流式代码闭合",
+      "ruleIds": [
+        "MR42",
+        "MR43",
+        "MR44"
+      ],
+      "status": "passed",
+      "groups": [
+        "code"
+      ],
+      "remaining": "",
+      "note": ""
+    },
+    {
+      "id": "CA07",
+      "title": "代码与写作块",
+      "ruleIds": [
+        "MR45",
+        "MR51",
+        "MR62"
+      ],
+      "status": "partial",
+      "groups": [
+        "code",
+        "links"
+      ],
+      "remaining": "功能检查通过；流式选区所有边界尚未穷举。",
+      "note": ""
+    },
+    {
+      "id": "CA08",
+      "title": "Mermaid 未完成和错误",
+      "ruleIds": [
+        "MR46"
+      ],
+      "status": "partial",
+      "groups": [
+        "mermaid"
+      ],
+      "remaining": "未穷举语言前缀和所有异步覆盖竞态。",
+      "note": ""
+    },
+    {
+      "id": "CA09",
+      "title": "宽表与复制",
+      "ruleIds": [
+        "MR47",
+        "MR48",
+        "MR64"
+      ],
+      "status": "passed",
+      "groups": [
+        "table"
+      ],
+      "remaining": "",
+      "note": ""
+    },
+    {
+      "id": "CA10",
+      "title": "列表、方向与公式",
+      "ruleIds": [
+        "MR49",
+        "MR50"
+      ],
+      "status": "partial",
+      "groups": [
+        "body"
+      ],
+      "remaining": "真实字体/RTL/公式通过，延迟加载中间状态未逐个截取。",
+      "note": ""
+    },
+    {
+      "id": "CA11",
+      "title": "跨块引用与异常恢复",
+      "ruleIds": [
+        "MR41",
+        "MR84"
+      ],
+      "status": "passed",
+      "groups": [
+        "body",
+        "errors"
+      ],
+      "remaining": "",
+      "note": ""
+    },
+    {
+      "id": "CA12",
+      "title": "文件与外链",
+      "ruleIds": [
+        "MR51",
+        "MR52",
+        "MR53"
+      ],
+      "status": "partial",
+      "groups": [
+        "links"
+      ],
+      "remaining": "缺少远端宿主集成。",
+      "note": ""
+    },
+    {
+      "id": "CA13",
+      "title": "媒体加载与失败",
+      "ruleIds": [
+        "MR53",
+        "MR54",
+        "MR55"
+      ],
+      "status": "partial",
+      "groups": [
+        "media"
+      ],
+      "remaining": "真实文件媒体失败→换源恢复通过；远端慢速媒体与 default/scrollable 私有模式未穷举。",
+      "note": ""
+    },
+    {
+      "id": "CA14",
+      "title": "图片画廊",
+      "ruleIds": [
+        "MR30",
+        "MR56",
+        "MR57"
+      ],
+      "status": "partial",
+      "groups": [
+        "media"
+      ],
+      "remaining": "已完成画廊和停止回退通过，逐图到达时所有 pending 组合未穷举。",
+      "note": ""
+    },
+    {
+      "id": "CA15",
+      "title": "附件空消息与来源",
+      "ruleIds": [
+        "MR22",
+        "MR58",
+        "MR59",
+        "MR60"
+      ],
+      "status": "partial",
+      "groups": [
+        "user",
+        "markers"
+      ],
+      "remaining": "私有 heartbeat/委派来源缺少完整产品语义。",
+      "note": ""
+    },
+    {
+      "id": "CA16",
+      "title": "原地编辑失败恢复",
+      "ruleIds": [
+        "MR23",
+        "MR61"
+      ],
+      "status": "partial",
+      "groups": [
+        "user"
+      ],
+      "remaining": "按允许的降级明确为放回输入框；不具备附件历史原地编辑能力。普通文件横向标签已做真实布局/键盘检查，PDF/Office 等专用预览及条件文档卡片组尚未接入。",
+      "note": ""
+    },
+    {
+      "id": "CA17",
+      "title": "复制、分支和时间戳",
+      "ruleIds": [
+        "MR24",
+        "MR25",
+        "MR26",
+        "MR27",
+        "MR62",
+        "MR63",
+        "MR64"
+      ],
+      "status": "partial",
+      "groups": [
+        "footer"
+      ],
+      "remaining": "操作资格、锁、分支失败和真实截断通过；剪贴板系统拒绝权限分支未模拟。",
+      "note": ""
+    },
+    {
+      "id": "CA18",
+      "title": "后台命令及异常退出",
+      "ruleIds": [
+        "MR28",
+        "MR65",
+        "MR66",
+        "MR67"
+      ],
+      "status": "partial",
+      "groups": [
+        "commands"
+      ],
+      "remaining": "没有真实脱离轮次的后台进程完成验收。",
+      "note": ""
+    },
+    {
+      "id": "CA19",
+      "title": "patch 状态与多文件",
+      "ruleIds": [
+        "MR19",
+        "MR29",
+        "MR68",
+        "MR69",
+        "MR70"
+      ],
+      "status": "partial",
+      "groups": [
+        "files"
+      ],
+      "remaining": "无原批次回滚能力；二进制/重命名/跨 cwd 组合未穷举。",
+      "note": ""
+    },
+    {
+      "id": "CA20",
+      "title": "MCP 六类内容与去重",
+      "ruleIds": [
+        "MR21",
+        "MR71",
+        "MR72"
+      ],
+      "status": "partial",
+      "groups": [
+        "mcp"
+      ],
+      "remaining": "六内容和原始信封通过；超大 raw 性能及跨评审连续调用组合未穷举。",
+      "note": ""
+    },
+    {
+      "id": "CA21",
+      "title": "MCP App 资源恢复",
+      "ruleIds": [
+        "MR74",
+        "MR75",
+        "MR89"
+      ],
+      "status": "partial",
+      "groups": [
+        "apps"
+      ],
+      "remaining": "失败重试和折叠草稿通过；superseded/remote-logo 私有策略未实现。",
+      "note": ""
+    },
+    {
+      "id": "CA22",
+      "title": "提问与回答记录",
+      "ruleIds": [
+        "MR07",
+        "MR31",
+        "MR76",
+        "MR77"
+      ],
+      "status": "partial",
+      "groups": [
+        "questions",
+        "permission"
+      ],
+      "remaining": "通用 kind 回退通过，不能等同八类私有协议均已接入。",
+      "note": ""
+    },
+    {
+      "id": "CA23",
+      "title": "计划进度与协作",
+      "ruleIds": [
+        "MR20",
+        "MR78",
+        "MR79"
+      ],
+      "status": "partial",
+      "groups": [
+        "progress",
+        "markers"
+      ],
+      "remaining": "实际进度与已知子任务导航通过；多真实代理并行模型执行未在本套触发。",
+      "note": ""
+    },
+    {
+      "id": "CA24",
+      "title": "错误与重连",
+      "ruleIds": [
+        "MR06",
+        "MR80"
+      ],
+      "status": "partial",
+      "groups": [
+        "errors"
+      ],
+      "remaining": "缺独立重连次数 UI 与旧重试回调的整机回放。",
+      "note": ""
+    },
+    {
+      "id": "CA25",
+      "title": "五类资源与展开",
+      "ruleIds": [
+        "MR32",
+        "MR81",
+        "MR82",
+        "MR83"
+      ],
+      "status": "partial",
+      "groups": [
+        "files",
+        "links"
+      ],
+      "remaining": "无五种 Codex 私有资源宿主。",
+      "note": ""
+    },
+    {
+      "id": "CA26",
+      "title": "正文指令和播报",
+      "ruleIds": [
+        "MR84",
+        "MR85",
+        "MR88"
+      ],
+      "status": "partial",
+      "groups": [
+        "body",
+        "markers"
+      ],
+      "remaining": "无完整 Codex 私有正文指令/heartbeat 协议。",
+      "note": ""
+    },
+    {
+      "id": "CA27",
+      "title": "分页与切任务",
+      "ruleIds": [
+        "MR32",
+        "MR33",
+        "MR34",
+        "MR35",
+        "MR36",
+        "MR86"
+      ],
+      "status": "passed",
+      "groups": [
+        "history"
+      ],
+      "remaining": "",
+      "note": ""
+    },
+    {
+      "id": "CA28",
+      "title": "折叠、离屏和消息导航",
+      "ruleIds": [
+        "MR01",
+        "MR04",
+        "MR15",
+        "MR16",
+        "MR18",
+        "MR19",
+        "MR38",
+        "MR39",
+        "MR86"
+      ],
+      "status": "partial",
+      "groups": [
+        "history",
+        "apps"
+      ],
+      "remaining": "正文、折叠、iframe 和导航分别通过，未穷举它们的所有并发组合。",
+      "note": ""
+    },
+    {
+      "id": "CA29",
+      "title": "显式事件与未知项",
+      "ruleIds": [
+        "MR06",
+        "MR87",
+        "MR89"
+      ],
+      "status": "partial",
+      "groups": [
+        "markers"
+      ],
+      "remaining": "通用显式标记/raw 通过；worktree 两阶段私有事件未全量接入。",
+      "note": ""
+    },
+    {
+      "id": "CA30",
+      "title": "模式、主题和降动效",
+      "ruleIds": [
+        "MR08",
+        "MR40",
+        "MR44",
+        "MR49",
+        "MR54",
+        "MR63",
+        "MR89"
+      ],
+      "status": "partial",
+      "groups": [
+        "table",
+        "media"
+      ],
+      "remaining": "960/1440、亮暗暖主题、实际样式变量、键盘焦点及 reduced-motion 图表布局通过；全部 compact 配置和跨平台尚未穷举。",
+      "note": ""
+    },
+    {
+      "id": "CA31",
+      "title": "覆盖验收口径",
+      "ruleIds": [
+        "MR90"
+      ],
+      "status": "passed",
+      "groups": [],
+      "remaining": "",
+      "note": "静态参考校验与动态验收分开记录；不使用组件数量制造对齐百分比。"
+    }
+  ]
+}

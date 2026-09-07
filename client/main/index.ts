@@ -62,6 +62,11 @@ const fallbackTrayIconDataUrl =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAABoElEQVRYhe2WwWrCQBCG8xBtz/sHzUERxIMEfYti38K7gqfGHvSgV0GfSe0biCCeVNI2gl6cMrGG2GyiqLs91B9+WDK7M19m9zCGcZdEpmk+CSHeAIwBeADoQvPZEYAm5zTOEYAXIcTnFUWl/slZOVkcwO7WxUPexUKY+7bf/M8lnfhIpVKPEQCxv3PSZEfW/neNACNZB77iDrTb7cDVajU2McfCe5MepKwDFOewttst2bYd2VMsFmmz2RztTcp5MQCr3+9H9gwGA/otZQDr9ZoKhUIQz+fz5HmePgBWp9MJ4t1ul2RSCrBarSibzVImk6HlcqkPYLFYBGvHcXzLYsoAWq1WsJ7P575lMWUApVKJJpNJpN3T6ZTK5bJ6ANu2qV6vRwBqtZof0wKQTqdpNpsdXYVlWfoAAFCj0SDXdX3zmr9pBYDEdwD7misQCdNQr9cLnMvlYpNyLLw3aSqSvYFxErHygQRAUyPA618Opa5lWQ8RABaPzKrHctM0n40kAajwI1Hx5yeLH8RzO4/OAIZJw+oZRfnskO88tu3Gf9c3d8h7/xPUzzkAAAAASUVORK5CYII=";
 
 function configureDevelopmentIdentity(): void {
+  if (process.env.MARLOUES_HOME?.trim()) {
+    const isolatedUserDataPath = join(getMarlouesHome(), "electron-user-data");
+    mkdirSync(isolatedUserDataPath, { recursive: true });
+    app.setPath("userData", isolatedUserDataPath);
+  }
   if (!isDev || isTest) return;
 
   const devUserDataPath = join(getMarlouesHome(), "electron-user-data");

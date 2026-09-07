@@ -1,0 +1,119 @@
+.conversation-comparison {
+  height: 100dvh;
+  overflow: auto;
+  padding: 32px;
+  color: var(--text-primary, #e7e7e7);
+  background: var(--bg-primary, #171717);
+}
+
+.conversation-comparison-intro {
+  max-width: 1400px;
+  margin: 0 auto 24px;
+}
+.conversation-comparison-eyebrow {
+  color: #a0bfae;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+.conversation-comparison h1 {
+  font-size: 26px;
+  font-weight: 600;
+  margin: 12px 0;
+}
+.conversation-comparison-intro > p {
+  color: #aaa;
+  line-height: 1.7;
+}
+.conversation-comparison nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+}
+.conversation-comparison-intro button {
+  padding: 8px 14px;
+  border: 1px solid #454545;
+  border-radius: 8px;
+  color: #ddd;
+  background: #262626;
+}
+.conversation-comparison nav button[aria-pressed="true"] {
+  background: #d6eadb;
+  color: #182c20;
+  border-color: #d6eadb;
+}
+.conversation-comparison-instruction {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 10px;
+  background: #252b28;
+}
+.conversation-comparison-instruction p {
+  margin: 0;
+  line-height: 1.7;
+}
+.conversation-comparison-instruction button {
+  flex-shrink: 0;
+}
+.conversation-comparison-columns {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+}
+.conversation-comparison-panel {
+  min-width: 0;
+  border: 1px solid #3a3a3a;
+  border-radius: 12px;
+  padding: 24px;
+}
+.conversation-comparison-panel h2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 0 0 28px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #333;
+  font-size: 16px;
+  font-weight: 600;
+}
+.conversation-comparison-panel h2 small {
+  font-size: 11px;
+  color: #999;
+  font-weight: 400;
+}
+.conversation-comparison-panel .message-footer {
+  opacity: 1;
+}
+.conversation-comparison-panel .assistant-actions {
+  opacity: 1;
+}
+.conversation-comparison-copy {
+  max-width: 1400px;
+  margin: 24px auto;
+  padding: 20px;
+  background: #232323;
+  border-radius: 10px;
+}
+.conversation-comparison-copy pre {
+  margin-top: 12px;
+  white-space: pre-wrap;
+  line-height: 1.7;
+}
+@media (max-width: 850px) {
+  .conversation-comparison {
+    padding: 18px;
+  }
+  .conversation-comparison-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .conversation-comparison-instruction {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

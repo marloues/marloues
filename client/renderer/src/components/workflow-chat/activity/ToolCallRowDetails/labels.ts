@@ -1,22 +1,30 @@
-import { itemInputText } from "../../";
+import { itemInputText } from "../../adapter/item-text";
 import {
   basename,
   compactCommand,
   compactCommandTarget,
   isEditToolName,
+  isListToolName,
+  isReadToolName,
   isSearchToolName,
   itemStatus,
   toolName,
   toolTargetCount,
+  toolFileTargets,
+  toolArgumentText,
 } from "./helpers";
-import { workflowStatusIsRunning } from "../../";
+import { workflowStatusIsRunning } from "../../adapter/item-status";
 import type { ToolCallRowItem } from "./types";
 
 export function toolLabel(item: ToolCallRowItem): string {
-  const codexLabel = codexStyleToolLabel(item);
-  if (codexLabel) return codexLabel;
   const label = readableToolLabel(item);
   const status = itemStatus(item);
+  if (
+    ["cancelled", "canceled", "interrupted", "aborted", "stopped"].includes(
+      status,
+    )
+  )
+    return label.replace(/^已/, "已停止");
   if (workflowStatusIsRunning(status))
     return label.startsWith("已") ? label.replace(/^已/, "正在") : label;
   if (status === "error" || status === "failed")
@@ -24,33 +32,6 @@ export function toolLabel(item: ToolCallRowItem): string {
       ? label.replace(/^已/, "失败：")
       : `失败：${label}`;
   return label;
-}
-
-function codexStyleToolLabel(item: ToolCallRowItem): string | null {
-  const name = toolName(item);
-  const status = itemStatus(item);
-  const verb =
-    status === "error" || status === "failed"
-      ? "失败："
-      : workflowStatusIsRunning(status)
-        ? "正在运行 "
-        : "已运行 ";
-
-  if (name === "glob" || name.endsWith(".glob")) return `${verb}Glob`;
-  if (name === "grep" || name.endsWith(".grep")) return `${verb}Grep`;
-  if (name === "ls" || name.endsWith(".ls")) return `${verb}LS`;
-
-  if (
-    name === "read" ||
-    name === "read_files" ||
-    name.endsWith(".read") ||
-    name.endsWith(".read_file")
-  ) {
-    if (status === "error" || status === "failed") return "失败：Read";
-    return workflowStatusIsRunning(status) ? "正在运行 Read" : "已运行 Read";
-  }
-
-  return null;
 }
 
 function readableToolLabel(item: ToolCallRowItem): string {
@@ -62,18 +43,23 @@ function readableToolLabel(item: ToolCallRowItem): string {
       .find((line) => line.trim())
       ?.trim() ?? "";
 
-  if (name === "read" || name === "read_files" || name.endsWith(".read"))
-    return `已读取 ${toolTargetCount(input) || 1} 个文件`;
-  if (name === "workflow_read_file" || name.endsWith(".read_file"))
-    return `已读取 ${basename(firstLine || input || "文件")}`;
-  if (
-    name === "glob" ||
-    name.endsWith(".glob") ||
-    name === "ls" ||
-    name.endsWith(".ls")
-  )
-    return "已列出文件";
-  if (name === "grep" || name.endsWith(".grep")) return "已搜索工作区";
+  if (isReadToolName(name)) {
+    const paths = toolFileTargets("arguments" in item ? item.arguments : "");
+    const count = paths.length || toolTargetCount(input);
+    return paths.length === 1
+      ? `已读取 ${basename(paths[0])}`
+      : count > 1
+        ? `已读取 ${count} 个文件`
+        : "已读取文件";
+  }
+  if (isListToolName(name)) {
+    const pattern = toolArgumentText(item, "pattern", "glob");
+    return pattern ? `已查找文件 ${pattern}` : "已列出文件";
+  }
+  if (name === "grep" || name.endsWith(".grep")) {
+    const query = toolArgumentText(item, "pattern", "query");
+    return query ? `已搜索 ${query}` : "已搜索工作区";
+  }
   if (name.includes("tool_search")) return "已搜索工具";
   if (item.type === "webSearch")
     return input.includes('"type": "open_page"') ? "已打开页面" : "已搜索网页";
@@ -111,5 +97,5 @@ function readableToolLabel(item: ToolCallRowItem): string {
 
   if (isEditToolName(name)) return "已编辑文件";
   if (name.includes("todo")) return "已更新待办";
-  return `已运行 ${name || item.type}`;
+  return `已运行 ${"tool" in item ? item.tool : name || item.type}`;
 }

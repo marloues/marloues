@@ -7,6 +7,7 @@ export type NormalizedItemType =
   | 'web_search'
   | 'todo_list'
   | 'error'
+  | 'unknown'
 
 export interface NormalizedThreadItem {
   id: string
@@ -73,7 +74,9 @@ export function normalizeCodexItem(
 ): NormalizedThreadItem | null {
   const rawType = stringValue(item.type)
   const id = idFromRawItem(item, params, rawType)
-  const status = phase === 'completed' ? 'completed' : phase === 'started' ? 'in_progress' : stringValue(item.status)
+  const nativeStatus = stringValue(item.status)
+  const terminalStatus = ['failed', 'error', 'cancelled', 'denied', 'timed_out'].includes(nativeStatus)
+  const status = terminalStatus ? nativeStatus : phase === 'completed' ? 'completed' : nativeStatus || 'in_progress'
 
   if (rawType === 'userMessage') return null
 
@@ -194,7 +197,7 @@ export function normalizeCodexItem(
     }
   }
 
-  return null
+  return { id, type: 'unknown', rawType, phase, status, rawItem: item }
 }
 
 export function normalizeCodexRawEvents(rawEvents: CodexRawEvent[]): NormalizedTurn {

@@ -3,6 +3,7 @@
  * It keeps the neo-bot CSS hooks used by the existing layout.
  */
 
+import styles from "./WorkflowChatPage.module.css";
 import {
   startTransition,
   useRef,
@@ -542,14 +543,6 @@ export function WorkflowChatPage({
       activeSessionId ? loadMoreReadThread(activeSessionId) : Promise.resolve(),
   });
 
-  // Scroll to bottom on session switch (model change notice reset is handled
-  // by useModelChangeTracking).
-  useEffect(() => {
-    requestAnimationFrame(() => {
-      scrollToBottom("auto");
-    });
-  }, [activeSessionId, scrollToBottom]);
-
   useEffect(() => {
     if (!activeSessionId) return;
     const timer = window.setTimeout(() => {
@@ -677,6 +670,7 @@ export function WorkflowChatPage({
         description: error instanceof Error ? error.message : String(error),
         tone: "error",
       });
+      throw error;
     }
   };
 
@@ -865,6 +859,22 @@ export function WorkflowChatPage({
                   scrollParentRef={scrollRef}
                   stateScopeKey={activeSessionId ?? "default"}
                   modelName={modelName}
+                  writingBlockMode
+                  onAddSelection={(text) => {
+                    setInputText(
+                      `${inputText}${inputText ? "\n\n" : ""}${text
+                        .split("\n")
+                        .map((line) => `> ${line}`)
+                        .join("\n")}\n\n`,
+                    );
+                    requestAnimationFrame(() =>
+                      document
+                        .querySelector<HTMLTextAreaElement>(
+                          ".composer textarea",
+                        )
+                        ?.focus(),
+                    );
+                  }}
                   onFork={handleForkConversation}
                   onCopyMessage={handleCopyMessage}
                   onEditUserMessage={(text) => {
@@ -905,97 +915,112 @@ export function WorkflowChatPage({
         visible={!isEmpty && !isAtBottom}
         onClick={() => scrollToBottom("smooth")}
       />
-      {activePlanImplementationPrompt && !activeSessionIsStreaming ? (
-        <PlanImplementationPromptCard
-          planText={activePlanImplementationPrompt.planText}
-          onImplement={() => implementPlan(false)}
-          onImplementFresh={() => implementPlan(true)}
-          onStayInPlan={continuePlanning}
-          onDismiss={dismissPlanImplementationPrompt}
+      {activeReadThreadSnapshot?.replay ? (
+        <section
+          className={styles.replayNotice}
+          aria-label="真实会话回放"
+          data-replay-line={activeReadThreadSnapshot.replay.throughLine}
+        >
+          <strong>真实会话回放 · 只读</strong>
+          <p>
+            当前显示记录中的一个时点。可以展开、复制和预览；不会执行历史命令。
+          </p>
+        </section>
+      ) : (
+        <ComposerShell
+          planPrompt={
+            activePlanImplementationPrompt && !activeSessionIsStreaming ? (
+              <PlanImplementationPromptCard
+                planText={activePlanImplementationPrompt.planText}
+                onImplement={() => implementPlan(false)}
+                onImplementFresh={() => implementPlan(true)}
+                onStayInPlan={continuePlanning}
+                onDismiss={dismissPlanImplementationPrompt}
+              />
+            ) : undefined
+          }
+          conversationKey={`${activeSessionId ?? "new-session"}:${composerEpoch}`}
+          input={inputText}
+          incomingBrowserComment={incomingBrowserComment ?? undefined}
+          browserCommentSubmit={browserCommentSubmit ?? undefined}
+          browserCommentRemoval={browserCommentRemoval ?? undefined}
+          isGenerating={activeSessionIsStreaming}
+          securityMode={settings?.securityMode ?? "request"}
+          permissionPanel={
+            permissionRequest ? (
+              <PermissionRequestPanel
+                request={permissionRequest}
+                onRespond={onPermissionRespond}
+              />
+            ) : undefined
+          }
+          emptyHeader={
+            isEmpty ? (
+              <h1 className="empty-composer-prompt" title={workspace?.path}>
+                {workspace?.path
+                  ? `你想让我们在 ${promptWorkspaceName} 中构建什么？`
+                  : "我们要构建什么？"}
+              </h1>
+            ) : undefined
+          }
+          taskProgress={
+            activeSessionIsStreaming || hasIncompleteTasks
+              ? activeTaskProgress
+              : undefined
+          }
+          fileChangeSummary={
+            activeSessionIsStreaming || hasIncompleteTasks
+              ? composerFileChanges.summary
+              : undefined
+          }
+          onFileChangeSummaryClick={
+            composerReviewTarget
+              ? () => {
+                  const { path, diff } = composerReviewTarget;
+                  openReview(path, diff);
+                }
+              : undefined
+          }
+          selectedProvider={null}
+          placeholder={composerPlaceholder}
+          onInputChange={setInputText}
+          onKeyDown={handleComposerKeyDown}
+          onSend={handleSend}
+          onStop={() => void abort(activeSessionId ?? undefined)}
+          onSecurityModeChange={handleSecurityModeChange}
+          onOpenSecuritySettings={() => openSettings("security")}
+          modelControl={
+            <ModelSelector switchWarningVisible={modelSwitchWarningVisible} />
+          }
+          slashCommands={slashCommands}
+          skills={composerSkills}
+          workspacePath={workspace?.path}
+          contextUsage={composerContextUsage}
+          usage={composerUsage}
+          pendingSteers={pendingSteers}
+          steerQueuePaused={steerQueuePaused}
+          onResumeSteerQueue={() => {
+            if (activeSessionId) void resumeSteerQueue(activeSessionId);
+          }}
+          onApplyPendingSteer={(messageId) => {
+            if (!activeSessionId) return;
+            void applyPendingSteerNow(activeSessionId, messageId);
+          }}
+          onCancelPendingSteer={(messageId) => {
+            if (!activeSessionId) return;
+            void cancelPendingSteer(activeSessionId, messageId);
+          }}
+          onEditPendingSteer={(messageId, text) => {
+            if (!activeSessionId) return;
+            void cancelPendingSteer(activeSessionId, messageId);
+            setInputText(text);
+          }}
+          onReorderPendingSteer={(orderedIds) => {
+            if (!activeSessionId) return;
+            void reorderSteers(activeSessionId, orderedIds);
+          }}
         />
-      ) : null}
-      <ComposerShell
-        conversationKey={`${activeSessionId ?? "new-session"}:${composerEpoch}`}
-        input={inputText}
-        incomingBrowserComment={incomingBrowserComment ?? undefined}
-        browserCommentSubmit={browserCommentSubmit ?? undefined}
-        browserCommentRemoval={browserCommentRemoval ?? undefined}
-        isGenerating={activeSessionIsStreaming}
-        securityMode={settings?.securityMode ?? "request"}
-        permissionPanel={
-          permissionRequest ? (
-            <PermissionRequestPanel
-              request={permissionRequest}
-              onRespond={onPermissionRespond}
-            />
-          ) : undefined
-        }
-        emptyHeader={
-          isEmpty ? (
-            <h1 className="empty-composer-prompt" title={workspace?.path}>
-              {workspace?.path
-                ? `你想让我们在 ${promptWorkspaceName} 中构建什么？`
-                : "我们要构建什么？"}
-            </h1>
-          ) : undefined
-        }
-        taskProgress={
-          activeSessionIsStreaming || hasIncompleteTasks
-            ? activeTaskProgress
-            : undefined
-        }
-        fileChangeSummary={
-          activeSessionIsStreaming || hasIncompleteTasks
-            ? composerFileChanges.summary
-            : undefined
-        }
-        onFileChangeSummaryClick={
-          composerReviewTarget
-            ? () => {
-                const { path, diff } = composerReviewTarget;
-                openReview(path, diff);
-              }
-            : undefined
-        }
-        selectedProvider={null}
-        placeholder={composerPlaceholder}
-        onInputChange={setInputText}
-        onKeyDown={handleComposerKeyDown}
-        onSend={handleSend}
-        onStop={() => void abort(activeSessionId ?? undefined)}
-        onSecurityModeChange={handleSecurityModeChange}
-        onOpenSecuritySettings={() => openSettings("security")}
-        modelControl={
-          <ModelSelector switchWarningVisible={modelSwitchWarningVisible} />
-        }
-        slashCommands={slashCommands}
-        skills={composerSkills}
-        workspacePath={workspace?.path}
-        contextUsage={composerContextUsage}
-        usage={composerUsage}
-        pendingSteers={pendingSteers}
-        steerQueuePaused={steerQueuePaused}
-        onResumeSteerQueue={() => {
-          if (activeSessionId) void resumeSteerQueue(activeSessionId);
-        }}
-        onApplyPendingSteer={(messageId) => {
-          if (!activeSessionId) return;
-          void applyPendingSteerNow(activeSessionId, messageId);
-        }}
-        onCancelPendingSteer={(messageId) => {
-          if (!activeSessionId) return;
-          void cancelPendingSteer(activeSessionId, messageId);
-        }}
-        onEditPendingSteer={(messageId, text) => {
-          if (!activeSessionId) return;
-          void cancelPendingSteer(activeSessionId, messageId);
-          setInputText(text);
-        }}
-        onReorderPendingSteer={(orderedIds) => {
-          if (!activeSessionId) return;
-          void reorderSteers(activeSessionId, orderedIds);
-        }}
-      />
+      )}
     </section>
   );
 }

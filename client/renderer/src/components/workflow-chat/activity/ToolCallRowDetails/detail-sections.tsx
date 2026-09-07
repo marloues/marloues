@@ -59,15 +59,21 @@ export function WebSearchDetail({ data }: { data: WebSearchDetailData }) {
 
 export function ImageGenerationDetail({
   data,
-  completed,
+  status,
 }: {
   data: ImageGenerationDetailData;
-  completed: boolean;
+  status: "running" | "success" | "failed" | "stopped";
 }) {
   return (
     <div className="workflow-tool-section">
       <div className="workflow-tool-primary">
-        {data.hasResult || completed ? "Image generated" : "Generating image"}
+        {status === "failed"
+          ? "生成图片失败"
+          : status === "stopped"
+            ? "已取消生成图片"
+            : status === "success"
+              ? "已生成图片"
+              : "正在生成图片"}
       </div>
       <div className="workflow-tool-muted">
         {[data.status, data.resultBytes ? formatBytes(data.resultBytes) : ""]
@@ -84,11 +90,20 @@ export function ImageGenerationDetail({
 export function PlanDetail({ steps }: { steps: PlanStep[] }) {
   return (
     <div className="workflow-tool-plan">
+      <div
+        role="progressbar"
+        aria-label="计划进度"
+        aria-valuemin={0}
+        aria-valuemax={steps.length}
+        aria-valuenow={
+          steps.filter((step) => step.status === "completed").length
+        }
+      >
+        {steps.filter((step) => step.status === "completed").length} /{" "}
+        {steps.length} 已完成
+      </div>
       {steps.map((step, index) => (
-        <div
-          key={`${step.status}-${step.step}-${index}`}
-          className="workflow-tool-plan-row"
-        >
+        <div key={`${step.step}-${index}`} className="workflow-tool-plan-row">
           <span
             className={`workflow-tool-plan-dot ${planStatusTone(step.status)}`}
           >

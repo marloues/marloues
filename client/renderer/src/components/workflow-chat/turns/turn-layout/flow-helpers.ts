@@ -39,7 +39,7 @@ export function workflowFlowEntries(
       entry: {
         kind: "activityGroup",
         group: {
-          id: groupItems.map((item) => item.id).join("-"),
+          id: `activity:${groupItems[0].id}`,
           items: groupItems,
           summary: summarizeActivityItems(groupItems),
         },
@@ -78,6 +78,13 @@ export function workflowFlowEntries(
     if (shouldHideReasoningItem(item, options)) {
       continue;
     }
+    if (item.type === "imageView") {
+      if (groupItems.length && groupItems[0].type !== "imageView") flushGroup();
+      if (!groupItems.length) groupStartIndex = index;
+      groupItems.push(item);
+      continue;
+    }
+    if (groupItems[0]?.type === "imageView") flushGroup();
     if (!workflowIsCollapsibleActivityItem(item)) {
       flushGroup();
       flow.push({ index, entry: { kind: "activityItem", item } });
@@ -106,7 +113,14 @@ export function shouldHideReasoningItem(
 }
 
 function workflowShouldSplitRunningToolItem(item: ProcessItem): boolean {
-  return workflowItemIsRunning(item);
+  // A completed command belongs to its surrounding activity group even when
+  // its exit code is nonzero. Its detail retains the failure and exit code.
+  if (item.type === "commandExecution") return workflowItemIsRunning(item);
+  return (
+    workflowItemIsRunning(item) ||
+    ("status" in item &&
+      ["failed", "error", "denied", "timed_out"].includes(String(item.status)))
+  );
 }
 
 export function findFinalAgentMessageIndexes(
@@ -118,6 +132,15 @@ export function findFinalAgentMessageIndexes(
   const indexes = new Set<number>();
   for (let index = items.length - 1; index >= 0; index -= 1) {
     const item = items[index];
+    // Without a native final role, only a trailing text run can be an answer.
+    // A later tool/approval means this text was part of the execution process.
+    if (
+      item &&
+      item.type !== "agentMessage" &&
+      item.type !== "userMessage" &&
+      !isSilentProcessBoundary(item)
+    )
+      return indexes;
     if (item?.type === "agentMessage" && item.text.trim()) {
       indexes.add(index);
       for (let cursor = index - 1; cursor >= 0; cursor -= 1) {

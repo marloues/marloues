@@ -88,17 +88,17 @@
   width: fit-content;
   max-width: 100%;
   overflow: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  border-collapse: separate;
+  border: 0;
+  border-radius: 0;
+  border-collapse: collapse;
   border-spacing: 0;
-  font-size: var(--text-xs);
+  font-size: inherit;
 }
 
 .workflow-markdown :is(th, td) {
-  border-right: 1px solid var(--border-subtle);
+  border-right: 0;
   border-bottom: 1px solid var(--border-subtle);
-  padding: 7px 10px;
+  padding: 12px 10px;
   text-align: left;
 }
 
@@ -111,7 +111,7 @@
 }
 
 .workflow-markdown th {
-  background: var(--raised-1);
+  background: transparent;
   color: var(--text-1);
   font-weight: 600;
 }
@@ -253,4 +253,29 @@
   .workflow-code-block-body {
     padding-inline: 10px;
   }
+}
+
+/* Rich conversation content shares the same controls in messages and previews. */
+.workflow-markdown ol {
+  list-style-type: decimal;
+}
+.workflow-markdown .contains-task-list {
+  list-style: none;
+  padding-left: 0;
+}
+.workflow-code-block-body[data-wrap="true"],
+.workflow-code-block-body[data-wrap="true"] code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.workflow-code-block-header button[aria-pressed="true"] {
+  color: var(--accent);
+  background: var(--raised-2);
+}
+/* KaTeX participates in the shared Markdown document contract. */
+.workflow-markdown .katex-display {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: var(--space-1) 0;
 }

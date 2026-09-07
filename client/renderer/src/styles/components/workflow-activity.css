@@ -150,6 +150,11 @@
   padding: 0;
 }
 
+/* Keep process components mounted without letting grid override hidden. */
+.workflow-agent-flow-section[hidden] {
+  display: none;
+}
+
 .workflow-activity-group {
   display: grid;
   min-width: 0;
@@ -173,6 +178,12 @@
 
 .workflow-activity-group.is-detail .workflow-activity-group-detail {
   border-top: 0;
+}
+
+/* Interactive resources size themselves; the log viewport must not clip forms. */
+.workflow-activity-group-detail:has([data-kind="mcp-app"] iframe) {
+  max-height: none;
+  overflow: visible;
 }
 
 .workflow-activity-group-detail .workflow-activity-row {
@@ -242,6 +253,7 @@
   display: grid;
   width: 16px;
   height: 16px;
+  flex: none;
   place-items: center;
   color: var(--text-3);
 }
@@ -283,6 +295,7 @@
 
 .workflow-activity-row-content {
   display: flex;
+  flex: 1;
   min-width: 0;
   align-items: center;
   gap: 9px;
@@ -294,6 +307,13 @@
   align-items: center;
   overflow: hidden;
   color: currentColor;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workflow-activity-row-text {
+  min-width: 0;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -311,7 +331,7 @@
 }
 
 .workflow-activity-row-meta:empty {
-  display: block;
+  display: none;
 }
 
 .workflow-activity-row-meta > span:not(.workflow-activity-diff-stats) {
@@ -324,6 +344,7 @@
   display: grid;
   width: 16px;
   height: 16px;
+  flex: none;
   place-items: center;
   color: var(--text-3);
   opacity: 0;

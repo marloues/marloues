@@ -1,3 +1,6 @@
+import { WorkflowMcpApp } from "../McpApp";
+import { workflowToolResult } from "@shared/workflow-tool-result";
+import { WorkflowMcpResult } from "../McpResult";
 import {
   Clipboard,
   FilePenLine,
@@ -61,6 +64,10 @@ export function ToolDetail({
   const output = cleanDetailOutput(outputText);
   const name = toolName(item);
   const exitCode = exitCodeFromOutput(outputText);
+  const result =
+    item.type === "mcpToolCall" || item.type === "dynamicToolCall"
+      ? (item.result ?? workflowToolResult(outputText))
+      : undefined;
   const status = itemStatus(item);
   const running = workflowStatusIsRunning(status);
   const stopped = ["cancelled", "canceled", "stopped"].includes(status);
@@ -92,6 +99,7 @@ export function ToolDetail({
   );
   const showOutput = Boolean(
     output &&
+    !result &&
     !(name === "update_plan" && output === "Plan updated") &&
     !planMarkdown &&
     !toolSearch &&
@@ -99,7 +107,8 @@ export function ToolDetail({
     !imageGeneration &&
     !usage,
   );
-  const statusFailed = failed || (exitCode !== null && exitCode !== 0);
+  const statusFailed =
+    failed || Boolean(result?.isError) || (exitCode !== null && exitCode !== 0);
   const statusKind: ToolDetailStatusKind = running
     ? "running"
     : statusFailed
@@ -133,15 +142,14 @@ export function ToolDetail({
       {toolSearch ? <ToolSearchDetail data={toolSearch} /> : null}
       {webSearch ? <WebSearchDetail data={webSearch} /> : null}
       {imageGeneration ? (
-        <ImageGenerationDetail
-          data={imageGeneration}
-          completed={statusKind === "success"}
-        />
+        <ImageGenerationDetail data={imageGeneration} status={statusKind} />
       ) : null}
       {usage ? <UsageDetail data={usage} /> : null}
       {showDefaultInput ? (
         <DetailBlock label={detailInputLabel(item)} value={input} />
       ) : null}
+      {item.type === "mcpToolCall" ? <WorkflowMcpApp item={item} /> : null}
+      {result ? <WorkflowMcpResult result={result} /> : null}
       {showOutput ? (
         <DetailBlock
           label={failed ? "Error" : "Output"}
@@ -157,7 +165,8 @@ export function ToolDetail({
       !imageGeneration &&
       !usage &&
       !showDefaultInput &&
-      !showOutput ? (
+      !showOutput &&
+      !result ? (
         <div className="workflow-tool-empty">无输出</div>
       ) : null}
     </ToolDetailFrame>

@@ -24,6 +24,7 @@ export function projectToolItem(
       id: item.id,
       command: commandFromToolArguments(item.arguments),
       status: item.status,
+      settled: item.settled,
       output: item.output,
     };
   }
@@ -42,6 +43,7 @@ export function projectToolItem(
         type: "fileChange",
         id: item.id,
         status: item.status,
+        settled: item.settled,
         changes: nextChanges,
       };
     }
@@ -110,7 +112,7 @@ function commandFromToolArguments(value: unknown): string {
       stringValue(record.cmd) ||
       stringValue(record.command) ||
       stringValue(record.script) ||
-      JSON.stringify(value)
+      ""
     );
   }
   return typeof value === "string" ? value : "";

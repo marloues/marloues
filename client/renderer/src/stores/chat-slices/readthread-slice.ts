@@ -4,7 +4,7 @@
  * Owns: readThreads, readThreadPaging
  *
  * loadReadThread: initial load (full replace)
- * loadMoreReadThread: upward pagination (prepend older turns)
+ * loadMoreReadThread: upward pagination (append older turns to newest-first data)
  * handleReadThread: IPC push handler (reconcile snapshot)
  * getActiveReadThreadModel: derived — returns the active session's read thread,
  *   falling back to the legacy workflowMessages adapter if no cached readThread.
@@ -47,7 +47,9 @@ export function createReadThreadSlice(
         };
       });
       try {
-        const snapshot = await window.marloues.chat.readThread(sessionId);
+        const snapshot = await window.marloues.chat.readThread(sessionId, {
+          limit: Math.max(100, get().readThreads[sessionId]?.turns.length ?? 0),
+        });
         if (!snapshot) {
           set((state) => {
             const current = state.readThreadPaging[sessionId];
@@ -109,10 +111,10 @@ export function createReadThreadSlice(
       }));
 
       try {
-        // Marloues main process serves the full newest-first snapshot per
-        // session; upward pagination is not supported yet, so reload the
-        // canonical snapshot for this session.
-        const snapshot = await window.marloues.chat.readThread(sessionId);
+        const snapshot = await window.marloues.chat.readThread(sessionId, {
+          cursor: paging.cursor,
+          limit: 100,
+        });
         if (!snapshot) {
           set((state) => ({
             readThreadPaging: {
@@ -134,8 +136,8 @@ export function createReadThreadSlice(
         const mergedTurns = [...existingTurns];
         for (const turn of snapshot.turns) {
           if (!existingIds.has(turn.id)) {
-            // newest_first ordering: older pages prepend before current ones
-            mergedTurns.unshift(turn);
+            // The host returns newest-first; the next page contains older turns.
+            mergedTurns.push(turn);
           }
         }
 
@@ -174,7 +176,38 @@ export function createReadThreadSlice(
 
     handleReadThread: (snapshot) => {
       if (!snapshot) return;
-      set((state) => reconcileReadThreadSnapshot(state, snapshot));
+      set((state) => {
+        const id = snapshot.thread.id;
+        const cached = state.readThreads[id];
+        const lastId = snapshot.turns.at(-1)?.id;
+        const anchor = lastId
+          ? (cached?.turns.findIndex((turn) => turn.id === lastId) ?? -1)
+          : -1;
+        // A host push refreshes only the newest page. Keep already loaded older
+        // pages after the shared boundary, while replacing the authoritative
+        // prefix (including removals). Without an overlap we must fetch the gap.
+        const retainTail = snapshot.page.hasMore && anchor >= 0 && cached;
+        const next = retainTail
+          ? {
+              ...snapshot,
+              turns: [...snapshot.turns, ...cached.turns.slice(anchor + 1)],
+              page: cached.page,
+            }
+          : snapshot;
+        const reconciled = reconcileReadThreadSnapshot(state, next);
+        return {
+          ...reconciled,
+          readThreadPaging: {
+            ...reconciled.readThreadPaging,
+            [id]: {
+              cursor: next.page.nextCursor,
+              hasMore: next.page.hasMore,
+              loading: state.readThreadPaging[id]?.loading ?? false,
+              loadingMore: state.readThreadPaging[id]?.loadingMore ?? false,
+            },
+          },
+        };
+      });
     },
 
     getActiveReadThreadModel: () => {

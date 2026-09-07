@@ -20,15 +20,12 @@ export function workflowTurnStatusLabel(
 
 export function workflowTurnDurationLabel(
   durationMs: number | null,
-  options: { running?: boolean } = {},
+  _options: { running?: boolean } = {},
 ): string {
-  if (!durationMs) return "";
-  const seconds = Math.max(
-    1,
-    options.running
-      ? Math.ceil(durationMs / 1000)
-      : Math.floor(durationMs / 1000),
-  );
+  if (durationMs == null || !Number.isFinite(durationMs) || durationMs <= 0)
+    return "";
+  if (durationMs < 1000) return "";
+  const seconds = Math.floor(durationMs / 1000);
   if (seconds < 60) return `${seconds}秒`;
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useMarkdownContext } from "../content/MarkdownContext";
 import {
   ExternalLink,
   FileText,
@@ -19,7 +20,7 @@ import {
   type WorkflowImagePreview,
 } from "./ImageLightbox";
 import { workflowImageSource } from "./image-source";
-import { workflowStatusIsRunning } from "../";
+import { imageGenerationLabel } from "./ImageGenerationRow";
 import {
   ConversationChangesIcon,
   ConversationChevronDownIcon,
@@ -76,8 +77,9 @@ export function WorkflowResultCards({ items, showFileChanges = true }: Props) {
   const fileSummaries = localFileSummaries;
   const browserItem = items.find(
     (item) =>
-      item.type === "webSearch" ||
-      (item.type === "dynamicToolCall" && resultToolName(item) === "js"),
+      (item.type === "webSearch" ||
+        (item.type === "dynamicToolCall" && resultToolName(item) === "js")) &&
+      Boolean(browserPreviewInfo(item).url),
   );
   const imagePreviews = imagePreviewData(items);
   if (!fileSummaries.length && !browserItem && !imagePreviews.length)
@@ -100,6 +102,11 @@ export function WorkflowResultCards({ items, showFileChanges = true }: Props) {
       </div>
       <WorkflowImageLightbox
         image={previewImage}
+        images={imagePreviews.map((image) => ({
+          src: image.src,
+          name: image.subtitle || image.title,
+        }))}
+        onNavigate={setPreviewImage}
         onClose={() => setPreviewImage(null)}
       />
     </>
@@ -153,17 +160,6 @@ function ImagePreviewCard({
 
 function imagePreviewData(items: ProcessItem[]): ImagePreviewData[] {
   return items.flatMap((item) => {
-    if (item.type === "imageView" && item.path) {
-      return [
-        {
-          id: item.id,
-          title: "图片预览",
-          subtitle: basename(item.path),
-          src: workflowImageSource(item.path),
-        },
-      ];
-    }
-
     if (item.type === "imageGeneration") {
       const resultPath = typeof item.result === "string" ? item.result : "";
       const src = workflowImageSource(item.savedPath || resultPath);
@@ -171,9 +167,7 @@ function imagePreviewData(items: ProcessItem[]): ImagePreviewData[] {
       return [
         {
           id: item.id,
-          title: workflowStatusIsRunning(item.status)
-            ? "正在生成图片"
-            : "已生成图片",
+          title: imageGenerationLabel(item),
           subtitle: item.savedPath ? basename(item.savedPath) : "生成结果",
           src,
         },
@@ -227,7 +221,8 @@ function browserPreviewInfo(item: ProcessItem): {
   for (const text of [output, input]) {
     const parsed = parseJsonRecord(text);
     const title = stringFromRecord(parsed, ["title", "pageTitle", "name"]);
-    const url = stringFromRecord(parsed, ["url", "href"]);
+    const candidate = stringFromRecord(parsed, ["url", "href"]);
+    const url = /^https?:\/\//i.test(candidate) ? candidate : "";
     if (title) return { title, subtitle: hostLabel(url) || "网站", url };
     if (url)
       return {
@@ -241,6 +236,7 @@ function browserPreviewInfo(item: ProcessItem): {
 }
 
 function EditSummaryCard({ summaries }: { summaries: FileEditSummary[] }) {
+  const { cwd } = useMarkdownContext();
   const openReview = useInspectorStore((state) => state.openReview);
   const stats = summaries.reduce(
     (total, file) => ({
@@ -308,7 +304,9 @@ function EditSummaryCard({ summaries }: { summaries: FileEditSummary[] }) {
               className="workflow-result-file-row"
               onClick={() => handleReview(file)}
             >
-              <span className="workflow-result-file-path">{file.path}</span>
+              <span className="workflow-result-file-path" title={file.path}>
+                {relativeFileLabel(file.path, cwd)}
+              </span>
               <span className="workflow-result-diff-stats">
                 <b>+{file.added}</b>
                 <em>-{file.removed}</em>
@@ -338,28 +336,34 @@ function EditSummaryCard({ summaries }: { summaries: FileEditSummary[] }) {
 }
 
 function fileEditSummaries(items: FileChangeItemModel[]): FileEditSummary[] {
-  const files = new Map<string, { lines: DiffLine[]; diff: string }>();
+  const files = new Map<string, FileEditSummary>();
 
   for (const item of items) {
     for (const change of item.changes) {
       if (!change.path) continue;
       const patch = patchForFile(change.diff?.text ?? "", change.path);
-      files.set(change.path, { lines: patchPreviewLines(patch), diff: patch });
+      const previous = files.get(change.path);
+      const stats = patchStats(patchPreviewLines(patch));
+      files.set(change.path, {
+        path: change.path,
+        added: (previous?.added ?? 0) + stats.added,
+        removed: (previous?.removed ?? 0) + stats.removed,
+        diff: patch,
+      });
     }
   }
 
-  return Array.from(files.entries())
-    .map(([path, latest]) => {
-      const lines = latest.lines;
-      const stats = patchStats(lines);
-      return {
-        path,
-        added: stats.added,
-        removed: stats.removed,
-        diff: latest.diff,
-      };
-    })
-    .filter((summary) => summary.added > 0 || summary.removed > 0);
+  return Array.from(files.values()).sort((left, right) =>
+    left.path.localeCompare(right.path),
+  );
+}
+
+function relativeFileLabel(path: string, cwd?: string | null): string {
+  const normalized = path.replace(/\\/g, "/");
+  const root = cwd?.replace(/\\/g, "/").replace(/\/$/, "");
+  return root && normalized.startsWith(root + "/")
+    ? normalized.slice(root.length + 1)
+    : path;
 }
 function FileDiffHoverPreview({ file }: { file: FileEditSummary }) {
   const diffThemeType = useThemeStore((state) =>

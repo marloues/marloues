@@ -1,5 +1,6 @@
 import type { WorkflowTurnItem as WorkflowStreamItem } from "../../../../../shared/adapters/workflow-messages-to-read-thread";
-import { workflowStatusIsRunning } from "../";
+import { workflowStatusIsRunning } from "../adapter/item-status";
+import { commandDisplayText, commandSummaryKind } from "./command-display";
 
 export type CommandItemModel = Extract<
   WorkflowStreamItem,
@@ -11,6 +12,9 @@ export type CommandStatusKind = "running" | "failed" | "stopped" | "success";
 
 export interface CommandPresentation {
   detailOutput: string;
+  durationMs?: number;
+  exitCode?: number;
+  truncated?: boolean;
   failed: boolean;
   hasDetail: boolean;
   input: string;
@@ -30,7 +34,13 @@ export function commandPresentation(
   const output = item.output?.text || "";
   const status = item.status || "completed";
   const running = workflowStatusIsRunning(status);
-  const failed = status === "error" || status === "failed";
+  const failed =
+    status === "error" ||
+    status === "failed" ||
+    (!running &&
+      typeof item.exitCode === "number" &&
+      item.exitCode !== 0 &&
+      !commandStopped(status));
   const stopped = commandStopped(status);
   const statusKind: CommandStatusKind = running
     ? "running"
@@ -42,12 +52,19 @@ export function commandPresentation(
 
   return {
     detailOutput: cleanCommandOutput(output),
+    durationMs: item.durationMs ?? undefined,
+    exitCode: item.exitCode ?? undefined,
+    truncated: item.output?.truncated,
     failed,
     hasDetail: Boolean(input || output),
     input,
     kind: commandDisplayKind(item.command),
-    label: commandLabel(item, status),
-    meta: item.command.trim().split(/\r?\n/)[0] ?? "",
+    label: commandLabel(item, failed ? "failed" : status),
+    meta:
+      status === "pending" ||
+      readableCommandLabel(input) === `已运行 ${commandDisplayText(input)}`
+        ? ""
+        : commandDisplayText(input),
     running,
     shell: commandShellLabel(item),
     statusKind,
@@ -62,26 +79,24 @@ export function commandPresentation(
   };
 }
 
-function commandLabel(item: CommandItemModel, status: string): string {
+export function commandLabel(item: CommandItemModel, status: string): string {
+  if (status === "pending") return "正在准备命令";
   const commandCount = item.command.split(/\n\n+/).filter(Boolean).length;
-  if (commandCount > 1) return `已运行 ${commandCount} 条命令`;
-
-  const label = readableCommandLabel(item.command);
+  const label =
+    commandCount > 1
+      ? `已运行 ${commandCount} 条命令`
+      : readableCommandLabel(item.command);
   if (commandStopped(status))
     return label.startsWith("已")
       ? label.replace(/^已/, "已停止")
       : `已停止: ${label}`;
   if (workflowStatusIsRunning(status))
     return label.startsWith("已") ? label.replace(/^已/, "正在") : label;
-  if (status === "error" || status === "failed")
-    return label.startsWith("已")
-      ? label.replace(/^已/, "失败: ")
-      : `失败: ${label}`;
   return label;
 }
 
 export function readableCommandLabel(command: string): string {
-  const firstLine = command.trim().split(/\r?\n/)[0] ?? "";
+  const firstLine = commandDisplayText(command);
   if (!firstLine) return "已运行命令";
   if (firstLine.startsWith("git status")) return "已检查 Git 状态";
   if (/^(npm|pnpm|yarn|npm\.cmd|pnpm\.cmd|yarn\.cmd)\b/i.test(firstLine))
@@ -91,7 +106,7 @@ export function readableCommandLabel(command: string): string {
   if (/^(Get-Content|gc|cat)\b/i.test(firstLine))
     return `已读取 ${compactReadCommandTarget(firstLine)}`;
   if (/^(Get-ChildItem|ls|dir)\b/i.test(firstLine)) return "已列出文件";
-  if (isFolderCreationCommand(firstLine)) return "已创建文件夹";
+  if (commandSummaryKind(command) === "folder") return "已创建文件夹";
   if (/^Select-String\b/i.test(firstLine)) return "已搜索工作区";
   if (/^Get-NetTCPConnection\b/i.test(firstLine)) return "已检查开发服务";
   if (/^\$snapshot\s*=/i.test(firstLine)) return "已读取会话日志";
@@ -175,17 +190,8 @@ function commandShellLabel(item: CommandItemModel): string {
 }
 
 function commandDisplayKind(command: string): CommandDisplayKind {
-  const firstLine = command.trim().split(/\r?\n/)[0] ?? "";
-  if (/^(Get-Content|gc|cat)\b/i.test(firstLine)) return "read";
-  if (isFolderCreationCommand(firstLine)) return "list";
-  if (
-    /^(Get-ChildItem|ls|dir)\b/i.test(firstLine) ||
-    firstLine.startsWith("rg --files")
-  )
-    return "list";
-  if (/^Select-String\b/i.test(firstLine) || /^rg\s+/i.test(firstLine))
-    return "search";
-  return "command";
+  const kind = commandSummaryKind(command);
+  return kind === "folder" ? "list" : kind === "web" ? "command" : kind;
 }
 
 function compactReadCommandTarget(command: string): string {
@@ -196,13 +202,6 @@ function compactReadCommandTarget(command: string): string {
     .trim()
     .replace(/^["']|["']$/g, "");
   return basename(target || "file");
-}
-
-function isFolderCreationCommand(command: string): boolean {
-  return (
-    /^(mkdir|md)\b/i.test(command) ||
-    (/^New-Item\b/i.test(command) && /\s-ItemType\s+Directory\b/i.test(command))
-  );
 }
 
 function basename(filePath: string): string {

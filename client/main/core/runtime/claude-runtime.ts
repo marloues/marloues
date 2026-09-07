@@ -1,3 +1,7 @@
+import { createSdkMcpResultBridges } from "./sdk-mcp-result-bridge";
+import { workflowToolResult } from "@shared/workflow-tool-result";
+import { conversationInputBroker } from "./conversation-input";
+import { inputFieldsFromSchema } from "@shared/conversation-input";
 /**
  * Claude Runtime Adapter.
  *
@@ -39,7 +43,10 @@ import {
 import { recordMcpRuntimeStatus } from "../../services/mcp-service";
 import { evaluateContextPolicy } from "../context/context-policy";
 import { resolveModelProvider } from "../config/model-provider";
-import { resolveRuntimeProviderRoutes } from "../config/provider-routing";
+import {
+  resolveRuntimeProviderRoutes,
+  runtimeProviderRouteError,
+} from "../config/provider-routing";
 import { buildClaudeRuntimeOptions } from "../config/options-builder";
 import { configuredMcpTools } from "./mcp-tools";
 import { configuredRuntimeModels } from "./runtime-models";
@@ -134,6 +141,7 @@ interface StreamingToolBlock {
 }
 
 const streamingToolBlocks = new Map<string, StreamingToolBlock>();
+const completedToolCalls = new Map<string, Set<string>>();
 const turnsWithStreamedText = new Set<string>();
 const turnsWithStreamedThinking = new Set<string>();
 
@@ -153,6 +161,7 @@ function clearTurnStreamState(sessionId: string, turnId: string): void {
   const keyPrefix = `${sessionId}:${turnId}:`;
   turnsWithStreamedText.delete(turnStreamKey(sessionId, turnId));
   turnsWithStreamedThinking.delete(turnStreamKey(sessionId, turnId));
+  completedToolCalls.delete(turnStreamKey(sessionId, turnId));
   for (const key of streamingToolBlocks.keys()) {
     if (key.startsWith(keyPrefix)) streamingToolBlocks.delete(key);
   }
@@ -518,7 +527,13 @@ export function normalizeSdkMessage(
         const block = streamingToolBlocks.get(
           streamingToolKey(sessionId, turnId, event.index),
         );
-        if (!block) return events;
+        if (
+          !block ||
+          completedToolCalls
+            .get(turnStreamKey(sessionId, turnId))
+            ?.has(block.id)
+        )
+          return events;
         block.partialInput = appendToolInputDelta(
           block.partialInput,
           String((delta as Record<string, unknown>).partial_json ?? ""),
@@ -531,6 +546,7 @@ export function normalizeSdkMessage(
             toolName: block.name,
             partialInput: block.partialInput,
             input: tryParseJson(block.partialInput),
+            isReady: false,
           },
         });
       }
@@ -541,6 +557,10 @@ export function normalizeSdkMessage(
       const block = event.content_block as Record<string, unknown> | undefined;
       if (block?.type === "tool_use") {
         const toolId = String(block.id ?? `tool-${Date.now()}`);
+        if (
+          completedToolCalls.get(turnStreamKey(sessionId, turnId))?.has(toolId)
+        )
+          return events;
         const toolName = String(block.name ?? "unknown");
         const initialInput = stringifyToolInput(block.input);
         streamingToolBlocks.set(
@@ -558,6 +578,7 @@ export function normalizeSdkMessage(
             toolId,
             toolName,
             input: tryParseJson(initialInput) ?? {},
+            isReady: false,
           },
         });
       }
@@ -569,7 +590,10 @@ export function normalizeSdkMessage(
       const block = streamingToolBlocks.get(
         streamingToolKey(sessionId, turnId, event.index),
       );
-      if (block) {
+      if (
+        block &&
+        !completedToolCalls.get(turnStreamKey(sessionId, turnId))?.has(block.id)
+      ) {
         events.push({
           kind: "tool-progress",
           payload: {
@@ -619,6 +643,10 @@ export function normalizeSdkMessage(
           });
         }
         if (block.type === "tool_use") {
+          // Fast tool errors can precede the SDK's full assistant message.
+          // That late echo must not reopen an already completed invocation.
+          if (completedToolCalls.get(streamKey)?.has(String(block.id)))
+            continue;
           events.push({
             kind: "tool-start",
             payload: {
@@ -642,6 +670,11 @@ export function normalizeSdkMessage(
     if (Array.isArray(content)) {
       for (const block of content as Array<Record<string, unknown>>) {
         if (block.type === "tool_result") {
+          const streamKey = turnStreamKey(sessionId, turnId);
+          const completed =
+            completedToolCalls.get(streamKey) ?? new Set<string>();
+          completed.add(String(block.tool_use_id ?? "unknown"));
+          completedToolCalls.set(streamKey, completed);
           events.push({
             kind: "tool-complete",
             payload: {
@@ -649,7 +682,13 @@ export function normalizeSdkMessage(
               toolId: String(
                 (block as Record<string, unknown>).tool_use_id ?? "unknown",
               ),
-              output: block.content ?? "",
+              output:
+                content.filter((value) => value && value.type === "tool_result")
+                  .length === 1
+                  ? (workflowToolResult(msg.tool_use_result) ??
+                    block.content ??
+                    "")
+                  : (block.content ?? ""),
               isError: Boolean((block as Record<string, unknown>).is_error),
             },
           });
@@ -694,7 +733,13 @@ export function normalizeSdkMessage(
       });
       events.push({
         kind: "turn-complete",
-        payload: { turnId, result: "error", error: errorMessage },
+        payload: {
+          turnId,
+          result: "error",
+          error: errorMessage,
+          sdkSessionId:
+            typeof msg.session_id === "string" ? msg.session_id : undefined,
+        },
       });
     } else if (isInterrupted) {
       events.push({
@@ -1262,7 +1307,7 @@ export class ClaudeRuntime implements AgentRuntime {
       runtimeId: "sdk",
     });
     if (!routePlan.routes.length) {
-      throw new Error("当前供应商没有可用于 SDK 运行时的模型端点");
+      throw new Error(runtimeProviderRouteError(routePlan, "SDK"));
     }
     const directRoute = routePlan.directRoute;
     const connection = directRoute
@@ -1305,12 +1350,86 @@ export class ClaudeRuntime implements AgentRuntime {
       opts.threadId,
     );
 
+    const rawToolResults = new Map<
+      string,
+      import("@shared/workflow-tool-result").WorkflowToolResult
+    >();
+    const emitQuestion = (event: RuntimeEvent) => {
+      workflowThreadStore.applyRuntimeEvent(opts.threadId, turnId, event);
+      queue.push(event);
+    };
+    const mcpResultBridges = createSdkMcpResultBridges(
+      effectiveSettings,
+      opts.cwd || process.cwd(),
+      (id, result) => rawToolResults.set(id, result),
+      async (serverName, request, signal) => {
+        const answer = await conversationInputBroker.request(
+          {
+            sessionId: opts.threadId,
+            turnId,
+            kind: request.mode === "url" ? "url" : "form",
+            title: String(request.message ?? "需要提供信息"),
+            source: serverName,
+            url: typeof request.url === "string" ? request.url : undefined,
+            ...inputFieldsFromSchema(
+              request.requestedSchema as Record<string, unknown> | undefined,
+            ),
+          },
+          emitQuestion,
+          signal,
+        );
+        return { action: answer.action, content: answer.content };
+      },
+    );
     // Prepare tool permission callbacks for SDK canUseTool.
     const options = buildClaudeRuntimeOptions({
+      hooks: {
+        PostToolUse: [
+          {
+            matcher: "mcp__.*",
+            hooks: [
+              async (
+                input: import("@anthropic-ai/claude-agent-sdk").HookInput,
+              ) => {
+                if (input.hook_event_name === "PostToolUse") {
+                  const result = workflowToolResult(input.tool_response);
+                  if (result && !rawToolResults.has(input.tool_use_id))
+                    rawToolResults.set(input.tool_use_id, result);
+                }
+                return {};
+              },
+            ],
+          },
+        ],
+      },
+      onElicitation: async (
+        request: import("@anthropic-ai/claude-agent-sdk").ElicitationRequest,
+        context: { signal: AbortSignal },
+      ) => {
+        const schema = inputFieldsFromSchema(request.requestedSchema);
+        const answer = await conversationInputBroker.request(
+          {
+            sessionId: opts.threadId,
+            turnId,
+            kind: request.mode === "url" ? "url" : "form",
+            title: request.message,
+            source: request.serverName,
+            url: request.url,
+            ...schema,
+          },
+          emitQuestion,
+          context.signal,
+        );
+        return {
+          action: answer.action,
+          ...(answer.action === "accept" ? { content: answer.content } : {}),
+        };
+      },
       settings: effectiveSettings,
       cwd: opts.cwd || process.cwd(),
       env: sdkEnv,
       sdkMcpServers: {
+        ...mcpResultBridges.servers,
         [SDK_SANDBOX_SERVER_NAME]: sdkCommandSandbox.server,
         [SDK_TERMINAL_SERVER_NAME]: sdkTerminalServer.server,
         [SDK_BROWSER_SERVER_NAME]: sdkBrowserServer.server,
@@ -1328,6 +1447,56 @@ export class ClaudeRuntime implements AgentRuntime {
         );
         const toolUseId =
           typeof context.toolUseID === "string" ? context.toolUseID : genId();
+        if (toolName === "AskUserQuestion") {
+          const questions = Array.isArray(input.questions)
+            ? (input.questions as Array<{
+                question: string;
+                options?: Array<{ label: string }>;
+                multiSelect?: boolean;
+              }>)
+            : [];
+          const answer = await conversationInputBroker.request(
+            {
+              sessionId: opts.threadId,
+              turnId,
+              kind: "question",
+              title: "需要你的回答",
+              source: toolName,
+              fields: questions.map((question) => ({
+                id: question.question,
+                label: question.question,
+                type: question.multiSelect ? "multi" : "string",
+                options: question.options?.map((option) => option.label),
+                required: true,
+              })),
+            },
+            emitQuestion,
+            context.signal as AbortSignal | undefined,
+          );
+          return answer.action === "accept"
+            ? {
+                behavior: "allow",
+                toolUseID: toolUseId,
+                updatedInput: {
+                  ...input,
+                  answers: Object.fromEntries(
+                    Object.entries(answer.content ?? {}).map(([key, value]) => [
+                      key,
+                      Array.isArray(value) ? value.join(", ") : String(value),
+                    ]),
+                  ),
+                },
+              }
+            : {
+                behavior: "deny",
+                toolUseID: toolUseId,
+                message:
+                  answer.action === "decline"
+                    ? "用户跳过此问题。"
+                    : "问题已取消。",
+                interrupt: false,
+              };
+        }
         const requestId = `sdk-approval-${toolUseId}`;
         const storm = this.toolStormBreaker.check(
           turnId,
@@ -1694,6 +1863,7 @@ export class ClaudeRuntime implements AgentRuntime {
       sdkCommandSandbox.clear();
       sdkTerminalServer.clear();
       sdkBrowserServer.clear();
+      await mcpResultBridges.close();
       this.activeTurns.delete(opts.threadId);
       entry.finish();
       throw err;
@@ -1707,6 +1877,7 @@ export class ClaudeRuntime implements AgentRuntime {
       sdkCommandSandbox.clear();
       sdkTerminalServer.clear();
       sdkBrowserServer.clear();
+      await mcpResultBridges.close();
       this.activeTurns.delete(opts.threadId);
       entry.finish();
       return canceledTurnStream(opts.threadId, turnId);
@@ -1822,9 +1993,52 @@ export class ClaudeRuntime implements AgentRuntime {
           if (sdkDone) break;
           nextSdk = iterator.next();
           const sdkMsg = sdkResult.value;
+          const sessionMessage =
+            sdkMsg && typeof sdkMsg === "object"
+              ? (sdkMsg as {
+                  type?: string;
+                  subtype?: string;
+                  session_id?: unknown;
+                })
+              : undefined;
+          if (
+            sessionMessage?.type === "system" &&
+            sessionMessage.subtype === "init" &&
+            typeof sessionMessage.session_id === "string"
+          ) {
+            threadSdkSession.set(opts.threadId, sessionMessage.session_id);
+          }
           const events = normalizeSdkMessage(opts.threadId, turnId, sdkMsg);
           let flushedSteer = false;
-          for (const event of events) {
+          for (const incoming of events) {
+            if (incoming.kind === "tool-complete") {
+              const original = rawToolResults.get(incoming.payload.toolId);
+              if (original) {
+                incoming.payload.output = original;
+                rawToolResults.delete(incoming.payload.toolId);
+              }
+            }
+            const stopped = entry.stopRequested || entry.canceled;
+            if (stopped && incoming.kind === "tool-complete")
+              incoming.payload.status = "cancelled";
+            if (stopped && incoming.kind === "error") continue;
+            // User stop is a host decision. Some providers report a tool-use
+            // error when interrupted; it must not turn cancellation into failure.
+            const event: RuntimeEvent =
+              stopped && incoming.kind === "turn-complete"
+                ? {
+                    ...incoming,
+                    payload: {
+                      ...incoming.payload,
+                      result: "aborted",
+                      error: undefined,
+                      sdkSessionId:
+                        incoming.payload.sdkSessionId ??
+                        threadSdkSession.get(opts.threadId),
+                      final: true,
+                    },
+                  }
+                : incoming;
             if (event.kind === "text-chunk") {
               assistantText += event.payload.content;
             }
@@ -1916,11 +2130,16 @@ export class ClaudeRuntime implements AgentRuntime {
           const resultVal = entry.canceled
             ? "aborted"
             : entry.stopRequested
-              ? "interrupted"
+              ? "aborted"
               : "success";
           const completeEvent: RuntimeEvent = {
             kind: "turn-complete",
-            payload: { turnId, result: resultVal },
+            payload: {
+              turnId,
+              result: resultVal,
+              sdkSessionId: threadSdkSession.get(opts.threadId),
+              final: true,
+            },
           };
           workflowThreadStore.applyRuntimeEvent(
             opts.threadId,
@@ -1931,38 +2150,59 @@ export class ClaudeRuntime implements AgentRuntime {
         }
       } catch (err) {
         yield* queue.drainSync();
-        const errorEvent: RuntimeEvent = {
-          kind: "error",
-          payload: {
-            code: "SDK_QUERY_ERROR",
-            message: err instanceof Error ? err.message : String(err),
-            recoverable: false,
-          },
-        };
-        workflowThreadStore.applyRuntimeEvent(
-          opts.threadId,
-          turnId,
-          errorEvent,
-        );
-        yield errorEvent;
-        const completeEvent: RuntimeEvent = {
-          kind: "turn-complete",
-          payload: {
+        if (entry.stopRequested || entry.canceled) {
+          const completeEvent: RuntimeEvent = {
+            kind: "turn-complete",
+            payload: {
+              turnId,
+              result: "aborted",
+              sdkSessionId: threadSdkSession.get(opts.threadId),
+              final: true,
+            },
+          };
+          workflowThreadStore.applyRuntimeEvent(
+            opts.threadId,
             turnId,
-            result: "error",
-            error: err instanceof Error ? err.message : String(err),
-          },
-        };
-        workflowThreadStore.applyRuntimeEvent(
-          opts.threadId,
-          turnId,
-          completeEvent,
-        );
-        yield completeEvent;
+            completeEvent,
+          );
+          yield completeEvent;
+        } else {
+          const errorEvent: RuntimeEvent = {
+            kind: "error",
+            payload: {
+              code: "SDK_QUERY_ERROR",
+              message: err instanceof Error ? err.message : String(err),
+              recoverable: false,
+            },
+          };
+          workflowThreadStore.applyRuntimeEvent(
+            opts.threadId,
+            turnId,
+            errorEvent,
+          );
+          yield errorEvent;
+          const completeEvent: RuntimeEvent = {
+            kind: "turn-complete",
+            payload: {
+              turnId,
+              result: "error",
+              error: err instanceof Error ? err.message : String(err),
+            },
+          };
+          workflowThreadStore.applyRuntimeEvent(
+            opts.threadId,
+            turnId,
+            completeEvent,
+          );
+          yield completeEvent;
+        }
       } finally {
+        conversationInputBroker.cancelTurn(opts.threadId, turnId);
+        clearTurnStreamState(opts.threadId, turnId);
         sdkCommandSandbox.clear();
         sdkTerminalServer.clear();
         sdkBrowserServer.clear();
+        await mcpResultBridges.close();
         if (!channel.isClosed()) channel.close();
         try {
           query.close?.();
@@ -2005,6 +2245,8 @@ export class ClaudeRuntime implements AgentRuntime {
       }
     }
     if (!target) return;
+    if (targetThreadId)
+      conversationInputBroker.cancelTurn(targetThreadId, turnId);
     target.stopRequested = true;
     target.acceptingSteers = false;
     if (target.query?.interrupt) {

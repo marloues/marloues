@@ -15,32 +15,13 @@ import type {
   ChatSendReceipt,
   PendingStateSnapshot,
   TimelineItem,
-  TokenUsage,
 } from "@shared/types";
 import type { UIEvent } from "@shared/ui-protocol";
-import type {
-  WorkflowReadThreadResponse,
-  WorkflowTurnItem,
-} from "@shared/workflow-read-thread-contract";
+import type { WorkflowReadThreadResponse } from "@shared/workflow-read-thread-contract";
 import type { UserMessageContent } from "../../types";
 
-export interface ItemEvent {
-  type: string;
-  sessionId: string;
-  turnId: string;
-  startedAt?: number;
-  completedAt?: number;
-  final?: boolean;
-  result?: string;
-  error?: string;
-  usage?: TokenUsage;
-  modelId?: string;
-  modelName?: string;
-  item?: WorkflowTurnItem;
-  items?: WorkflowTurnItem[];
-  /** item 变更前的快照（新建/首帧时为 undefined），供投影层做增量 diff。 */
-  prevItem?: WorkflowTurnItem;
-}
+export type { WorkflowItemEvent as ItemEvent } from "@shared/adapters/workflow-item-event";
+import type { WorkflowItemEvent as ItemEvent } from "@shared/adapters/workflow-item-event";
 
 export interface ExecutionTaskRecord {
   id: string;

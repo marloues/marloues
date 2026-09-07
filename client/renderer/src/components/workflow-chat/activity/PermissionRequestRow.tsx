@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { WorkflowQuestionCard } from "./QuestionCard";
+import { useItemDisclosure } from "../content/conversation-ui-state";
 import { ShieldQuestion } from "lucide-react";
 import type { WorkflowTurnItem } from "../../../../../shared/adapters/workflow-messages-to-read-thread";
 import {
@@ -18,7 +19,8 @@ export function WorkflowPermissionRequestRow({
 }: {
   item: PermissionRequestItem;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useItemDisclosure(item.id);
+  if (item.question) return <WorkflowQuestionCard request={item.question} />;
   const pending = workflowStatusIsRunning(item.status);
   const timedOut = item.status === "timed_out";
   const cancelled = item.status === "cancelled";

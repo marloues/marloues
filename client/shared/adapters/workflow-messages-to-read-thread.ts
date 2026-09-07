@@ -1,3 +1,4 @@
+import type { ConversationTiming } from "@shared/conversation-timing";
 import {
   WORKFLOW_READ_THREAD_SCHEMA_VERSION,
   type WorkflowDynamicToolCallItem as BaseDynamicToolCallItem,
@@ -8,6 +9,7 @@ import {
   type WorkflowReasoningItem as BaseReasoningItem,
   type WorkflowTextOutput,
   type WorkflowTurn,
+  type WorkflowTurnError,
   type WorkflowTurnItem as BaseTurnItem,
   type WorkflowTurnStatus,
   type WorkflowWebSearchItem as BaseWebSearchItem,
@@ -52,7 +54,9 @@ export type WorkflowTurnItem =
   | WorkflowReasoningItem;
 
 export interface WorkflowMessageBlock {
+  timing?: ConversationTiming;
   id: string;
+  error?: WorkflowTurnError | null;
   userMessageId?: string;
   user: string;
   userContent: WorkflowUserMessageContent[];
@@ -190,10 +194,12 @@ export function workflowTurnToWorkflowMessage(
     userContent,
     status: normalizeWorkflowStatus(turn.status),
     activity: workflowActivityForTurn(turn),
+    error: turn.error,
     startedAt: typeof turn.startedAt === "number" ? turn.startedAt : undefined,
     completedAt:
       typeof turn.completedAt === "number" ? turn.completedAt : undefined,
     durationMs: turn.durationMs ?? null,
+    timing: turn.timing,
     modelId: typeof turn.modelId === "string" ? turn.modelId : undefined,
     modelName: typeof turn.modelName === "string" ? turn.modelName : undefined,
     usage: turn.usage,
@@ -224,10 +230,11 @@ function workflowBlockToWorkflowTurn(
     // 本地 workflow 渲染路径的 turn 归属 workspace 区
     zone: "workspace",
     status: block.status,
-    error: null,
+    error: block.error ?? null,
     startedAt: block.startedAt ?? null,
     completedAt: block.completedAt ?? null,
     durationMs: block.durationMs,
+    timing: block.timing,
     modelId: block.modelId ?? null,
     modelName: block.modelName ?? null,
     usage: block.usage,

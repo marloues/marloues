@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useItemDisclosure } from "../content/conversation-ui-state";
 import { Image as ImageIcon } from "lucide-react";
 import type { WorkflowTurnItem } from "../../../../../shared/adapters/workflow-messages-to-read-thread";
 import { itemInputText, itemOutputText, workflowStatusIsRunning } from "../";
@@ -19,7 +19,7 @@ export function WorkflowImageGenerationRow({
 }: {
   item: ImageGenerationItem;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useItemDisclosure(item.id);
   const hasDetail = Boolean(itemInputText(item) || itemOutputText(item));
   const status = item.status ?? "completed";
   const running = workflowStatusIsRunning(status);
@@ -54,9 +54,21 @@ export function WorkflowImageGenerationRow({
   );
 }
 
-function imageGenerationLabel(item: ImageGenerationItem): string {
+export function imageGenerationLabel(item: ImageGenerationItem): string {
   if (workflowStatusIsRunning(item.status)) return "正在生成图片";
   if (item.status === "error" || item.status === "failed")
     return "失败：生成图片";
-  return "已生成图片";
+  if (
+    item.status === "cancelled" ||
+    item.status === "canceled" ||
+    item.status === "interrupted"
+  )
+    return "已取消生成图片";
+  if (
+    item.status === "completed" ||
+    item.status === "done" ||
+    item.status === "success"
+  )
+    return "已生成图片";
+  return "图片生成";
 }

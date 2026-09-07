@@ -18,8 +18,8 @@ describe("ToolDetail", () => {
       />,
     );
 
-    expect(html).toContain("Image generated");
-    expect(html).not.toContain("Generating image");
+    expect(html).toContain("已生成图片");
+    expect(html).not.toContain("正在生成图片");
   });
 
   it("does not present a cancelled tool as successful", () => {

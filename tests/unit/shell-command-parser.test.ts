@@ -47,6 +47,39 @@ describe("parseSimpleCommand", () => {
 });
 
 describe("analyzeShellCommand", () => {
+  it("allows the real long-task stderr sink without treating read arguments as redirect targets", () => {
+    for (const command of [
+      "cd /workspace/project 2>/dev/null && git status",
+      "find src -type d 2>/dev/null",
+      "cat /etc/hosts > /tmp/hosts-copy",
+      "printf ok >> '/dev/null'",
+      "git status 2>&1 | head -20",
+    ]) {
+      const result = analyzeShellCommand(command);
+      expect(result.ok, command).toBe(true);
+      expect(result.riskHints, command).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ code: "system_path_modification" }),
+        ]),
+      );
+    }
+  });
+
+  it("still flags real system writes even beside a harmless stderr sink", () => {
+    for (const command of [
+      "printf bad > /etc/hosts 2>/dev/null",
+      "printf bad > /dev/disk0",
+      "printf bad > /dev/null/../disk0",
+      "rm /dev/null",
+      "chmod 777 /etc/hosts 2>/dev/null",
+    ]) {
+      expect(analyzeShellCommand(command).riskHints, command).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ code: "system_path_modification" }),
+        ]),
+      );
+    }
+  });
   it("identifies mixed command-chain operators and preserves every command", () => {
     const result = analyzeShellCommand(
       "git status && npm test | tee result.txt; npm run lint\nnode check.js",

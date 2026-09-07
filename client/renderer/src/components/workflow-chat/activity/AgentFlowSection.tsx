@@ -1,5 +1,8 @@
-import type { ReactNode } from "react";
-import type { WorkflowActivityGroup, WorkflowFlowEntry } from "../";
+import { useRef, type ReactNode } from "react";
+import type {
+  WorkflowActivityGroup,
+  WorkflowFlowEntry,
+} from "../turns/turn-layout";
 import type { WorkflowTurnItem } from "../../../../../shared/adapters/workflow-messages-to-read-thread";
 import { codexActivityHeaderState } from "./codex-activity-contract";
 
@@ -31,22 +34,27 @@ export function WorkflowAgentFlowSection({
   renderActivityItem,
   renderAssistantMessage,
 }: Props) {
-  const visibleEntries = expanded
-    ? entries
-    : entries.filter(
-        (entry) => entry.kind === "assistantMessage" && entry.isFinal,
-      );
-  if (!visibleEntries.length) return null;
+  // Closed historical turns are lazy. After first expansion, keep the last
+  // visible snapshot mounted so collapsing preserves local detail state and
+  // does not mount an entire newly-completed long trace behind hidden content.
+  const mountedEntries = useRef<WorkflowFlowEntry[] | null>(null);
+  if (expanded) mountedEntries.current = entries;
+  const displayedEntries = expanded ? entries : mountedEntries.current;
+  if (!displayedEntries?.length) return null;
 
   return (
-    <div className="workflow-agent-flow-section" data-kind="agent-flow-section">
-      {visibleEntries.map((entry, index) => {
+    <div
+      className="workflow-agent-flow-section"
+      data-kind="agent-flow-section"
+      hidden={!expanded}
+    >
+      {displayedEntries.map((entry, index) => {
         if (entry.kind === "assistantMessage")
           return renderAssistantMessage(entry.item);
         if (entry.kind === "activityItem")
           return renderActivityItem(entry.item);
         const headerState = codexActivityHeaderState(entry.group.items, {
-          isLatestGroup: index === visibleEntries.length - 1,
+          isLatestGroup: index === displayedEntries.length - 1,
           isTurnInProgress: isStreaming,
         });
         return renderActivityGroup(

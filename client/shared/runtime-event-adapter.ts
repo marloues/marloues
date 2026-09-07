@@ -41,6 +41,7 @@ export function translateRuntimeEventToUIEvent(
         toolId: evt.payload.toolId,
         toolName: evt.payload.toolName,
         input: evt.payload.input,
+        isReady: evt.payload.isReady,
       };
     case "tool-progress":
       return {
@@ -59,6 +60,7 @@ export function translateRuntimeEventToUIEvent(
         toolId: evt.payload.toolId,
         output: evt.payload.output,
         isError: evt.payload.isError,
+        status: evt.payload.status,
       };
     case "turn-complete":
       textChunkCounters.delete(turnCounterKey(sessionId, turnId));

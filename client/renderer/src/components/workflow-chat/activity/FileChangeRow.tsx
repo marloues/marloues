@@ -1,3 +1,4 @@
+import { useItemDisclosure } from "../content/conversation-ui-state";
 import { useEffect, useRef, useState } from "react";
 import { Check, Copy, FileText, ShieldCheck } from "lucide-react";
 import { PatchDiff } from "@pierre/diffs/react";
@@ -24,15 +25,19 @@ interface Props {
 }
 
 export function WorkflowFileChangeRow({ item }: Props) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useItemDisclosure(item.id);
   const files = item.changes.map((change) => change.path).filter(Boolean);
   const running = workflowStatusIsRunning(item.status);
   const label =
     item.status === "failed" || item.status === "error"
       ? "编辑失败"
-      : running
-        ? "正在编辑"
-        : "已编辑";
+      : item.status === "rejected" || item.status === "denied"
+        ? "编辑已拒绝"
+        : ["cancelled", "canceled", "stopped"].includes(item.status)
+          ? "编辑已停止"
+          : running
+            ? "正在编辑"
+            : "已编辑";
   const patchLines = item.changes.flatMap((change) =>
     patchPreviewLines(change.diff?.text ?? ""),
   );

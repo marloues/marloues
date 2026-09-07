@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useItemDisclosure } from "../content/conversation-ui-state";
+import { useMarkdownContext } from "../content/MarkdownContext";
+import { useState, useRef } from "react";
 import type { WorkflowTurnItem } from "../../../../../shared/adapters/workflow-messages-to-read-thread";
 import { itemInputText, itemOutputText } from "../";
 import {
@@ -35,9 +37,14 @@ interface Props {
 }
 
 export function WorkflowToolCallRow({ item }: Props) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useItemDisclosure(item.id);
   const [isCancelling, setIsCancelling] = useState(false);
-  const activeSessionId = useUnifiedChatStore((state) => state.activeSessionId);
+  const cancelLock = useRef(false);
+  const [cancelError, setCancelError] = useState("");
+  const context = useMarkdownContext();
+  const activeSessionId = useUnifiedChatStore(
+    (state) => context.sessionId ?? state.activeSessionId,
+  );
   const execution = useUnifiedChatStore((state) =>
     activeSessionId
       ? (state.executionBySession[activeSessionId] ?? null)
@@ -51,7 +58,9 @@ export function WorkflowToolCallRow({ item }: Props) {
   const status = itemStatus(item);
   const running = workflowStatusIsRunning(status);
   const cancellable = running;
-  const hasDetail = Boolean(input || output || cancellable);
+  const hasDetail = Boolean(
+    input || output || cancellable || ("result" in item && item.result),
+  );
   const failed = status === "error" || status === "failed";
   const toolName = "tool" in item ? item.tool : "";
   const linksSubagent = isSubagentDelegationToolName(toolName);
@@ -63,12 +72,15 @@ export function WorkflowToolCallRow({ item }: Props) {
       )
     : [];
   const handleCancelTool = async () => {
-    if (isCancelling) return;
+    if (cancelLock.current) return;
+    cancelLock.current = true;
+    setCancelError("");
     setIsCancelling(true);
     try {
       await window.marloues.chat.cancelTool(item.id);
     } catch (error) {
-      console.error("Failed to cancel tool", error);
+      setCancelError(error instanceof Error ? error.message : String(error));
+      cancelLock.current = false;
       setIsCancelling(false);
     }
   };
@@ -106,7 +118,6 @@ export function WorkflowToolCallRow({ item }: Props) {
             ) : null}
           </>
         }
-        meta={toolName}
         detail={
           visibleSubagents.length ? (
             <div className="workflow-subagent-links workflow-activity-detail-surface">
@@ -156,25 +167,27 @@ export function WorkflowToolCallRow({ item }: Props) {
   return (
     <WorkflowActivityRow
       activityKind={item.type}
+      iconTone={failed ? "danger" : "muted"}
       icon={<ToolIcon item={item} />}
       label={
         <>
-          {toolLabel(item)}
+          <span className="workflow-activity-row-text" title={toolLabel(item)}>
+            {toolLabel(item)}
+          </span>
           {running ? <WorkflowInlineDots /> : null}
-          {running || failed ? (
-            <WorkflowActivityStatusBadge failed={failed} />
-          ) : null}
         </>
       }
-      meta={toolName}
       detail={
-        <ToolDetail
-          item={item}
-          failed={failed}
-          cancellable={cancellable}
-          isCancelling={isCancelling}
-          onCancel={handleCancelTool}
-        />
+        <>
+          {cancelError ? <p role="alert">{cancelError}</p> : null}
+          <ToolDetail
+            item={item}
+            failed={failed}
+            cancellable={cancellable}
+            isCancelling={isCancelling}
+            onCancel={handleCancelTool}
+          />
+        </>
       }
       hasDetail={hasDetail}
       open={open}

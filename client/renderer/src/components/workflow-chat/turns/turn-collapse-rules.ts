@@ -1,3 +1,5 @@
+import { workflowStatusIsRunning } from "../adapter/item-status";
+export { workflowStatusIsRunning } from "../adapter/item-status";
 import type {
   WorkflowMessageBlock as WorkflowMessageBlock,
   WorkflowTurnItem,
@@ -90,13 +92,29 @@ export function workflowShouldShowActivityItem(
 ): boolean {
   if (!workflowShouldShowProcessItem(item)) return false;
   if (workflowIsResultCardSourceItem(item)) {
+    if (item.type === "webSearch" || item.type === "dynamicToolCall")
+      return true;
     // A live file edit is process information. It becomes a result card only
     // after the runtime settles it, so it must not disappear between those
     // two phases.
-    if (item.type === "fileChange" && workflowItemIsRunning(item)) return true;
+    if (
+      item.type === "fileChange" &&
+      (workflowItemIsRunning(item) ||
+        [
+          "failed",
+          "error",
+          "denied",
+          "timed_out",
+          "rejected",
+          "cancelled",
+          "canceled",
+          "stopped",
+        ].includes(String(item.status)))
+    )
+      return true;
     return false;
   }
-  if (item.type === "imageView") return false;
+  if (item.type === "imageView") return Boolean(item.path);
   if (item.type === "imageGeneration" && (item.result || item.savedPath))
     return false;
   return true;
@@ -118,7 +136,6 @@ export function workflowIsResultCardSourceItem(
   item: WorkflowProcessItem,
 ): boolean {
   if (item.type === "fileChange") return item.changes.length > 0;
-  if (item.type === "imageView") return Boolean(item.path);
   if (item.type === "imageGeneration")
     return Boolean(item.result || item.savedPath);
   if (item.type === "webSearch") return true;
@@ -130,16 +147,6 @@ export function workflowIsResultCardSourceItem(
 export function workflowItemIsRunning(item: WorkflowProcessItem): boolean {
   if (!("status" in item)) return false;
   return workflowStatusIsRunning(item.status);
-}
-
-export function workflowStatusIsRunning(statusValue: unknown): boolean {
-  const status = String(statusValue).toLowerCase();
-  return (
-    status === "running" ||
-    status === "pending" ||
-    status === "in_progress" ||
-    status === "inprogress"
-  );
 }
 
 export function workflowLayoutToolName(item: WorkflowProcessItem): string {

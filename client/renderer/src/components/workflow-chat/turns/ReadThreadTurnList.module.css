@@ -1,0 +1,48 @@
+.navigation {
+  position: fixed;
+  z-index: 8;
+  font: var(--text-sm)/1.5 var(--font-ui);
+  color: var(--text-2);
+}
+.navigation summary {
+  cursor: var(--cursor-control);
+}
+.navigation summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+.navigation nav {
+  max-height: 50vh;
+  width: min(260px, calc(100vw - 2 * var(--space-4)));
+  overflow: auto;
+  background: var(--surface-popover);
+  color: var(--text-1);
+  border: 1px solid var(--border);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+.navigation button {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  padding: var(--space-2);
+  font: inherit;
+}
+.navigation button:hover,
+.navigation button:focus-visible {
+  background: var(--raised-2);
+  color: var(--text-1);
+}
+.navigation button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}

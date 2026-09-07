@@ -1337,6 +1337,7 @@ button.composer-browser-review-image {
   padding: 10px 12px;
   background: var(--surface-popover);
   box-shadow: var(--shadow-md);
+  pointer-events: auto;
 }
 
 .plan-implementation-copy {
@@ -1484,6 +1485,16 @@ button.composer-browser-review-image {
   background: var(--surface-popover);
   box-shadow: var(--shadow-lg);
   color: var(--text-1);
+}
+
+dialog.full-access-dialog {
+  max-width: calc(100vw - 48px);
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+}
+
+dialog.full-access-dialog::backdrop {
+  background: rgb(0 0 0 / 52%);
 }
 
 .full-access-header {

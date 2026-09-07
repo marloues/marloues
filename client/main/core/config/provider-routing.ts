@@ -26,6 +26,16 @@ export interface RuntimeProviderRoutePlan {
   routes: ResolvedProviderRoute[];
   directRoute?: ResolvedProviderRoute;
   requiresGateway: boolean;
+  unavailableReason?: "missing-credentials" | "no-endpoints";
+}
+
+export function runtimeProviderRouteError(
+  plan: RuntimeProviderRoutePlan,
+  runtimeName: string,
+): string {
+  return plan.unavailableReason === "missing-credentials"
+    ? "当前供应商的 API 密钥无法读取或尚未配置，请检查系统凭据访问或重新保存密钥。"
+    : `当前供应商没有可用于 ${runtimeName} 运行时的模型端点`;
 }
 
 export function runtimeSourceProtocol(
@@ -96,6 +106,13 @@ export function resolveRuntimeProviderRoutes(
     routes,
     directRoute,
     requiresGateway: !directRoute,
+    unavailableReason: !endpoints.some(
+      (endpoint) => endpoint.enabled && endpoint.baseUrl.trim(),
+    )
+      ? "no-endpoints"
+      : !apiKey
+        ? "missing-credentials"
+        : undefined,
   };
 }
 

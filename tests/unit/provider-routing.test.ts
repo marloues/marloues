@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   resolveRuntimeProviderRoutes,
   runtimeSourceProtocol,
+  runtimeProviderRouteError,
 } from "../../client/main/core/config/provider-routing";
 import type {
   AgentSettings,
@@ -9,6 +10,29 @@ import type {
 } from "../../client/shared/types";
 
 describe("runtime provider routing", () => {
+  it("reports unreadable or missing credentials separately from missing endpoints", () => {
+    const provider = customProvider([
+      endpoint("anthropic", "anthropic", "https://one.example", 10),
+    ]);
+    provider.apiKey = undefined;
+    const plan = resolveRuntimeProviderRoutes(settings(provider), {
+      runtimeId: "sdk",
+    });
+    expect(plan.routes).toEqual([]);
+    expect(plan.unavailableReason).toBe("missing-credentials");
+    expect(runtimeProviderRouteError(plan, "SDK")).toContain("API 密钥");
+    expect(runtimeProviderRouteError(plan, "SDK")).not.toContain("没有可用于");
+  });
+
+  it("keeps a missing endpoint diagnosis when credentials are available", () => {
+    const plan = resolveRuntimeProviderRoutes(settings(customProvider([])), {
+      runtimeId: "binary",
+    });
+    expect(plan.unavailableReason).toBe("no-endpoints");
+    expect(runtimeProviderRouteError(plan, "Binary")).toBe(
+      "当前供应商没有可用于 Binary 运行时的模型端点",
+    );
+  });
   it("selects the hidden Anthropic endpoint for an SDK built-in provider", () => {
     const plan = resolveRuntimeProviderRoutes(
       settings({

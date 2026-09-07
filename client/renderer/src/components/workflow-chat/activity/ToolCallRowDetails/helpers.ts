@@ -1,10 +1,10 @@
-import { itemInputText } from "../../";
+import { itemInputText } from "../../adapter/item-text";
 import type { ToolCallRowItem } from "./types";
-import { workflowStatusIsRunning } from "../../";
+import { workflowStatusIsRunning } from "../../adapter/item-status";
 
 export function toolName(item: ToolCallRowItem): string {
   if (item.type === "mcpToolCall")
-    return [item.server, item.tool].filter(Boolean).join(".") || item.tool;
+    return [item.server, item.tool].filter(Boolean).join(".").toLowerCase();
   if (item.type === "dynamicToolCall") return item.tool.toLowerCase();
   if (item.type === "webSearch") return "web_search";
   if (item.type === "imageGeneration") return "image_generation";
@@ -32,7 +32,11 @@ export function detailTitle(item: ToolCallRowItem): string {
     ?.trim();
   if (firstLine && (name.includes("shell") || name.includes("command")))
     return compactCommand(firstLine);
-  return name || item.type;
+  return item.type === "mcpToolCall"
+    ? [item.server, item.tool].filter(Boolean).join(".")
+    : "tool" in item
+      ? item.tool
+      : name || item.type;
 }
 
 export function detailInputLabel(item: ToolCallRowItem): string {
@@ -53,6 +57,7 @@ export function isReadToolName(name: string): boolean {
     name.endsWith(".read") ||
     name === "read_file" ||
     name === "read_files" ||
+    name === "workflow_read_file" ||
     name.endsWith(".read_file") ||
     name.endsWith(".read_files")
   );
@@ -136,7 +141,7 @@ export function toolTargetCount(value: string): number {
     if (Array.isArray(parsed)) return parsed.length;
     if (parsed && typeof parsed === "object") {
       const record = parsed as Record<string, unknown>;
-      for (const key of ["files", "paths", "filePaths"]) {
+      for (const key of ["files", "paths", "filePaths", "file_paths"]) {
         const entry = record[key];
         if (Array.isArray(entry)) return entry.length;
       }
@@ -149,6 +154,53 @@ export function toolTargetCount(value: string): number {
     if (lines.length > 1) return lines.length;
   }
   return 0;
+}
+
+/** Known argument fields only; never show serialized JSON as a file name. */
+export function toolFileTargets(value: unknown): string[] {
+  if (typeof value === "string") {
+    try {
+      return toolFileTargets(JSON.parse(value));
+    } catch {
+      return /^[[{]/.test(value.trim()) || value.includes("\n")
+        ? []
+        : value.trim()
+          ? [value.trim()]
+          : [];
+    }
+  }
+  if (Array.isArray(value)) return value.flatMap(toolFileTargets);
+  if (!value || typeof value !== "object") return [];
+  const record = value as Record<string, unknown>;
+  for (const key of ["file_path", "filePath", "path", "filename"]) {
+    if (typeof record[key] === "string") return [record[key]];
+  }
+  for (const key of ["files", "paths", "filePaths", "file_paths"]) {
+    if (Array.isArray(record[key])) return record[key].flatMap(toolFileTargets);
+  }
+  return [];
+}
+
+export function toolArgumentText(
+  item: ToolCallRowItem,
+  ...keys: string[]
+): string {
+  if (!("arguments" in item)) return "";
+  let value = item.arguments;
+  if (typeof value === "string") {
+    try {
+      value = JSON.parse(value);
+    } catch {
+      return "";
+    }
+  }
+  if (!value || typeof value !== "object" || Array.isArray(value)) return "";
+  const record = value as Record<string, unknown>;
+  for (const key of keys) {
+    if (typeof record[key] === "string" && record[key].trim())
+      return record[key].trim();
+  }
+  return "";
 }
 
 export function formatCompactNumber(value?: number): string {

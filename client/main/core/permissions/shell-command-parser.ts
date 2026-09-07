@@ -196,6 +196,12 @@ export function analyzeShellCommand(command: string): ShellCommandAnalysis {
       continue;
     }
 
+    // A descriptor target (2>&1) is part of the redirect, not a new command.
+    if (pendingRedirection && char === "&" && /[\d-]/.test(next ?? "")) {
+      current += char;
+      hasCurrent = true;
+      continue;
+    }
     const chain = readChainOperator(command, index);
     if (chain) {
       const pushed = pushSegment(index);
@@ -215,6 +221,7 @@ export function analyzeShellCommand(command: string): ShellCommandAnalysis {
       index += chain.length - 1;
       pendingRedirection = undefined;
       segmentStart = index + 1;
+      pendingRedirection = undefined;
       continue;
     }
 

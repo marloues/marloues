@@ -1,3 +1,6 @@
+import { observeConversationTiming } from "@shared/conversation-timing";
+import { workflowToolResult } from "@shared/workflow-tool-result";
+import type { ConversationTiming } from "@shared/conversation-timing";
 import type { RuntimeEvent, Thread } from "../../../shared/agent-runtime";
 import type { TokenUsage } from "../../../shared/types";
 import type {
@@ -19,14 +22,25 @@ import {
   type WorkflowThreadStoreTurn,
 } from "./read-thread-serializer";
 import { compressToolResult } from "../context/token-economy";
+import { textOutputFromUnknown } from "../../../shared/adapters/runtime-event-to-turn-item";
 
 /** Minimal shape needed to rehydrate turns from persisted session messages. */
 interface RehydratableMessage {
+  userClientId?: string;
+  userSettled?: boolean;
+  durationMs?: number | null;
+  timing?: ConversationTiming;
   id: string;
+  turnId?: string;
+  continuationFragment?: boolean;
+  continuesPreviousTurn?: boolean;
+  error?: string;
+  errorDetails?: unknown;
   role: "user" | "assistant";
   content: string;
   userContent?: WorkflowUserMessageContent[];
   timestamp: number;
+  status?: string;
   startedAt?: number;
   completedAt?: number;
   modelId?: string;
@@ -160,7 +174,7 @@ function textOutput(text: string): WorkflowTextOutput {
   return { text, truncated: false };
 }
 
-class WorkflowThreadStore {
+export class WorkflowThreadStore {
   private threads = new Map<string, WorkflowThreadStoreThread>();
   private listeners = new Set<ThreadListener>();
 
@@ -394,6 +408,10 @@ class WorkflowThreadStore {
           continuesPreviousTurn:
             event.payload.status === "applied" || undefined,
           appliedInterruptPending: event.payload.status === "applied",
+          timing:
+            event.payload.status === "applied"
+              ? previousTurn.timing
+              : undefined,
           itemOrder: [item.id],
           items: new Map([[item.id, { item }]]),
         });
@@ -409,6 +427,23 @@ class WorkflowThreadStore {
 
     const displayTurnId = thread.displayTurnIds.get(turnId) ?? turnId;
     const turn = this.ensureTurn(thread, displayTurnId, timestamp);
+    turn.timing = observeConversationTiming(
+      turn.timing,
+      event,
+      timestamp,
+      typeof turn.startedAt === "number" ? turn.startedAt : undefined,
+    );
+    if (
+      turn.continuesPreviousTurn &&
+      turn.timing?.finalAnswerStartedAt != null
+    ) {
+      const first = thread.turns.get(turnId);
+      if (first?.timing && first.timing.finalAnswerStartedAt == null)
+        first.timing = {
+          ...first.timing,
+          finalAnswerStartedAt: turn.timing.finalAnswerStartedAt,
+        };
+    }
 
     // Any substantive follow-up event (assistant text, tools, etc.) means the
     // SDK has started the priority:"now" continuation turn — clear the
@@ -422,7 +457,15 @@ class WorkflowThreadStore {
       turn.appliedInterruptPending = false;
     }
 
-    if (event.kind === "text-chunk") {
+    if (event.kind === "item-updated") {
+      this.upsertItem(turn, event.payload.item);
+      if (
+        event.payload.item.type === "agentMessage" &&
+        event.payload.item.text.trim()
+      ) {
+        thread.preview = event.payload.item.text.trim().slice(0, 160);
+      }
+    } else if (event.kind === "text-chunk") {
       this.appendAgentText(turn, event.payload.content, timestamp);
       thread.preview = event.payload.content.trim()
         ? event.payload.content.trim().slice(0, 160)
@@ -432,15 +475,29 @@ class WorkflowThreadStore {
     } else if (event.kind === "tool-start" || event.kind === "tool-progress") {
       const payload = event.payload;
       const existing = turn.items.get(payload.toolId)?.item;
+      // A runtime may echo its tool start after sending the result. The same
+      // invocation keeps its terminal status; a retry must have a new tool ID.
+      const terminalStatus =
+        existing?.type === "mcpToolCall" &&
+        [
+          "completed",
+          "error",
+          "failed",
+          "cancelled",
+          "canceled",
+          "aborted",
+          "interrupted",
+        ].includes(existing.status ?? "")
+          ? existing.status
+          : undefined;
       const item: WorkflowMcpToolCallItem = {
         type: "mcpToolCall",
         id: payload.toolId,
         tool: payload.toolName,
         arguments: "input" in payload ? payload.input : {},
         status:
-          event.kind === "tool-progress" && event.payload.isReady === false
-            ? "pending"
-            : "running",
+          terminalStatus ??
+          (event.payload.isReady === false ? "pending" : "running"),
       };
       this.upsertItem(
         turn,
@@ -448,28 +505,37 @@ class WorkflowThreadStore {
       );
     } else if (event.kind === "tool-complete") {
       const existing = turn.items.get(event.payload.toolId)?.item;
-      const economy = compressToolResult(event.payload.output, {
-        maxModelChars: 6_000,
-      });
+      const economy = compressToolResult(
+        textOutputFromUnknown(event.payload.output)?.text ?? "",
+        {
+          maxModelChars: 6_000,
+        },
+      );
       const output = textOutput(economy.rawText);
       const modelOutput = textOutput(economy.modelText);
       if (existing?.type === "mcpToolCall") {
         this.upsertItem(turn, {
           ...existing,
-          status: event.payload.isError ? "error" : "completed",
+          status:
+            event.payload.status ??
+            (event.payload.isError ? "error" : "completed"),
           output,
           modelOutput,
           contextEconomy: economy.meta,
+          result: workflowToolResult(event.payload.output),
         });
       } else {
         this.upsertItem(turn, {
           type: "mcpToolCall",
           id: event.payload.toolId,
           tool: "tool",
-          status: event.payload.isError ? "error" : "completed",
+          status:
+            event.payload.status ??
+            (event.payload.isError ? "error" : "completed"),
           output,
           modelOutput,
           contextEconomy: economy.meta,
+          result: workflowToolResult(event.payload.output),
         });
       }
     } else if (event.kind === "runtime-status") {
@@ -559,6 +625,18 @@ class WorkflowThreadStore {
     );
   }
 
+  /** Serialize only this execution's display segments for durable storage. */
+  readRuntimeTurnSegments(threadId: string, runtimeTurnId: string) {
+    const thread = this.ensureThread(threadId);
+    const turnOrder = thread.turnOrder.filter(
+      (id) => id === runtimeTurnId || id.startsWith(`${runtimeTurnId}:steer:`),
+    );
+    return serializeWorkflowThread(
+      { ...thread, turnOrder },
+      { limit: Math.max(1, turnOrder.length) },
+    );
+  }
+
   /**
    * Reconstruct turns from persisted session messages after an app restart.
    * The WorkflowThreadStore is in-memory only; after restart it starts empty,
@@ -585,7 +663,7 @@ class WorkflowThreadStore {
     for (const message of messages) {
       if (message.role === "user") {
         if (currentTurn) currentTurn.status = "completed";
-        const turnId = `seed-${message.id}`;
+        const turnId = message.turnId ?? `seed-${message.id}`;
         const userContent: WorkflowUserMessageContent[] =
           message.userContent ??
           (message.content.trim()
@@ -609,6 +687,8 @@ class WorkflowThreadStore {
                   type: "userMessage",
                   id: message.id,
                   content: userContent,
+                  clientId: message.userClientId,
+                  settled: message.userSettled,
                 },
               },
             ],
@@ -618,7 +698,7 @@ class WorkflowThreadStore {
         thread.turnOrder.push(turnId);
       } else if (message.role === "assistant") {
         if (!currentTurn) {
-          const turnId = `seed-${message.id}`;
+          const turnId = message.turnId ?? `seed-${message.id}`;
           currentTurn = {
             id: turnId,
             status: "completed",
@@ -636,10 +716,20 @@ class WorkflowThreadStore {
           thread.turnOrder.push(turnId);
         }
         currentTurn.status =
-          message.items.length === 0 && !message.content
-            ? "failed"
-            : "completed";
+          message.status === "failed" || message.status === "cancelled"
+            ? message.status
+            : message.items.length === 0 && !message.content
+              ? "failed"
+              : "completed";
+        currentTurn.timing = message.timing;
+        currentTurn.error = message.error
+          ? { message: message.error, additionalDetails: message.errorDetails }
+          : null;
+        currentTurn.continuationFragment = message.continuationFragment;
+        currentTurn.continuesPreviousTurn = message.continuesPreviousTurn;
         currentTurn.completedAt = message.completedAt ?? message.timestamp;
+        currentTurn.startedAt = message.startedAt ?? currentTurn.startedAt;
+        currentTurn.durationMs = message.durationMs ?? currentTurn.durationMs;
         currentTurn.modelId = message.modelId ?? currentTurn.modelId;
         currentTurn.modelName = message.modelName ?? currentTurn.modelName;
         currentTurn.usage = message.usage ?? currentTurn.usage;
@@ -766,8 +856,11 @@ class WorkflowThreadStore {
     for (const itemId of turn.itemOrder) {
       const entry = turn.items.get(itemId);
       const item = entry?.item;
-      if (item?.type === "agentMessage" && item.settled !== true) {
-        this.upsertItem(turn, { ...item, settled: true, phase: "finalized" });
+      if (
+        (item?.type === "agentMessage" || item?.type === "reasoning") &&
+        item.settled !== true
+      ) {
+        this.upsertItem(turn, { ...item, settled: true });
       }
     }
   }
@@ -780,15 +873,11 @@ class WorkflowThreadStore {
     const id = currentAgentItemId(turn);
     const existing = turn.items.get(id)?.item;
     const existingText = existing?.type === "agentMessage" ? existing.text : "";
-    const text =
-      existingText && delta.startsWith(existingText)
-        ? delta
-        : existingText + delta;
+    const text = existingText + delta;
     const item: WorkflowAgentMessageItem = {
       type: "agentMessage",
       id,
       text,
-      phase: "updated",
       // 流式不变量：chunk 期间 settled=false，turn 完成时 finalize 为 true。
       // 渲染端据此走节流 + 增量渲染路径，避免每 chunk 同步全量重解析。
       settled: false,

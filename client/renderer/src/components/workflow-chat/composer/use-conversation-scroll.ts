@@ -63,7 +63,7 @@ export function useConversationScroll({
   const contentRef = useRef<HTMLDivElement>(null);
   const shouldStickRef = useRef(true);
   const restoredRef = useRef(false);
-  const prevSessionRef = useRef(sessionKey);
+  const generationRef = useRef(0);
   const loadTriggeredRef = useRef(false);
   const stickToBottomRafRef = useRef<number | null>(null);
   const programmaticScrollRef = useRef(false);
@@ -119,16 +119,24 @@ export function useConversationScroll({
       loadTriggeredRef.current = true;
       const prevHeight = el.scrollHeight;
       const prevTop = el.scrollTop;
-      onLoadMore().finally(() => {
-        // 加载完成后恢复视角
-        requestAnimationFrame(() => {
-          if (viewportRef.current) {
-            viewportRef.current.scrollTop =
-              prevTop + (viewportRef.current.scrollHeight - prevHeight);
-            observedTopRef.current = viewportRef.current.scrollTop;
-          }
+      const generation = generationRef.current;
+      // A previous session's pagination must never write into this viewport.
+      void Promise.resolve()
+        .then(onLoadMore)
+        .catch(() => undefined)
+        .finally(() => {
+          requestAnimationFrame(() => {
+            if (
+              generationRef.current !== generation ||
+              viewportRef.current !== el
+            )
+              return;
+            el.scrollTop = prevTop + (el.scrollHeight - prevHeight);
+            observedTopRef.current = el.scrollTop;
+            lastScrollTopRef.current = el.scrollTop;
+            loadTriggeredRef.current = false;
+          });
         });
-      });
     }
   }, [
     nearBottomThreshold,
@@ -149,7 +157,10 @@ export function useConversationScroll({
       el.scrollTo({ top: el.scrollHeight, behavior });
       observedTopRef.current = el.scrollTop;
       setStickiness(true);
+      const generation = generationRef.current;
       requestAnimationFrame(() => {
+        if (generation !== generationRef.current || viewportRef.current !== el)
+          return;
         programmaticScrollRef.current = false;
         lastScrollTopRef.current = el.scrollTop;
         observedTopRef.current = el.scrollTop;
@@ -161,9 +172,11 @@ export function useConversationScroll({
   const scheduleScrollToBottom = useCallback(
     (behavior: ScrollBehavior = "auto") => {
       if (stickToBottomRafRef.current != null) return;
+      const generation = generationRef.current;
       stickToBottomRafRef.current = requestAnimationFrame(() => {
         stickToBottomRafRef.current = null;
-        if (!shouldStickRef.current) return;
+        if (generation !== generationRef.current || !shouldStickRef.current)
+          return;
         scrollToBottom(behavior);
       });
     },
@@ -196,8 +209,25 @@ export function useConversationScroll({
         setStickiness(false);
       }
     };
-    const handleTouchStart = () => breakLock("touch");
+    let touchY: number | undefined;
+    const handleTouchStart = (event: TouchEvent) => {
+      touchY = event.touches[0]?.clientY;
+    };
+    const handleTouchMove = (event: TouchEvent) => {
+      const next = event.touches[0]?.clientY;
+      if (next != null && touchY != null && next - touchY > 3)
+        breakLock("touch");
+      touchY = next;
+    };
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.defaultPrevented ||
+        (event.target instanceof Element &&
+          event.target.closest(
+            'input, textarea, select, [contenteditable="true"], [role="textbox"]',
+          ))
+      )
+        return;
       if (["ArrowUp", "PageUp", "Home"].includes(event.key)) {
         breakLock("keyboard");
       }
@@ -210,6 +240,26 @@ export function useConversationScroll({
     viewport.addEventListener("touchstart", handleTouchStart, {
       passive: true,
     });
+    const handleDisclosure = (event: MouseEvent) => {
+      if (shouldStickRef.current || !(event.target instanceof Element)) return;
+      const control = event.target.closest<HTMLElement>(
+        "button[aria-expanded]",
+      );
+      if (!control || !viewport.contains(control)) return;
+      const top = control.getBoundingClientRect().top;
+      const generation = generationRef.current;
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          if (generation !== generationRef.current || !control.isConnected)
+            return;
+          viewport.scrollTop += control.getBoundingClientRect().top - top;
+          observedTopRef.current = viewport.scrollTop;
+          lastScrollTopRef.current = viewport.scrollTop;
+        }),
+      );
+    };
+    viewport.addEventListener("touchmove", handleTouchMove, { passive: true });
+    viewport.addEventListener("click", handleDisclosure, true);
     viewport.addEventListener("keydown", handleKeyDown);
     viewport.addEventListener("pointerdown", handlePointerDown, {
       passive: true,
@@ -217,25 +267,23 @@ export function useConversationScroll({
     return () => {
       viewport.removeEventListener("wheel", handleWheel);
       viewport.removeEventListener("touchstart", handleTouchStart);
+      viewport.removeEventListener("touchmove", handleTouchMove);
+      viewport.removeEventListener("click", handleDisclosure, true);
       viewport.removeEventListener("keydown", handleKeyDown);
       viewport.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [setStickiness]);
+  }, [setStickiness, sessionKey]);
 
-  // 切换会话：重置恢复标记 + 触发标记
-  useEffect(() => {
-    if (sessionKey !== prevSessionRef.current) {
-      prevSessionRef.current = sessionKey;
-      restoredRef.current = false;
-      loadTriggeredRef.current = false;
-      shouldStickRef.current = true;
-      manuallyDetachedRef.current = false;
-    }
-  }, [sessionKey]);
-
-  // 恢复滚动位置（绘制前执行，配合外层 opacity 控制无闪烁）
+  // Reset and restore in one layout effect. Passive effects are too late here:
+  // a newly selected session would otherwise inherit restoredRef from the old one.
   useLayoutEffect(() => {
-    if (restoredRef.current) return;
+    const generation = ++generationRef.current;
+    restoredRef.current = false;
+    loadTriggeredRef.current = false;
+    programmaticScrollRef.current = false;
+    if (stickToBottomRafRef.current != null)
+      cancelAnimationFrame(stickToBottomRafRef.current);
+    stickToBottomRafRef.current = null;
     const el = viewportRef.current;
     if (!el) return;
 
@@ -249,7 +297,8 @@ export function useConversationScroll({
       lastScrollTopRef.current = el.scrollTop;
       // 巩固一次，防止后续布局变化竞争
       requestAnimationFrame(() => {
-        if (!viewportRef.current) return;
+        if (generationRef.current !== generation || viewportRef.current !== el)
+          return;
         const t =
           viewportRef.current.scrollHeight -
           viewportRef.current.clientHeight -
@@ -264,7 +313,11 @@ export function useConversationScroll({
       manuallyDetachedRef.current = false;
       lastScrollTopRef.current = el.scrollTop;
     }
+    setIsAtBottom(shouldStickRef.current);
     restoredRef.current = true;
+    return () => {
+      generationRef.current += 1;
+    };
   }, [sessionKey]);
 
   // hasMore 变化时重置加载触发标记（如切换会话后重新可加载）

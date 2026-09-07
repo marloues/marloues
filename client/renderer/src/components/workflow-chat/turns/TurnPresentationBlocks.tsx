@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { WorkflowResultCards } from "../activity/ResultCards";
 import { WorkflowAssistantAnswer } from "./AssistantAnswer";
 import { WorkflowTurnErrorCard } from "./TurnErrorCard";
@@ -12,6 +13,7 @@ interface Props {
   expanded: boolean;
   plainTextAnswers?: boolean;
   sessionId?: string;
+  beforeAnswer?: ReactNode;
 }
 
 export function TurnPresentationBlocks({
@@ -19,19 +21,24 @@ export function TurnPresentationBlocks({
   expanded,
   plainTextAnswers = false,
   sessionId,
+  beforeAnswer,
 }: Props) {
   return (
-    <>
-      {model.blocks.map((block) => (
+    <div className="workflow-turn-body" data-kind="turn-body">
+      {model.blocks.map((block, index) => (
         <div
           key={block.id}
           className="turn-presentation-block"
           data-kind="turn-presentation-block"
           data-block-kind={block.kind}
         >
+          {index ===
+          model.blocks.findIndex((entry) => entry.kind === "document")
+            ? beforeAnswer
+            : null}
           <TurnPresentationBlockView
             block={block}
-            expanded={expanded}
+            expanded={expanded || !model.process.canCollapse}
             isLastStreaming={model.runtime.isLastStreaming}
             plainTextAnswers={plainTextAnswers}
             sessionId={sessionId}
@@ -39,7 +46,7 @@ export function TurnPresentationBlocks({
           />
         </div>
       ))}
-    </>
+    </div>
   );
 }
 
@@ -70,7 +77,7 @@ function TurnPresentationBlockView({
             text={item.text}
             hasLeadingContent={false}
             plainText={plainTextAnswers}
-            streaming={isLastStreaming}
+            streaming={isLastStreaming && item.settled !== true}
           />
         )}
       />
@@ -79,7 +86,10 @@ function TurnPresentationBlockView({
 
   if (block.kind === "document") {
     return block.tone === "error" ? (
-      <WorkflowTurnErrorCard message={block.text} />
+      <WorkflowTurnErrorCard
+        message={block.text}
+        additionalDetails={block.additionalDetails}
+      />
     ) : (
       <WorkflowAssistantAnswer
         text={block.text}

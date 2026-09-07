@@ -9,13 +9,13 @@ describe("workflowTurnDurationLabel", () => {
 
   it("preserves sub-second, exact-second, and minute boundaries", () => {
     expect(workflowTurnDurationLabel(0)).toBe("");
-    expect(workflowTurnDurationLabel(999)).toBe("1秒");
+    expect(workflowTurnDurationLabel(999)).toBe("");
     expect(workflowTurnDurationLabel(5_000)).toBe("5秒");
     expect(workflowTurnDurationLabel(60_000)).toBe("1分钟");
   });
 
-  it("rounds a running timer up to avoid showing zero seconds", () => {
-    expect(workflowTurnDurationLabel(1_001, { running: true })).toBe("2秒");
+  it("floors elapsed seconds without inventing an extra second", () => {
+    expect(workflowTurnDurationLabel(1_001, { running: true })).toBe("1秒");
   });
 
   it("omits the label only when no duration is available", () => {

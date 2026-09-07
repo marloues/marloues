@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useItemDisclosure } from "../content/conversation-ui-state";
+import { useMarkdownContext } from "../content/MarkdownContext";
 import { Wrench } from "lucide-react";
 import type { WorkflowTurnItem } from "../../../../../shared/adapters/workflow-messages-to-read-thread";
 import {
@@ -19,10 +20,17 @@ interface Props {
 }
 
 export function WorkflowCollabAgentToolRow({ item }: Props) {
-  const [open, setOpen] = useState(false);
-  const activeSessionId = useUnifiedChatStore((state) => state.activeSessionId);
+  const [open, setOpen] = useItemDisclosure(item.id);
+  const context = useMarkdownContext();
+  const activeSessionId = useUnifiedChatStore(
+    (state) => context.sessionId ?? state.activeSessionId,
+  );
   const revealExecutionSubagent = useUnifiedChatStore(
     (state) => state.revealExecutionSubagent,
+  );
+  const sessions = useUnifiedChatStore((state) => state.sessions);
+  const setActiveSession = useUnifiedChatStore(
+    (state) => state.setActiveSession,
   );
   const hasDetail = Boolean(
     item.prompt ||
@@ -39,7 +47,13 @@ export function WorkflowCollabAgentToolRow({ item }: Props) {
       icon={<Wrench />}
       label={
         <>
-          {running ? "正在使用协作代理" : "已使用协作代理"}
+          {running
+            ? "正在使用协作代理"
+            : ["failed", "error"].includes(item.status)
+              ? "协作代理失败"
+              : ["cancelled", "canceled", "stopped"].includes(item.status)
+                ? "协作代理已停止"
+                : "已使用协作代理"}
           {running ? <WorkflowInlineDots /> : null}
         </>
       }
@@ -57,6 +71,18 @@ export function WorkflowCollabAgentToolRow({ item }: Props) {
       detail={
         <WorkflowActivityDetailStack>
           <CollabAgentDetail item={item} />
+          {item.receiverThreadIds
+            ?.filter((id) => sessions.some((session) => session.id === id))
+            .map((id) => (
+              <button
+                key={id}
+                type="button"
+                className="workflow-file-link"
+                onClick={() => setActiveSession(id)}
+              >
+                打开子任务 {id}
+              </button>
+            ))}
         </WorkflowActivityDetailStack>
       }
     />

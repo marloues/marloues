@@ -7,7 +7,9 @@
 
 专题方案：[Skill 与 MCP 市场接入](./marketplace-integration.md)
 
-对话区专题：[Marloues 组件、规则与适配差距](./marloues-conversation-area.md)（2026-09-05，原分析基于 main；专用 worktree 已有实现，见文首基线更正）
+对话区规格：[Marloues 组件与行为规则](./marloues-conversation-area.md)（2026-09-05，基于 `codex/architecture-review-20260905` 工作区，包含已实现能力与剩余差距）
+
+对话区细节：[组件参数、76 个分发分支及 MR41–MR90](./conversation-area/README.md)（含代码/表格/媒体、工具详情、资源、契约草案与验收场景）
 
 ---
 

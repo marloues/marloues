@@ -1,4 +1,5 @@
 import { WorkflowActivityGroup } from "./ActivityGroup";
+import { WorkflowImageViewGroup } from "./ImageViewGroup";
 import type { WorkflowActivityGroupEntry } from "./ActivityGroup";
 import { WorkflowAssistantAnswer } from "../";
 import { WorkflowCommandExecutionRow } from "./CommandExecutionRow";
@@ -15,6 +16,7 @@ type Props =
   | {
       kind: "activityItem";
       item: ProcessItem;
+      expanded?: boolean;
       reasoningDefaultOpen?: boolean;
     }
   | {
@@ -29,6 +31,11 @@ type Props =
 
 export function WorkflowActivityRenderer(props: Props) {
   if (props.kind === "activityItem") {
+    if (props.item.type === "imageView") {
+      return props.expanded !== false ? (
+        <WorkflowImageViewGroup items={[props.item]} />
+      ) : null;
+    }
     return (
       <WorkflowTurnItemRenderer
         item={props.item}
@@ -37,6 +44,13 @@ export function WorkflowActivityRenderer(props: Props) {
     );
   }
 
+  if (props.group.items.every((item) => item.type === "imageView")) {
+    return props.expanded ? (
+      <WorkflowImageViewGroup
+        items={props.group.items.filter((item) => item.type === "imageView")}
+      />
+    ) : null;
+  }
   return (
     <ActivityGroupBridge
       group={props.group}

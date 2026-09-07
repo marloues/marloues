@@ -7,6 +7,10 @@ import {
 } from "../../../../../../../client/renderer/src/components/workflow-chat/composer/composer-contract";
 
 describe("composer contract", () => {
+  it("keeps an explicitly dismissed suggestion closed", () => {
+    expect(composerSuggestionQuery("$qa-verify", -1)).toBeNull();
+    expect(composerSuggestionQuery("$qa-verify", 10)?.kind).toBe("skill");
+  });
   it("parses unicode command, skill and mention tokens at the caret", () => {
     expect(composerSuggestionQuery("前文 $图片-生成", 8)?.kind).toBe("skill");
     expect(composerSuggestionQuery("引用 @src/组件.tsx", 14)?.kind).toBe(

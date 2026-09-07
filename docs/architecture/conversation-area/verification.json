@@ -1,0 +1,21 @@
+{
+  "capturedAt": "2026-09-05",
+  "command": "node docs/architecture/conversation-area/verify.mjs",
+  "exitCode": 0,
+  "status": "static-verification-passed",
+  "bundle": "26.901.41600",
+  "assets": 4,
+  "functions": 112,
+  "mappedBranches": 76,
+  "rules": 90,
+  "localSourceFiles": 64,
+  "documentLinks": 129,
+  "plannedScenarios": 31,
+  "uiScenariosExecuted": 0,
+  "contractsSyntax": "TypeScript parsed successfully with Babel parser",
+  "productCodeChanged": false,
+  "notes": [
+    "31 acceptance scenarios are planned, not executed.",
+    "Earlier targeted 6 files / 44 tests are recorded in marloues-source.json; no UI rerun in this extension."
+  ]
+}

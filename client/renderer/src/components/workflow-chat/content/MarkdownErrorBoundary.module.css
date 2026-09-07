@@ -1,0 +1,12 @@
+.error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--danger) 28%, var(--border));
+  border-radius: var(--radius-md);
+  background: var(--raised-1);
+  color: var(--text-2);
+  font: var(--text-base)/1.5 var(--font-ui);
+}

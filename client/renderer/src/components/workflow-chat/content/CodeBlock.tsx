@@ -1,7 +1,18 @@
+import styles from "./CodeBlock.module.css";
+import { useMarkdownContext } from "./MarkdownContext";
 import type { ReactElement, ReactNode } from "react";
 import { WorkflowDetailCopyButton } from "../activity/DetailCopyButton";
+import { WrapText } from "lucide-react";
+import { useCodePreferences } from "./code-preferences";
+import { WorkflowMermaidBlock } from "./MermaidBlock";
 
-export function WorkflowCodeBlock({ children }: { children?: ReactNode }) {
+export function WorkflowCodeBlock({
+  children,
+  fenceOpen = false,
+}: {
+  children?: ReactNode;
+  fenceOpen?: boolean;
+}) {
   const codeElement = Array.isArray(children)
     ? children.find(isCodeElement)
     : isCodeElement(children)
@@ -9,16 +20,59 @@ export function WorkflowCodeBlock({ children }: { children?: ReactNode }) {
       : null;
   const language = languageFromClass(codeElement?.props?.className);
   const text = textFromNode(codeElement?.props?.children ?? children);
+  const { writingBlockMode } = useMarkdownContext();
+  const wrap = useCodePreferences((state) => state.wrap);
+  const toggleWrap = useCodePreferences((state) => state.toggleWrap);
+  if (
+    language.toLowerCase() === "mermaid" ||
+    (fenceOpen &&
+      language.length >= 2 &&
+      "mermaid".startsWith(language.toLowerCase()))
+  ) {
+    return <WorkflowMermaidBlock code={text} fenceOpen={fenceOpen} />;
+  }
 
+  if (
+    writingBlockMode &&
+    (!language || language === "markdown" || language === "md")
+  )
+    return (
+      <section
+        className={`workflow-writing-block ${styles.writing}`}
+        data-kind="writing-block"
+      >
+        <div className={styles.header} data-copy-exclude>
+          <span>写作</span>
+          {!fenceOpen ? (
+            <WorkflowDetailCopyButton value={text} label="复制写作内容" />
+          ) : null}
+        </div>
+        <pre className={styles.body}>{text}</pre>
+      </section>
+    );
   return (
     <div className="workflow-code-block" data-kind="workflow-code-block">
-      <div className="workflow-code-block-header">
+      <div className="workflow-code-block-header" data-copy-exclude>
         <span className="workflow-code-block-language">
           {language || "text"}
         </span>
-        <WorkflowDetailCopyButton value={text} label="复制代码" />
+        <button
+          type="button"
+          className="workflow-detail-copy-button"
+          aria-label="代码自动换行"
+          title="代码自动换行"
+          aria-pressed={wrap}
+          onClick={toggleWrap}
+        >
+          <WrapText size={14} />
+        </button>
+        {!fenceOpen ? (
+          <WorkflowDetailCopyButton value={text} label="复制代码" />
+        ) : null}
       </div>
-      <pre className="workflow-code-block-body">{children}</pre>
+      <pre className="workflow-code-block-body" data-wrap={wrap}>
+        {children}
+      </pre>
     </div>
   );
 }
@@ -30,7 +84,9 @@ function isCodeElement(
     value &&
     typeof value === "object" &&
     "props" in value &&
-    (value as { type?: unknown }).type === "code",
+    ((value as { type?: unknown }).type === "code" ||
+      (value as ReactElement<{ node?: { tagName?: string } }>).props.node
+        ?.tagName === "code"),
   );
 }
 

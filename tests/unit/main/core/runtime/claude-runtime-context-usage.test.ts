@@ -132,7 +132,10 @@ vi.mock("../../../../../client/main/services/outbox-service", () => ({
   recoverApplyingOutbox: vi.fn(),
 }));
 
-import { ClaudeRuntime } from "../../../../../client/main/core/runtime/claude-runtime";
+import {
+  ClaudeRuntime,
+  normalizeSdkMessage,
+} from "../../../../../client/main/core/runtime/claude-runtime";
 
 function settings(): AgentSettings {
   return {
@@ -147,6 +150,152 @@ function settings(): AgentSettings {
 }
 
 describe("ClaudeRuntime context usage", () => {
+  it("does not reopen a fast tool error when the SDK echoes its assistant block", () => {
+    const session = "late-tool-echo";
+    const turn = "late-tool-turn";
+    const block = {
+      type: "tool_use",
+      id: "glob",
+      name: "Glob",
+      input: { pattern: "**/*.ts" },
+    };
+    normalizeSdkMessage(session, turn, {
+      type: "stream_event",
+      event: { type: "content_block_start", index: 0, content_block: block },
+    });
+    const completion = normalizeSdkMessage(session, turn, {
+      type: "user",
+      message: {
+        content: [
+          {
+            type: "tool_result",
+            tool_use_id: "glob",
+            is_error: true,
+            content: "No such tool available: Glob",
+          },
+        ],
+      },
+    });
+    expect(completion).toContainEqual({
+      kind: "tool-complete",
+      payload: {
+        turnId: turn,
+        toolId: "glob",
+        isError: true,
+        output: "No such tool available: Glob",
+      },
+    });
+    expect(
+      normalizeSdkMessage(session, turn, {
+        type: "assistant",
+        message: { content: [block] },
+      }),
+    ).toEqual([]);
+    expect(
+      normalizeSdkMessage(session, turn, {
+        type: "stream_event",
+        event: { type: "content_block_stop", index: 0 },
+      }),
+    ).toEqual([]);
+    // Scope the guard to this invocation, not the tool's name or other turns.
+    expect(
+      normalizeSdkMessage(session, turn, {
+        type: "assistant",
+        message: { content: [{ ...block, id: "retry" }] },
+      })[0]?.kind,
+    ).toBe("tool-start");
+    normalizeSdkMessage(session, turn, { type: "result", subtype: "success" });
+  });
+
+  it.each(["result", "throw"])(
+    "keeps a user stop cancelled when the SDK ends with an error %s",
+    async (ending) => {
+      const nativeSessionId = "985c6dad-c171-45e5-bd8a-d2528f3cfa94";
+      mocks.queryClaude.mockResolvedValueOnce({
+        interrupt: vi.fn(async () => undefined),
+        close: vi.fn(),
+        [Symbol.asyncIterator]: async function* () {
+          yield {
+            type: "system",
+            subtype: "init",
+            session_id: nativeSessionId,
+          };
+          yield {
+            type: "stream_event",
+            event: {
+              type: "content_block_delta",
+              delta: { type: "text_delta", text: "Reading files" },
+            },
+          };
+          if (ending === "throw") throw new Error("query interrupted");
+          yield {
+            type: "result",
+            subtype: "error_during_execution",
+            is_error: true,
+            session_id: nativeSessionId,
+            errors: [
+              "[ede_diagnostic] result_type=user last_content_type=n/a stop_reason=tool_use",
+            ],
+          };
+        },
+      });
+      const runtime = new ClaudeRuntime();
+      const events: RuntimeEvent[] = [];
+      for await (const event of await runtime.sendMessage({
+        threadId: `stop-${ending}`,
+        turnId: "stop-turn",
+        content: "inspect",
+        settingsSnapshot: settings(),
+      })) {
+        events.push(event);
+        if (event.kind === "text-chunk")
+          await runtime.interruptTurn("stop-turn");
+      }
+      expect(events.some((event) => event.kind === "error")).toBe(false);
+      expect(events).toContainEqual(
+        expect.objectContaining({
+          kind: "turn-complete",
+          payload: expect.objectContaining({
+            result: "aborted",
+            final: true,
+            sdkSessionId: nativeSessionId,
+          }),
+        }),
+      );
+    },
+  );
+  it("marks streamed tool input as pending until its argument block closes", () => {
+    const start = normalizeSdkMessage("pending-input", "turn", {
+      type: "stream_event",
+      event: {
+        type: "content_block_start",
+        index: 0,
+        content_block: {
+          type: "tool_use",
+          id: "bash",
+          name: "Bash",
+          input: {},
+        },
+      },
+    });
+    const delta = normalizeSdkMessage("pending-input", "turn", {
+      type: "stream_event",
+      event: {
+        type: "content_block_delta",
+        index: 0,
+        delta: { type: "input_json_delta", partial_json: '{"command":"pwd"}' },
+      },
+    });
+    const stop = normalizeSdkMessage("pending-input", "turn", {
+      type: "stream_event",
+      event: { type: "content_block_stop", index: 0 },
+    });
+    expect(start[0]).toMatchObject({ payload: { isReady: false } });
+    expect(delta[0]).toMatchObject({ payload: { isReady: false } });
+    expect(stop[0]).toMatchObject({
+      payload: { isReady: true, input: { command: "pwd" } },
+    });
+  });
   it("finalizes the workflow turn when the SDK fails before streaming starts", async () => {
     mocks.queryClaude.mockRejectedValueOnce(
       new Error("Claude executable is missing"),
@@ -185,6 +334,61 @@ describe("ClaudeRuntime context usage", () => {
           error: "Claude executable is missing",
         },
       },
+    );
+  });
+
+  it("preserves the native session ID after a real max-turns result so the next request can resume", async () => {
+    const nativeSessionId = "bc115220-6dd2-4d5a-bb44-7d4bbfa2c76a";
+    mocks.queryClaude.mockResolvedValueOnce({
+      close: vi.fn(),
+      [Symbol.asyncIterator]: async function* () {
+        yield {
+          type: "result",
+          subtype: "error_max_turns",
+          is_error: true,
+          session_id: nativeSessionId,
+        };
+      },
+    });
+    const runtime = new ClaudeRuntime();
+    const events: RuntimeEvent[] = [];
+    for await (const event of await runtime.sendMessage({
+      threadId: "max-turns-resume",
+      turnId: "first",
+      content: "inspect",
+      settingsSnapshot: settings(),
+    }))
+      events.push(event);
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        kind: "turn-complete",
+        payload: expect.objectContaining({
+          result: "error",
+          sdkSessionId: nativeSessionId,
+        }),
+      }),
+    );
+    mocks.queryClaude.mockResolvedValueOnce({
+      close: vi.fn(),
+      [Symbol.asyncIterator]: async function* () {
+        yield {
+          type: "result",
+          subtype: "success",
+          session_id: nativeSessionId,
+        };
+      },
+    });
+    for await (const event of await runtime.sendMessage({
+      threadId: "max-turns-resume",
+      turnId: "second",
+      content: "continue",
+      runtimeThreadId: nativeSessionId,
+      settingsSnapshot: settings(),
+    }))
+      void event;
+    expect(mocks.queryClaude).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.objectContaining({ resume: nativeSessionId }),
     );
   });
 

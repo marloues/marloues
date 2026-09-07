@@ -1,3 +1,5 @@
+import { conversationInputBroker } from "./conversation-input";
+import { inputFieldsFromSchema } from "@shared/conversation-input";
 import type {
   AgentRuntime,
   Message,
@@ -27,6 +29,7 @@ import {
 } from "../security/security-host";
 import { configuredMcpTools } from "./mcp-tools";
 import { configuredRuntimeModels } from "./runtime-models";
+import { createBinaryEventAdapter } from "./binary-event-adapter";
 import { workflowThreadStore } from "./workflow-thread-store";
 
 function genId(): string {
@@ -225,13 +228,20 @@ export class BinaryRuntime implements AgentRuntime {
       const queue: RuntimeEvent[] = [];
       let completed = false;
       let error: string | null = null;
-      let assistantText = "";
+      const assistantMessages = new Map<string, string>();
+      const convertThreadEvent = createBinaryEventAdapter(turnId);
       const wakeups: Array<() => void> = [];
       const wake = () => wakeups.splice(0).forEach((resolve) => resolve());
 
       const enqueue = (runtimeEvent: RuntimeEvent) => {
-        if (runtimeEvent.kind === "text-chunk") {
-          assistantText += runtimeEvent.payload.content;
+        if (
+          runtimeEvent.kind === "item-updated" &&
+          runtimeEvent.payload.item.type === "agentMessage"
+        ) {
+          assistantMessages.set(
+            runtimeEvent.payload.item.id,
+            runtimeEvent.payload.item.text,
+          );
         }
         if (runtimeEvent.kind === "turn-complete") completed = true;
         workflowThreadStore.applyRuntimeEvent(
@@ -320,6 +330,71 @@ export class BinaryRuntime implements AgentRuntime {
 
       const onEvent = (sessionId: string, event: ThreadEvent) => {
         if (sessionId !== opts.threadId) return;
+        if (event.type === "input_requested" && event.inputRequest) {
+          const { method, params, signal, respond } = event.inputRequest;
+          const questions = Array.isArray(params.questions)
+            ? (params.questions as Array<{
+                id: string;
+                question: string;
+                options?: Array<{ label: string }>;
+              }>)
+            : [];
+          const ordinary = method === "item/tool/requestUserInput";
+          const schema = ordinary
+            ? {
+                fields: questions.map((question) => ({
+                  id: question.id,
+                  label: question.question,
+                  type: "string" as const,
+                  options: question.options?.map((option) => option.label),
+                  required: true,
+                })),
+              }
+            : inputFieldsFromSchema(
+                params.requestedSchema as Record<string, unknown> | undefined,
+              );
+          void conversationInputBroker
+            .request(
+              {
+                sessionId: opts.threadId,
+                turnId,
+                kind: ordinary
+                  ? "question"
+                  : params.mode === "url"
+                    ? "url"
+                    : "form",
+                title: ordinary
+                  ? "需要你的回答"
+                  : String(params.message ?? "需要提供信息"),
+                source: String(params.serverName ?? "Codex"),
+                url: typeof params.url === "string" ? params.url : undefined,
+                ...schema,
+              },
+              enqueue,
+              signal,
+            )
+            .then((answer) => {
+              respond(
+                ordinary
+                  ? {
+                      answers: Object.fromEntries(
+                        Object.entries(answer.content ?? {}).map(
+                          ([id, value]) => [
+                            id,
+                            {
+                              answers: Array.isArray(value)
+                                ? value.map(String)
+                                : [String(value)],
+                            },
+                          ],
+                        ),
+                      ),
+                    }
+                  : { action: answer.action, content: answer.content ?? null },
+              );
+            });
+          return;
+        }
         if (event.type === "approval_requested" && event.approval) {
           void reviewApproval(event.approval).catch((reviewError) => {
             const message =
@@ -356,7 +431,7 @@ export class BinaryRuntime implements AgentRuntime {
           });
           return;
         }
-        const converted = convertThreadEvent(turnId, event);
+        const converted = convertThreadEvent(event);
         for (const runtimeEvent of converted) {
           enqueue(runtimeEvent);
         }
@@ -415,10 +490,12 @@ export class BinaryRuntime implements AgentRuntime {
           await new Promise<void>((resolve) => wakeups.push(resolve));
         }
       } finally {
+        conversationInputBroker.cancelTurn(opts.threadId, turnId);
         removeEventListener();
         removeErrorListener();
       }
 
+      const assistantText = [...assistantMessages.values()].join("\n\n");
       if (assistantText.trim()) {
         pushMessage(opts.threadId, {
           id: genId(),
@@ -525,133 +602,6 @@ function approvalRuntimeEvent(
       allowSession: decision.allowSession || approval.allowSession,
     },
   };
-}
-function convertThreadEvent(
-  turnId: string,
-  event: ThreadEvent,
-): RuntimeEvent[] {
-  if (event.type === "turn.completed") {
-    return [{ kind: "turn-complete", payload: { turnId, result: "success" } }];
-  }
-  if (event.type === "turn.failed") {
-    const message = event.error?.message ?? "Binary runtime failed";
-    return [
-      {
-        kind: "error",
-        payload: {
-          code: "BINARY_TURN_FAILED",
-          message,
-          recoverable: Boolean(event.error?.recoverable),
-        },
-      },
-      {
-        kind: "turn-complete",
-        payload: { turnId, result: "error", error: message },
-      },
-    ];
-  }
-  if (event.type === "approval_requested" && event.approval) {
-    return [
-      {
-        kind: "approval-request",
-        payload: {
-          requestId: event.approval.id,
-          toolName: event.approval.tool,
-          reason: JSON.stringify(event.approval.toolInput ?? {}),
-          timeout: 120_000,
-          allowSession: event.approval.allowSession,
-        },
-      },
-    ];
-  }
-  if (!event.item) return [];
-
-  if (event.item.type === "agent_message" && event.item.text) {
-    return [
-      { kind: "text-chunk", payload: { turnId, content: event.item.text } },
-    ];
-  }
-  if (event.item.type === "reasoning" && event.item.text) {
-    return [
-      { kind: "thinking-chunk", payload: { turnId, content: event.item.text } },
-    ];
-  }
-  if (event.type === "item.started" && event.item.type === "mcp_tool_call") {
-    return [
-      {
-        kind: "tool-start",
-        payload: {
-          turnId,
-          toolId: event.item.id,
-          toolName: event.item.tool ?? "tool",
-          input: event.item.args ?? event.item.arguments ?? {},
-        },
-      },
-    ];
-  }
-  if (
-    event.type === "item.started" &&
-    event.item.type === "command_execution"
-  ) {
-    return [
-      {
-        kind: "tool-start",
-        payload: {
-          turnId,
-          toolId: event.item.id,
-          toolName: "Bash",
-          input: {
-            command: event.item.command ?? "",
-            shell: event.item.shell,
-          },
-        },
-      },
-    ];
-  }
-  if (
-    event.type === "item.completed" &&
-    event.item.type === "command_execution"
-  ) {
-    return [
-      {
-        kind: "tool-complete",
-        payload: {
-          turnId,
-          toolId: event.item.id,
-          output: event.item.aggregated_output ?? "",
-          isError:
-            event.item.status === "error" ||
-            (event.item.exit_code !== undefined && event.item.exit_code !== 0),
-        },
-      },
-    ];
-  }
-  if (event.type === "item.completed" && event.item.type === "mcp_tool_call") {
-    return [
-      {
-        kind: "tool-complete",
-        payload: {
-          turnId,
-          toolId: event.item.id,
-          output: event.item.result ?? "",
-          isError: event.item.status === "error",
-        },
-      },
-    ];
-  }
-  if (event.item.type === "error") {
-    const message =
-      event.item.message ??
-      event.item.error?.message ??
-      "Binary runtime item error";
-    return [
-      {
-        kind: "error",
-        payload: { code: "BINARY_ITEM_ERROR", message, recoverable: true },
-      },
-    ];
-  }
-  return [];
 }
 
 function runtimePermissionMode(

@@ -18,6 +18,7 @@ export type TurnPresentationBlock =
       text: string;
       tone: "normal" | "error";
       streaming: boolean;
+      additionalDetails?: unknown;
     }
   | {
       kind: "results";
@@ -48,6 +49,8 @@ export interface TurnPresentationModel {
     isLastStreaming: boolean;
     continuesPreviousTurn: boolean;
     showDuration: boolean;
+    clockRunning: boolean;
+    timingPlacement: "before-process" | "before-answer" | "hidden";
     startedAt: number | null;
     completedAt: number | null;
     durationMs: number | null;
@@ -59,6 +62,7 @@ export interface TurnPresentationModel {
   };
   process: {
     hasActivityItems: boolean;
+    canCollapse: boolean;
     stepCount: number;
   };
   documentText: string;

@@ -23,6 +23,24 @@ export function WorkflowCommandDetail({
         />
       </header>
       <div className="workflow-command-detail-body">
+        {typeof presentation.exitCode === "number" ||
+        typeof presentation.durationMs === "number" ? (
+          <div className="workflow-command-metadata">
+            {typeof presentation.exitCode === "number" ? (
+              <span>退出码 {presentation.exitCode}</span>
+            ) : null}
+            {typeof presentation.durationMs === "number" &&
+            Number.isFinite(presentation.durationMs) ? (
+              <span>
+                命令用时{" "}
+                {(Math.max(0, presentation.durationMs) / 1000).toFixed(1)} 秒
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+        {presentation.truncated ? (
+          <p role="status">输出已截断，以下是保留的输出。</p>
+        ) : null}
         {presentation.input ? (
           <CommandSection
             label="命令"

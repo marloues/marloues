@@ -92,6 +92,7 @@ export type UIEvent =
       toolId: string;
       toolName: string;
       input: unknown;
+      isReady?: boolean;
       /** SDK parent_tool_use_id. Present when this tool runs inside a subagent. */
       parentToolId?: string;
     }
@@ -114,6 +115,7 @@ export type UIEvent =
       toolId: string;
       output: unknown;
       isError: boolean;
+      status?: "completed" | "error" | "cancelled";
       /** SDK parent_tool_use_id. Present when this tool runs inside a subagent. */
       parentToolId?: string;
     }

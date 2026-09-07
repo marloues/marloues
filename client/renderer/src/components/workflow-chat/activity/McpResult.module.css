@@ -1,0 +1,33 @@
+.result {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-3);
+}
+.resourceLink {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.resource {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-2);
+}
+.resourceLink small,
+.raw small {
+  color: var(--text-3);
+  font-size: var(--text-xs);
+}
+.raw {
+  min-width: 0;
+}
+.action {
+  justify-self: start;
+}
+.error {
+  color: var(--danger);
+}

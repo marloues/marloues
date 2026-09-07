@@ -1,3 +1,4 @@
+import { useItemDisclosure } from "../content/conversation-ui-state";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   FileText,
@@ -54,12 +55,11 @@ export function WorkflowActivityGroup({
   renderCommandGroup,
   renderItem,
 }: Props) {
-  const [summaryExpanded, setSummaryExpanded] = useState(defaultDetailExpanded);
+  const [summaryExpanded, setSummaryExpanded] = useItemDisclosure(
+    `group:${group.items[0]?.id ?? group.id}`,
+    defaultDetailExpanded,
+  );
   const viewState = workflowActivityGroupViewState(expanded, summaryExpanded);
-
-  useEffect(() => {
-    setSummaryExpanded(defaultDetailExpanded);
-  }, [defaultDetailExpanded, group.id]);
 
   if (!viewState.showDetail) {
     return (
@@ -140,9 +140,8 @@ function ActivitySummaryRow({
         label={
           <>
             <span
-              className={
-                thinking ? "workflow-activity-thinking-label" : undefined
-              }
+              className={`workflow-activity-row-text${thinking ? " workflow-activity-thinking-label" : ""}`}
+              title={displayLabel}
             >
               {displayLabel}
             </span>
