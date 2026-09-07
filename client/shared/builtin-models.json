@@ -78,6 +78,76 @@
       ]
     },
     {
+      "id": "agw",
+      "name": "AGW 网关",
+      "endpoints": [
+        {
+          "id": "agw-anthropic",
+          "name": "Anthropic",
+          "protocol": "anthropic",
+          "baseUrl": "http://172.21.197.208:8080/efllmas-agw/anthropicproxy/",
+          "priority": 10
+        },
+        {
+          "id": "agw-openai",
+          "name": "OpenAI Chat",
+          "protocol": "openai-chat",
+          "baseUrl": "http://172.21.197.208:8080/efllmas-agw/v1/",
+          "priority": 20
+        }
+      ],
+      "models": [
+        {
+          "id": "deepseek-v4-pro-0813-aliyun",
+          "label": "DeepSeek V4 Pro (Aliyun)",
+          "contextWindowTokens": 128000,
+          "maxOutputTokens": 384000,
+          "supportsThinking": true,
+          "supportsVision": false
+        },
+        {
+          "id": "glm-5.2-aliyun",
+          "label": "GLM-5.2 (Aliyun)",
+          "contextWindowTokens": 128000,
+          "maxOutputTokens": 48000,
+          "supportsThinking": true,
+          "supportsVision": true
+        },
+        {
+          "id": "glm-5.2-fast-preview-aliyun",
+          "label": "GLM-5.2 Fast Preview (Aliyun)",
+          "contextWindowTokens": 128000,
+          "maxOutputTokens": 48000,
+          "supportsThinking": true,
+          "supportsVision": true
+        },
+        {
+          "id": "glm-5.3-aliyun",
+          "label": "GLM-5.3 (Aliyun)",
+          "contextWindowTokens": 121600,
+          "maxOutputTokens": 48000,
+          "supportsThinking": true,
+          "supportsVision": true
+        },
+        {
+          "id": "kimi-k3-aliyun",
+          "label": "Kimi K3 (Aliyun)",
+          "contextWindowTokens": 256000,
+          "maxOutputTokens": 32000,
+          "supportsThinking": true,
+          "supportsVision": true
+        },
+        {
+          "id": "qwen3.8-max-aliyun",
+          "label": "Qwen3.8 Max (Aliyun)",
+          "contextWindowTokens": 256000,
+          "maxOutputTokens": 32000,
+          "supportsThinking": true,
+          "supportsVision": true
+        }
+      ]
+    },
+    {
       "id": "zhipu",
       "name": "智谱 GLM",
       "endpoints": [

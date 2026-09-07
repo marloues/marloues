@@ -1,7 +1,7 @@
 import builtinModelsData from "./builtin-models.json";
 import type { ModelOption, ModelProviderEndpoint } from "./types";
 
-export type BuiltinProviderPresetId = "deepseek" | "minimax" | "zhipu";
+export type BuiltinProviderPresetId = "deepseek" | "minimax" | "zhipu" | "agw";
 
 export interface BuiltinEndpointEntry {
   id: string;
