@@ -1,0 +1,1086 @@
+{
+  "schemaVersion": 1,
+  "analysisDate": "2026-09-05T12:36:53.751Z",
+  "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+  "packageName": "openai-codex-electron",
+  "version": "26.901.41600",
+  "offsetConvention": "zero-based UTF-16 code units; end exclusive; unformatted decoded JavaScript",
+  "scope": "Installed client static inspection, ordinary local Codex task flow; not an official specification",
+  "assets": [
+    {
+      "path": "webview/assets/app-initial-86767c3d23e5.js",
+      "bytes": 10301862,
+      "sha256": "fb72076ee44f6596f8dafa9a3effe37a3527a87db21fde8b4042233957b554bb"
+    },
+    {
+      "path": "webview/assets/split-items-into-render-groups-6e1e0319ac77.js",
+      "bytes": 5280,
+      "sha256": "e566c72a13555f3a80d06509a6974f781df2a98545196667fb21301d38f2412a"
+    },
+    {
+      "path": "webview/assets/local-conversation-turn-91afa1cb9913.js",
+      "bytes": 47085,
+      "sha256": "852c4196bfb25fe2c4b42d12428bcda1c63b99dd296a0963d92745b3f3d17816"
+    },
+    {
+      "path": "webview/assets/content-reference-markers-bd6666956a91.js",
+      "bytes": 20898,
+      "sha256": "3676c221bf784001fb78a3c945382a8ef828e7616afd8077215b5a35b9e94abb"
+    },
+    {
+      "path": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+      "bytes": 469201,
+      "sha256": "85e7a17d5bf5a1e3d4fec04beb0ce4e3cf7ab2f9965edb56e611d88c34cf512a"
+    },
+    {
+      "path": "webview/assets/generated-image-output-visibility-27fee60e9ccf.js",
+      "bytes": 1007,
+      "sha256": "3a8384abcc7bc025a76e3a99600c536fe64849a0467cf63b70c5962e83a8eb43"
+    },
+    {
+      "path": "webview/assets/local-conversation-thread-turn-entries-81b9949c3002.js",
+      "bytes": 7235,
+      "sha256": "8e730534c9a539f8305b0d02399a94f025faac66bc9190382c1d2e35d1e15e6e"
+    },
+    {
+      "path": "webview/assets/thread-scroll-layout-e1ad7d066d92.js",
+      "bytes": 17883,
+      "sha256": "4c2209d9fa29264e0efd8c39ce0da1f07c87f1248b5ad81159dbd0db56fbe4cf"
+    },
+    {
+      "path": "webview/assets/local-conversation-plan-model-eb0246445024.js",
+      "bytes": 576,
+      "sha256": "7c54e5d1d99d978fa9dc89e0b84ca05cd2b121935fc7f3ea105a77386b960905"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "E01",
+      "title": "协议终态到展示终态",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "hJn",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 3620391,
+          "endUtf16": 3620554,
+          "sha256": "2f8d1249040a4105ea56b10bb11310c188cee34e00a26840cb20f08ccd8bb1ec"
+        }
+      ]
+    },
+    {
+      "id": "E02",
+      "title": "新轮次提交和结果未知",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "iun",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 2908385,
+          "endUtf16": 2914343,
+          "sha256": "93300807c05986cf9a05d2ff6341c9f158f63727f12d2fb9aa684bc2ef229a48"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "tun",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 2907323,
+          "endUtf16": 2907458,
+          "sha256": "be8bc628e175da4630cbb0411ab4cfe1194414dec7f805b2969a0f78b0968ee8"
+        }
+      ]
+    },
+    {
+      "id": "E03",
+      "title": "轮次事件处理",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "bin",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 2780808,
+          "endUtf16": 2785925,
+          "sha256": "5d30967fb6922ab4210ef14b2b2209f94d44500239a5d305068e4a081ae6ad8b"
+        }
+      ]
+    },
+    {
+      "id": "E04",
+      "title": "条目事件与流式增量",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Rrn",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 2768379,
+          "endUtf16": 2771843,
+          "sha256": "5f09db0ce60f8eb73b78cd5affdb31dee15d2d97c9fe12ff8d160fd832e23c32"
+        }
+      ]
+    },
+    {
+      "id": "E05",
+      "title": "按 item ID 覆盖或追加",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "xC",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 2692192,
+          "endUtf16": 2692310,
+          "sha256": "b50c1271e81ce5f3d12dec8541d09bded6cb775e8758b39755ef8ffc5add3ef0"
+        }
+      ]
+    },
+    {
+      "id": "E06",
+      "title": "按帧缓冲与结束前排空",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Utn",
+          "kind": "AssignmentExpression",
+          "startUtf16": 2738247,
+          "endUtf16": 2741023,
+          "sha256": "dd10872a008eed6a4f5b1124fa6c724f438fe19da0a54eb6e92b238fa97aac94"
+        }
+      ]
+    },
+    {
+      "id": "E07",
+      "title": "终端输出尾部保留函数",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Ltn",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 2737827,
+          "endUtf16": 2738168,
+          "sha256": "41b829c504ce90bf3369cacaa50b1d085ca980b1a3114a261e27f837987fe1a1"
+        }
+      ]
+    },
+    {
+      "id": "E08",
+      "title": "运行中追加消息",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "fun",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 2914820,
+          "endUtf16": 2917826,
+          "sha256": "1daa6f8394e8b45fa981430b46d937c8caf7ac1df60e3f2f5c4871b26358a2ff"
+        }
+      ]
+    },
+    {
+      "id": "E09",
+      "title": "等待真实轮次 ID 与提交路径",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "gun",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 2918565,
+          "endUtf16": 2919101,
+          "sha256": "17809e997f13f05c5d640b56632916a1c6d876fdcde0921931f0cd963c296f4b"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "hun",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 2918114,
+          "endUtf16": 2918565,
+          "sha256": "8bc79ab6e9ba747975e09e96bb45133b7e52856ecc8c70de0e162571fa2276d8"
+        }
+      ]
+    },
+    {
+      "id": "E10",
+      "title": "发送与队列协调器",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Sdn",
+          "kind": "AssignmentExpression",
+          "startUtf16": 2957162,
+          "endUtf16": 2970881,
+          "sha256": "e9a4fc752885058800c56120411505a1031f6562ec4427bc3af005a630a84f7b"
+        }
+      ]
+    },
+    {
+      "id": "E11",
+      "title": "结束时恢复未接受消息",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Frn",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 2767940,
+          "endUtf16": 2768279,
+          "sha256": "1eeb64941de080dfe97da669c5b24bf99de10d1800be57d0c5b419213d4c1aea"
+        }
+      ]
+    },
+    {
+      "id": "E12",
+      "title": "中断当前轮次与竞态修复",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Etn",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 2734130,
+          "endUtf16": 2735412,
+          "sha256": "fc59c91c33d2fad34ed3ef3ba0dfed3c06465db7138e14980a46c94757e75273"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Otn",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 2735550,
+          "endUtf16": 2735611,
+          "sha256": "9d502c45ae50b964b8b3c3650969c028603be4e2b5f88b0ce7322293ca58f3c2"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "ktn",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 2735611,
+          "endUtf16": 2736217,
+          "sha256": "0257193f58cda0c7a05342269d887c69a25dcedd0ba4e9f85f9274735cc3dbad"
+        }
+      ]
+    },
+    {
+      "id": "E13",
+      "title": "用户中断、目标暂停及 owner 路由",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "interruptConversation",
+          "kind": "ClassMethod",
+          "startUtf16": 3014739,
+          "endUtf16": 3015060,
+          "sha256": "f8d63a1408c64ac8bbd30e0e9481fed0c4ab169a934ec8614d627bfd9fb344f4"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "interruptConversationSelf",
+          "kind": "ClassMethod",
+          "startUtf16": 3016338,
+          "endUtf16": 3018403,
+          "sha256": "6ad8b9b029aa2f5f49bb66ca2ad8e75148e40b9698a8742397694f01617c948b"
+        }
+      ]
+    },
+    {
+      "id": "E14",
+      "title": "中断后代任务",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Mtn",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 2736273,
+          "endUtf16": 2737229,
+          "sha256": "83cb75bb4a4aa9b36d659dd5a6a6be8faa138eba6d10cfb64a2d3843c81e0d6c"
+        }
+      ]
+    },
+    {
+      "id": "E15",
+      "title": "服务端请求已解决",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Vrn",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 2772414,
+          "endUtf16": 2772942,
+          "sha256": "e8494b8db9474bd490412257649b8d7eb245b7661c0cb18c3eb2d6ca11e0f6db"
+        }
+      ]
+    },
+    {
+      "id": "E16",
+      "title": "审批响应",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "L9t",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 2684428,
+          "endUtf16": 2684983,
+          "sha256": "1f70c91f6bf78bb570b32df30ed8581e8415c16514daf94b1e43d92a3b7caf57"
+        }
+      ]
+    },
+    {
+      "id": "E17",
+      "title": "优先显示哪个待处理请求",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "N_r",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 4186343,
+          "endUtf16": 4187250,
+          "sha256": "ab1a061a59da9621301f2e2b587a579199e8f4c08a8b5d3c85ad895895c230f4"
+        }
+      ]
+    },
+    {
+      "id": "E18",
+      "title": "请求按轮次归类",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "R_r",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 4188372,
+          "endUtf16": 4190449,
+          "sha256": "fc442c10d20d8706d4de25aad5af054603d4fc94d6b550a5a110b5def39bbf48"
+        }
+      ]
+    },
+    {
+      "id": "E19",
+      "title": "请求是否阻塞",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "P_r",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 4187250,
+          "endUtf16": 4187455,
+          "sha256": "38c8c1fd72d5de70a3b530e74930b54419409c9c3e9123ef9dee9a653f127a8d"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "L_r",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 4188329,
+          "endUtf16": 4188372,
+          "sha256": "d112b0da8f75173bb29a6724f9475e477b8f0ca5fc970150d9cca20649fea0a0"
+        }
+      ]
+    },
+    {
+      "id": "E20",
+      "title": "恢复状态下的等待识别",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "F_r",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 4187455,
+          "endUtf16": 4188014,
+          "sha256": "5174048ca987d4af5961711da564dde1051f75f26305070a1146355b6aba1241"
+        }
+      ]
+    },
+    {
+      "id": "E21",
+      "title": "命令、补丁和权限请求投影",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "W_r",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 4191864,
+          "endUtf16": 4192053,
+          "sha256": "3d081b8631360c92c33924979d27c590a370de22bfb2c7090dc554e112ca8c1e"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "K_r",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 4192228,
+          "endUtf16": 4192434,
+          "sha256": "623166e15e2665e50cc223c4d90b4a78ff4930951f35bc68ba6825172b8955e0"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "J_r",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 4193113,
+          "endUtf16": 4193544,
+          "sha256": "6e20fb39b2b8ad103211aa0f5569b07bb8518164e99cffbe7d1f0a4c3e63bcea"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Y_r",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 4193544,
+          "endUtf16": 4193662,
+          "sha256": "9063c5b6e1ed62297295aab92519335f3504be4bfab59e6f8f9786b150e02c66"
+        }
+      ]
+    },
+    {
+      "id": "E22",
+      "title": "计划实施请求",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "X_r",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 4193662,
+          "endUtf16": 4193894,
+          "sha256": "a67caea541991d3f464e8702b9669b35e80ad008fd43b8d1421423e98b7f5ca2"
+        }
+      ]
+    },
+    {
+      "id": "E23",
+      "title": "异步问题与答案匹配",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "iqn",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 3605435,
+          "endUtf16": 3605726,
+          "sha256": "24b85987637bac5462b1880793dc80f23b616ea78c10c5599e940d1592ff3c42"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "aqn",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 3605726,
+          "endUtf16": 3605819,
+          "sha256": "c7d7c7bbb4e275255fd1ab3f6bd685d2cfb4096033a67da070d0f26c7aeacc7c"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "cqn",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 3606083,
+          "endUtf16": 3607217,
+          "sha256": "33e5ead93909fefc6d0f7808a2453ff8c954931e1feeb2c3bc9c967dc6be51a3"
+        }
+      ]
+    },
+    {
+      "id": "E24",
+      "title": "原始轮次转展示消息",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "dj",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 3667349,
+          "endUtf16": 3683775,
+          "sha256": "8c15288602df97fc255d698e32738bb4db76160568caeec38f9dc0f13189fc3f"
+        }
+      ]
+    },
+    {
+      "id": "E25",
+      "title": "拆分用户、过程、最终答复、输出、请求",
+      "locations": [
+        {
+          "asset": "webview/assets/split-items-into-render-groups-6e1e0319ac77.js",
+          "symbol": "d",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 348,
+          "endUtf16": 3453,
+          "sha256": "27c08244a101b8e19fa665a14fca86bdbbac6b122c9fb87e94cf23218aedbacb"
+        },
+        {
+          "asset": "webview/assets/split-items-into-render-groups-6e1e0319ac77.js",
+          "symbol": "f",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 3453,
+          "endUtf16": 3516,
+          "sha256": "e65dbeb54cb5f581668ef7f584c3081d512fd04e88fb254571e12277510f1b63"
+        },
+        {
+          "asset": "webview/assets/split-items-into-render-groups-6e1e0319ac77.js",
+          "symbol": "x",
+          "kind": "AssignmentExpression",
+          "startUtf16": 4007,
+          "endUtf16": 4687,
+          "sha256": "e63c76a242a3560504718568ee9b4b72bbdc5324bf8c31bcadcd831d42358895"
+        },
+        {
+          "asset": "webview/assets/split-items-into-render-groups-6e1e0319ac77.js",
+          "symbol": "b",
+          "kind": "AssignmentExpression",
+          "startUtf16": 3879,
+          "endUtf16": 4006,
+          "sha256": "8434f0fefb7b3ee42ede89c371c554ece8a3d6e1eb3ac4ab86d3531afabbbe80"
+        }
+      ]
+    },
+    {
+      "id": "E26",
+      "title": "工作指示器选择",
+      "locations": [
+        {
+          "asset": "webview/assets/local-conversation-turn-91afa1cb9913.js",
+          "symbol": "Xr",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 12349,
+          "endUtf16": 12777,
+          "sha256": "fcf0a24374fa930ee34512ff685f34ff31dff8e7514297a016e52f88d451930f"
+        }
+      ]
+    },
+    {
+      "id": "E27",
+      "title": "轮次展示组合和停止文案",
+      "locations": [
+        {
+          "asset": "webview/assets/local-conversation-turn-91afa1cb9913.js",
+          "symbol": "_i",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 18190,
+          "endUtf16": 38910,
+          "sha256": "77750e0b4898e3fcd19efa3eb768cd4aecf506cd534b9b3ed265d856432d9dd5"
+        }
+      ]
+    },
+    {
+      "id": "E28",
+      "title": "未完成判定与探索聚合",
+      "locations": [
+        {
+          "asset": "webview/assets/content-reference-markers-bd6666956a91.js",
+          "symbol": "W",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 9264,
+          "endUtf16": 10405,
+          "sha256": "48dbf2396df035d555f8b6b046d2a5d970937fb49d3d9bba1d7d567b3889f88e"
+        },
+        {
+          "asset": "webview/assets/content-reference-markers-bd6666956a91.js",
+          "symbol": "K",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 10423,
+          "endUtf16": 11057,
+          "sha256": "c473d9201c79c514ae87caac25ea1b769796e646dffa9f5876c82ed74f43b7b3"
+        },
+        {
+          "asset": "webview/assets/content-reference-markers-bd6666956a91.js",
+          "symbol": "we",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 11057,
+          "endUtf16": 11192,
+          "sha256": "1ff2a700e2080f107c073a568ab07aa9c24ebc812f98555b27b712b08b978b9e"
+        }
+      ]
+    },
+    {
+      "id": "E29",
+      "title": "活动分组、合并和最新状态选择",
+      "locations": [
+        {
+          "asset": "webview/assets/content-reference-markers-bd6666956a91.js",
+          "symbol": "Ne",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 17429,
+          "endUtf16": 17661,
+          "sha256": "7c00df421bb1579577c7811ff483a32d3fa0bad33a0baa54c2ee52d2b313dec7"
+        },
+        {
+          "asset": "webview/assets/content-reference-markers-bd6666956a91.js",
+          "symbol": "Fe",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 17733,
+          "endUtf16": 18287,
+          "sha256": "62f7d220bf2c54984525fdd7596e0364a6a48027b366738205c4f8ca139c1fc6"
+        },
+        {
+          "asset": "webview/assets/content-reference-markers-bd6666956a91.js",
+          "symbol": "Z",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 18524,
+          "endUtf16": 19000,
+          "sha256": "34ef9b0678ec6ce691e901c6386a0919955e58a49ff6a87f5e1fb9e73d686707"
+        },
+        {
+          "asset": "webview/assets/content-reference-markers-bd6666956a91.js",
+          "symbol": "Ie",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 18287,
+          "endUtf16": 18524,
+          "sha256": "88a1f6123d8155296cad0571aefaddab9e5360427879cab5a86b9e117f6f1642"
+        },
+        {
+          "asset": "webview/assets/content-reference-markers-bd6666956a91.js",
+          "symbol": "Le",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 19000,
+          "endUtf16": 19382,
+          "sha256": "db51a19c45e9090bfeb822b70315df0f5d89d06b4472dc25d7459f5346b88eab"
+        },
+        {
+          "asset": "webview/assets/content-reference-markers-bd6666956a91.js",
+          "symbol": "Q",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 19558,
+          "endUtf16": 20289,
+          "sha256": "9b03699cad83b9a0468a102699190fad1949ae5e4b9355f933724fb69a15630e"
+        }
+      ]
+    },
+    {
+      "id": "E30",
+      "title": "活动摘要计数与去重",
+      "locations": [
+        {
+          "asset": "webview/assets/content-reference-markers-bd6666956a91.js",
+          "symbol": "De",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 11500,
+          "endUtf16": 12362,
+          "sha256": "f17357921f054e7d43f155397141234a6a463c9416adb144c27fbe668431982a"
+        },
+        {
+          "asset": "webview/assets/content-reference-markers-bd6666956a91.js",
+          "symbol": "Oe",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 12362,
+          "endUtf16": 14828,
+          "sha256": "4278c6c137544a430fcee40b739a3f8e01b45d345f61be7a2e78a59908fab474"
+        },
+        {
+          "asset": "webview/assets/content-reference-markers-bd6666956a91.js",
+          "symbol": "ke",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 14828,
+          "endUtf16": 16683,
+          "sha256": "5ee40c24eba9e52dc0ee7560ff92a3ed8f7d4c791db05af6f8eee77af9fcb754"
+        },
+        {
+          "asset": "webview/assets/content-reference-markers-bd6666956a91.js",
+          "symbol": "X",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 16725,
+          "endUtf16": 16947,
+          "sha256": "29dd6b7cffad45297ae598865cec352f009d83abbb77ae51559b65abca8eaf07"
+        }
+      ]
+    },
+    {
+      "id": "E31",
+      "title": "折叠许可与默认值",
+      "locations": [
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "$E",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 360130,
+          "endUtf16": 360383,
+          "sha256": "bd2e618d9567df0501b43b44486f6199e628cae4e91a3454350ec69eb87fe188"
+        }
+      ]
+    },
+    {
+      "id": "E32",
+      "title": "折叠区划分和交互卡保留",
+      "locations": [
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "tD",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 360402,
+          "endUtf16": 364392,
+          "sha256": "64cba1e31abeeea4f2d2a3a6e1d17b7eda3cc6fa6025f34bf2ae77e737858804"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "GE",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 358241,
+          "endUtf16": 358787,
+          "sha256": "ba6f11b880425e10d97cd86f54a2e29c61944ef408e89a3c6d85c299a7aeea0a"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "KE",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 358787,
+          "endUtf16": 359110,
+          "sha256": "4d9add4b2af2dfb5be3b10fe32796503faec67d8836296e18445804a5a927ace"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "qE",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 359110,
+          "endUtf16": 359356,
+          "sha256": "5debb7b8d66ec81038b6e1851a10912dd80f897a7873cc9c52f315b836d6e486"
+        }
+      ]
+    },
+    {
+      "id": "E33",
+      "title": "计时项生成及 sleep 识别",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "mqn",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 3607449,
+          "endUtf16": 3607721,
+          "sha256": "7214d42af58531055eb2fb7e41c4bd25907cf81c34510c165544f1e6e98e1406"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "hqn",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 3607721,
+          "endUtf16": 3607778,
+          "sha256": "aeb32dc395af28c7e5615b27c3fcc4bc8d4aefd3db8d32a4b6125aec490c5cff"
+        }
+      ]
+    },
+    {
+      "id": "E34",
+      "title": "计时项位置及最终答复识别",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "tQn",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 3687446,
+          "endUtf16": 3687785,
+          "sha256": "ea327b740e7e4c91f56b5d5bc2d9f5ab36881257a4ad3bdbc7996e3956c66312"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "nQn",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 3687785,
+          "endUtf16": 3688047,
+          "sha256": "9d90d1c1a46a663c98b94d5edd7dd881df005e3cf802d0d82246cd59ae05fc2f"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "rQn",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 3688047,
+          "endUtf16": 3688126,
+          "sha256": "09468dd679ed198b3e502743635a5de44848c72de7fd48845dbd97be59141b73"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "iQn",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 3688126,
+          "endUtf16": 3688197,
+          "sha256": "5a0d1625e215b2016c9a99df57edc9055467e6a647023cfc22b7b73a8e9711db"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "aQn",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 3688197,
+          "endUtf16": 3688311,
+          "sha256": "acbcd60c19b7f72db923d7a1bb281c509262ce238cf160b3caa9e5fd861efc88"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "oQn",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 3688311,
+          "endUtf16": 3688501,
+          "sha256": "e7af51280d87228b222c3299560b5929971c8470098d15ed50332cc747756323"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "OGn",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 3568678,
+          "endUtf16": 3568777,
+          "sha256": "25b9a468c5cbce533a61343c15aadd8ca811a33ad7da6fd5378085744fd3d5a2"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "kGn",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 3568777,
+          "endUtf16": 3568834,
+          "sha256": "9204e520fbd02867a35cc2da6ed195b48ba7964914f8a447361871e240a9ec7d"
+        }
+      ]
+    },
+    {
+      "id": "E35",
+      "title": "用时文案和折叠标题回退",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Sna",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 6520002,
+          "endUtf16": 6521557,
+          "sha256": "7592be5ca3fc7751c693baafde73a3e4591f50ad4af3e79b14edb1a01c6fbfc8"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "wna",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 6522820,
+          "endUtf16": 6523261,
+          "sha256": "3d18095a7e0124767a95cdd2a69cfd233a7954cc2db9ce8b75d0525a90e34ec1"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "kna",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 6523390,
+          "endUtf16": 6524741,
+          "sha256": "a220f43dd9aa4ff16d48567c788df8911e4b5d22efcb501d4c13032b8c843c82"
+        }
+      ]
+    },
+    {
+      "id": "E36",
+      "title": "图片占位和演示文稿输出",
+      "locations": [
+        {
+          "asset": "webview/assets/generated-image-output-visibility-27fee60e9ccf.js",
+          "symbol": "r",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 116,
+          "endUtf16": 536,
+          "sha256": "a366b4020affb0826c2171c9559be43bdff1aea2d10d08c226bd8bd1121fdede"
+        },
+        {
+          "asset": "webview/assets/generated-image-output-visibility-27fee60e9ccf.js",
+          "symbol": "i",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 536,
+          "endUtf16": 692,
+          "sha256": "3ac78bf0c9be4664dbcba2ebe57ca07b9af28041952a6ac01adbcab360a83c80"
+        },
+        {
+          "asset": "webview/assets/generated-image-output-visibility-27fee60e9ccf.js",
+          "symbol": "o",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 827,
+          "endUtf16": 873,
+          "sha256": "8a6329ec0e27a1caae5cdbff4825c8141ae6502a240587a2435c8b1900d864b2"
+        }
+      ]
+    },
+    {
+      "id": "E37",
+      "title": "重开任务与恢复历史",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Fln",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 2880865,
+          "endUtf16": 2900517,
+          "sha256": "02b0f21c0cd40cf1b99ab6e6d82854e3e41e7853f1853681cdf1e12325861aeb"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Iln",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 2900517,
+          "endUtf16": 2900700,
+          "sha256": "0c3c393ba399382acf4dfdce07b9dc55e1fada2c790e05b78c49d38d63ac9385"
+        }
+      ]
+    },
+    {
+      "id": "E38",
+      "title": "历史分页和旧响应保护",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "loadConversationTurns",
+          "kind": "ClassMethod",
+          "startUtf16": 2546397,
+          "endUtf16": 2546839,
+          "sha256": "edf9f44f05f85519e7083aaec2e5bcc748eb0b2e8365db8ec8cd1e0b83fe2a14"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "loadCurrentConversationTurns",
+          "kind": "ClassMethod",
+          "startUtf16": 2547525,
+          "endUtf16": 2550009,
+          "sha256": "cc51c4549f8547b37e90d3a1adbbc64ebe578c22cf692c99913cd0add28ea27d"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "loadOlderConversationTurnsPage",
+          "kind": "ClassMethod",
+          "startUtf16": 2546073,
+          "endUtf16": 2546397,
+          "sha256": "1f229a3cbc6f1223c271ff1072ee60c378e9e1fb7fb1c3e284e6ec4576d615dc"
+        }
+      ]
+    },
+    {
+      "id": "E39",
+      "title": "可见轮次、卡片展开和渲染复用",
+      "locations": [
+        {
+          "asset": "webview/assets/local-conversation-thread-turn-entries-81b9949c3002.js",
+          "symbol": "y",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 540,
+          "endUtf16": 3901,
+          "sha256": "38a69334cac3da100db24c30464731072dcc5e2aeae5677d21e615a94c60a0b0"
+        },
+        {
+          "asset": "webview/assets/local-conversation-thread-turn-entries-81b9949c3002.js",
+          "symbol": "x",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 4637,
+          "endUtf16": 6759,
+          "sha256": "9a69e9afbf78b20b39e653447ba3e2e354335d4d53e4a074893830d83354b829"
+        }
+      ]
+    },
+    {
+      "id": "E40",
+      "title": "滚动位置和阅读意图保持",
+      "locations": [
+        {
+          "asset": "webview/assets/thread-scroll-layout-e1ad7d066d92.js",
+          "symbol": "Fe",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 3639,
+          "endUtf16": 16876,
+          "sha256": "77383b63c73918535db32ea297c7900ebd52ae6b41f0e11e1fa5adc207f3b874"
+        }
+      ]
+    },
+    {
+      "id": "E41",
+      "title": "返回底部、键盘、加载阈值",
+      "locations": [
+        {
+          "asset": "webview/assets/thread-scroll-layout-e1ad7d066d92.js",
+          "symbol": "je",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 2573,
+          "endUtf16": 3432,
+          "sha256": "e17a692a2c6cefd82542c48940d387279d42c5441c65a79c8f2bbd8cc2fcc4fc"
+        },
+        {
+          "asset": "webview/assets/thread-scroll-layout-e1ad7d066d92.js",
+          "symbol": "Le",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 16899,
+          "endUtf16": 17367,
+          "sha256": "06f07c0695c04635ca58d3d4cfad78610bd6e02a2f960fc70bafd8a230213898"
+        },
+        {
+          "asset": "webview/assets/thread-scroll-layout-e1ad7d066d92.js",
+          "symbol": "Re",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 17367,
+          "endUtf16": 17398,
+          "sha256": "8e8bb02a8d1b72f8b3380cb7dc1c4cdc1d71ffbcaa8ebcfca730904b4484088a"
+        },
+        {
+          "asset": "webview/assets/thread-scroll-layout-e1ad7d066d92.js",
+          "symbol": "ze",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 17398,
+          "endUtf16": 17464,
+          "sha256": "3f54a7e1f2695752faac7fc72893f91569acddf286b4bb1e2d486f4f982241a4"
+        },
+        {
+          "asset": "webview/assets/thread-scroll-layout-e1ad7d066d92.js",
+          "symbol": "Be",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 17464,
+          "endUtf16": 17521,
+          "sha256": "2535712453714acbf9339f66eae17f72f38699e2f41bc6b009bc491f6229a1ce"
+        },
+        {
+          "asset": "webview/assets/thread-scroll-layout-e1ad7d066d92.js",
+          "symbol": "Ve",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 17521,
+          "endUtf16": 17610,
+          "sha256": "174de8af2cc3ab5249cf8ca166806f4a526d645f0af6f862b73ca612c4d4a21f"
+        }
+      ]
+    },
+    {
+      "id": "E42",
+      "title": "完成后的未读与自动化通知选择",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "vin",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 2780006,
+          "endUtf16": 2780778,
+          "sha256": "29940a1ca1eb17681f39279dce4676ee3aeb2421cf1a9bef54685fb17c13242d"
+        }
+      ]
+    },
+    {
+      "id": "E43",
+      "title": "历史计划内容选择",
+      "locations": [
+        {
+          "asset": "webview/assets/local-conversation-plan-model-eb0246445024.js",
+          "symbol": "r",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 116,
+          "endUtf16": 462,
+          "sha256": "807abac1451b335fb58c6e3266db9a2bffadc3dc2164bbb1895057068cd4e7fb"
+        }
+      ]
+    },
+    {
+      "id": "E44",
+      "title": "sleep 同时禁用 durationMs 回退",
+      "locations": [
+        {
+          "asset": "webview/assets/local-conversation-turn-91afa1cb9913.js",
+          "symbol": "包含 kt(l)?null:l.durationMs??null",
+          "kind": "ContextSlice",
+          "startUtf16": 44347,
+          "endUtf16": 45036,
+          "sha256": "047c2dd7fbc6dfd6114b75dc54572e9bbd55f128b0ecea1b99b3ec64189a5ed6"
+        }
+      ]
+    },
+    {
+      "id": "E45",
+      "title": "滚动数值常量",
+      "locations": [
+        {
+          "asset": "webview/assets/thread-scroll-layout-e1ad7d066d92.js",
+          "symbol": "包含 Ue=260",
+          "kind": "ContextSlice",
+          "startUtf16": 17716,
+          "endUtf16": 17883,
+          "sha256": "5b14eca3dbddcae75a1e3fca77a89a8d818a06b5f85b4b984962cd01d0c0b4c4"
+        }
+      ]
+    },
+    {
+      "id": "E46",
+      "title": "终端流输出截断调用点",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "包含 [output truncated]",
+          "kind": "ContextSlice",
+          "startUtf16": 2746001,
+          "endUtf16": 2746709,
+          "sha256": "1b7c586b5aa2dc141507cfb32a4cec09711d726e5b60c83b7e92b0b708391c92"
+        }
+      ]
+    }
+  ]
+}

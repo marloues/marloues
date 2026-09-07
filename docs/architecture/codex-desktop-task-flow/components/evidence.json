@@ -1,0 +1,764 @@
+{
+  "schemaVersion": 1,
+  "analysisDate": "2026-09-05T13:29:01.387Z",
+  "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+  "packageName": "openai-codex-electron",
+  "version": "26.901.41600",
+  "offsetConvention": "zero-based UTF-16 code units; end exclusive; unformatted decoded source",
+  "scope": "Selected components and their static prop/child references; readable names are analysis labels, not recovered original TypeScript names",
+  "assets": [
+    {
+      "path": "webview/assets/local-conversation-page-af4ba21b7167.js",
+      "bytes": 58541,
+      "sha256": "54db40363f257e8959bb3676291ae5325728e7e75d141aa66c3377f726ff5417"
+    },
+    {
+      "path": "webview/assets/local-conversation-thread-d62147e79bfc.js",
+      "bytes": 340014,
+      "sha256": "fd9345503efd27a4c97816721dc29230e2322cc19dc647dad99a346c6a8b129c"
+    },
+    {
+      "path": "webview/assets/local-conversation-turn-91afa1cb9913.js",
+      "bytes": 47085,
+      "sha256": "852c4196bfb25fe2c4b42d12428bcda1c63b99dd296a0963d92745b3f3d17816"
+    },
+    {
+      "path": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+      "bytes": 469201,
+      "sha256": "85e7a17d5bf5a1e3d4fec04beb0ce4e3cf7ab2f9965edb56e611d88c34cf512a"
+    },
+    {
+      "path": "webview/assets/tool-activity-disclosure-950cab720962.js",
+      "bytes": 2307,
+      "sha256": "8465f6c49f7c5fef83eb4e27ebbd2e59e8d406413df8be0003e86cf12cb865eb"
+    },
+    {
+      "path": "webview/assets/exec-shell-container-eec3edff86fc.js",
+      "bytes": 19578,
+      "sha256": "23358fa2f679e8684c5b452741ae274cd071caacea3d254319f8c301bf0eea43"
+    },
+    {
+      "path": "webview/assets/app-primary-139889e10fbd.js",
+      "bytes": 7978559,
+      "sha256": "5f2eb43484da39a9459a918c52cb6d0ff8df6ea8184d23bfc448f0702a86d010"
+    },
+    {
+      "path": "webview/assets/queued-message-list-2fae7464065e.js",
+      "bytes": 18707,
+      "sha256": "f0686ea359003a62d255cb397f5e808f0390ec22245659ef432162e5f754c473"
+    },
+    {
+      "path": "webview/assets/composer-utility-bar-64f689a3b4d2.js",
+      "bytes": 23050,
+      "sha256": "5489e573dfa502b9cc6b915b0d51d0a9eb8247010e9595a9f95353a6563b415b"
+    },
+    {
+      "path": "webview/assets/toggle-thread-summary-panel-20d94d38aed9.js",
+      "bytes": 9314,
+      "sha256": "6850a55c5bce0a6b2179ba7c4d1a6a8c222f88e4d3f6247a3745d054437e88ac"
+    },
+    {
+      "path": "webview/assets/thread-scroll-layout-e1ad7d066d92.js",
+      "bytes": 17883,
+      "sha256": "4c2209d9fa29264e0efd8c39ce0da1f07c87f1248b5ad81159dbd0db56fbe4cf"
+    },
+    {
+      "path": "webview/assets/thread-user-message-navigation-rail-app-58ae0a1a2c2b.js",
+      "bytes": 30618,
+      "sha256": "2f422ae223f01798a8e655e5caadebbb1bb6957659249bca6bbf7316496bc2ff"
+    },
+    {
+      "path": "webview/assets/app-initial-5b0a474bff5e.css",
+      "bytes": 817611,
+      "sha256": "3c3865c9f704dee3c444905a7625e757cd25c967a765d3f7710d8c14f46bd783"
+    },
+    {
+      "path": "webview/assets/app-primary-7fe7c6486695.css",
+      "bytes": 145939,
+      "sha256": "363510806a495e659f934a925556cbe0da7412ca1e99481fc5d06fd9508b13f7"
+    },
+    {
+      "path": "webview/assets/thread-scroll-layout-26a32b412ec3.css",
+      "bytes": 1432,
+      "sha256": "248304cf7dab96e4c7aff4ece74d336a5aeb32370000e2f09e12f7028f709ac6"
+    },
+    {
+      "path": "webview/assets/preserve-timeline-anchor-position-d4546e4e3d99.js",
+      "bytes": 776,
+      "sha256": "ce84b07a357e2510d2a7af71360b8ae5b1f1dfb8f96a4fa37dd357c5b4b9aa79"
+    },
+    {
+      "path": "webview/assets/conversation-source-92c561bb853b.js",
+      "bytes": 28107,
+      "sha256": "7a8c3106305aff5d1d71003a1c341d7072223a515c34de58405439e5a489c3d0"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "C01",
+      "title": "页面入口",
+      "locations": [
+        {
+          "asset": "webview/assets/local-conversation-page-af4ba21b7167.js",
+          "symbol": "gs",
+          "kind": "ComponentFunction",
+          "startUtf16": 52034,
+          "endUtf16": 53001,
+          "sha256": "a78adccc9787c37513fb091a46bb53b3f3e6da90f354720cd60b0ebb8bef4ccc"
+        },
+        {
+          "asset": "webview/assets/local-conversation-page-af4ba21b7167.js",
+          "symbol": "$o",
+          "kind": "ComponentFunction",
+          "startUtf16": 35569,
+          "endUtf16": 39900,
+          "sha256": "81d020f52a030708ccd614b5f9c4c399493293cddde49bf86994920cb17d4be2"
+        }
+      ]
+    },
+    {
+      "id": "C02",
+      "title": "任务标题栏",
+      "locations": [
+        {
+          "asset": "webview/assets/local-conversation-page-af4ba21b7167.js",
+          "symbol": "Fo",
+          "kind": "ComponentFunction",
+          "startUtf16": 29560,
+          "endUtf16": 32491,
+          "sha256": "177921f1ce061c2f147391d5ea7f38d8a35c5d8dad4ca6275aa72227d1b954c3"
+        }
+      ]
+    },
+    {
+      "id": "C03",
+      "title": "任务状态宿主",
+      "locations": [
+        {
+          "asset": "webview/assets/local-conversation-thread-d62147e79bfc.js",
+          "symbol": "NO",
+          "kind": "ComponentFunction",
+          "startUtf16": 302107,
+          "endUtf16": 307992,
+          "sha256": "0508ce1d637de595f8e075e047cce1c148f32290e34ad20589da48a5ef10b382"
+        }
+      ]
+    },
+    {
+      "id": "C04",
+      "title": "主布局",
+      "locations": [
+        {
+          "asset": "webview/assets/local-conversation-thread-d62147e79bfc.js",
+          "symbol": "RO",
+          "kind": "ComponentFunction",
+          "startUtf16": 310534,
+          "endUtf16": 319424,
+          "sha256": "a9905be536fe1dc0e62205d3c798254244261513d3493eed8c8c9d37d8afb878"
+        }
+      ]
+    },
+    {
+      "id": "C05",
+      "title": "时间线与提交占位协调",
+      "locations": [
+        {
+          "asset": "webview/assets/local-conversation-thread-d62147e79bfc.js",
+          "symbol": "GO",
+          "kind": "ComponentFunction",
+          "startUtf16": 325338,
+          "endUtf16": 338427,
+          "sha256": "3528219527f12e3be87f54ed403c9378dbd6175a5b4359e823770e045816b815"
+        },
+        {
+          "asset": "webview/assets/local-conversation-thread-d62147e79bfc.js",
+          "symbol": "UE",
+          "kind": "ComponentFunction",
+          "startUtf16": 252946,
+          "endUtf16": 265404,
+          "sha256": "a78f4b45839d6e10b995b80d4c484e7a777de1d84458b86071be66974cca5b17"
+        }
+      ]
+    },
+    {
+      "id": "C06",
+      "title": "单轮列表行",
+      "locations": [
+        {
+          "asset": "webview/assets/local-conversation-thread-d62147e79bfc.js",
+          "symbol": "IE",
+          "kind": "ComponentFunction",
+          "startUtf16": 246735,
+          "endUtf16": 251460,
+          "sha256": "7126b735ab4662fe2951b9a90c839577b358e80bdc3f49059bd8630c4d41e822"
+        }
+      ]
+    },
+    {
+      "id": "C07",
+      "title": "单轮数据包装",
+      "locations": [
+        {
+          "asset": "webview/assets/local-conversation-turn-91afa1cb9913.js",
+          "symbol": "Ji",
+          "kind": "ComponentFunction",
+          "startUtf16": 42483,
+          "endUtf16": 46973,
+          "sha256": "2326466254d096fafa75faaa5bbf552bc9bf73004416e56271c6a3918cf91349"
+        }
+      ]
+    },
+    {
+      "id": "C08",
+      "title": "单轮执行主体",
+      "locations": [
+        {
+          "asset": "webview/assets/local-conversation-turn-91afa1cb9913.js",
+          "symbol": "_i",
+          "kind": "ComponentFunction",
+          "startUtf16": 18190,
+          "endUtf16": 38910,
+          "sha256": "77750e0b4898e3fcd19efa3eb768cd4aecf506cd534b9b3ed265d856432d9dd5"
+        }
+      ]
+    },
+    {
+      "id": "C09",
+      "title": "消息与工具类型分发器",
+      "locations": [
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "YT",
+          "kind": "ComponentFunction",
+          "startUtf16": 302079,
+          "endUtf16": 323957,
+          "sha256": "0647fab6ca3e41a699b2ffc3f060dbd127bf3b55ffbb42c9d9c03fe2670b23f2"
+        }
+      ]
+    },
+    {
+      "id": "C10",
+      "title": "用户消息",
+      "locations": [
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "Eg",
+          "kind": "ComponentFunction",
+          "startUtf16": 26394,
+          "endUtf16": 35580,
+          "sha256": "7ebc72705983fb38ad3a9fd02cef5673e67f7e9ce9758e187865e6f4af6881e8"
+        }
+      ]
+    },
+    {
+      "id": "C11",
+      "title": "助手消息观察包装",
+      "locations": [
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "pE",
+          "kind": "ComponentFunction",
+          "startUtf16": 331746,
+          "endUtf16": 333121,
+          "sha256": "3f9208b8444cb3b8260cfc9ac2b3d9854dd0ecfb31a8169254f08432cd31c673"
+        }
+      ]
+    },
+    {
+      "id": "C12",
+      "title": "助手消息操作栏",
+      "locations": [
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "zy",
+          "kind": "ComponentFunction",
+          "startUtf16": 130458,
+          "endUtf16": 134437,
+          "sha256": "3a34246bf094d841e9714d9c32aa7457ed5bd4a5639e4ef5c3fde7b47d33a4e8"
+        }
+      ]
+    },
+    {
+      "id": "C13",
+      "title": "过程折叠与标题",
+      "locations": [
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "tD",
+          "kind": "ComponentFunction",
+          "startUtf16": 360402,
+          "endUtf16": 364392,
+          "sha256": "64cba1e31abeeea4f2d2a3a6e1d17b7eda3cc6fa6025f34bf2ae77e737858804"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "YE",
+          "kind": "ComponentFunction",
+          "startUtf16": 359384,
+          "endUtf16": 360062,
+          "sha256": "a0765c06227f7325520350d202b2124b1d0da78e49066b8a3f2ab91b5192a62f"
+        }
+      ]
+    },
+    {
+      "id": "C14",
+      "title": "单个工具活动展开容器",
+      "locations": [
+        {
+          "asset": "webview/assets/tool-activity-disclosure-950cab720962.js",
+          "symbol": "S",
+          "kind": "ComponentFunction",
+          "startUtf16": 848,
+          "endUtf16": 2135,
+          "sha256": "8f39a50852c8de571532d8e145eefe0d2e83beef55284aa66cf42972d2e50f3b"
+        }
+      ]
+    },
+    {
+      "id": "C15",
+      "title": "命令与日志组件",
+      "locations": [
+        {
+          "asset": "webview/assets/exec-shell-container-eec3edff86fc.js",
+          "symbol": "A",
+          "kind": "ComponentFunction",
+          "startUtf16": 8075,
+          "endUtf16": 16253,
+          "sha256": "1819b0d7a8b8805447d4fc05494258bc28d162e7f4f9a30bc4d2f4c4a9ecec22"
+        },
+        {
+          "asset": "webview/assets/exec-shell-container-eec3edff86fc.js",
+          "symbol": "De",
+          "kind": "ComponentFunction",
+          "startUtf16": 17305,
+          "endUtf16": 17943,
+          "sha256": "37e34bdabc9d1dfc784b35b43b496ccceb8abe73e76ba8f7ea94e4394c1815e9"
+        },
+        {
+          "asset": "webview/assets/exec-shell-container-eec3edff86fc.js",
+          "symbol": "Oe",
+          "kind": "ComponentFunction",
+          "startUtf16": 17943,
+          "endUtf16": 19395,
+          "sha256": "c4c2aae20c1a68a32a9b74d91b2389d35fe9b770c475a6b4f0260bc2e666febb"
+        }
+      ]
+    },
+    {
+      "id": "C16",
+      "title": "差异组件",
+      "locations": [
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "eT",
+          "kind": "ComponentFunction",
+          "startUtf16": 273676,
+          "endUtf16": 274395,
+          "sha256": "b0b5b8449ebea0d360b456b783ddce40de5ad8a17a279cc77198cb86c0cbf025"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "rT",
+          "kind": "ComponentFunction",
+          "startUtf16": 277150,
+          "endUtf16": 286702,
+          "sha256": "d7d332a1e29461f29629cb0d91829042648c5ee9c0dffae208267c8317a9c67b"
+        }
+      ]
+    },
+    {
+      "id": "C17",
+      "title": "计划与进度组件",
+      "locations": [
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "hw",
+          "kind": "ComponentFunction",
+          "startUtf16": 254738,
+          "endUtf16": 255177,
+          "sha256": "4b7d49a8dd3da704cb1f9afc4f8438f50360c4277873101ef9baf21e5e12bc6c"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "gw",
+          "kind": "ComponentFunction",
+          "startUtf16": 255177,
+          "endUtf16": 256816,
+          "sha256": "d9b6385acdcb2740add8f4cea2b72116183034b54bb90698f1f3d35da0672582"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "Sw",
+          "kind": "ComponentFunction",
+          "startUtf16": 257783,
+          "endUtf16": 262105,
+          "sha256": "d3c031a22150f45b92fd043072a5afa408410de84a51ff1423ffa401cdd2a8e2"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "hE",
+          "kind": "ComponentFunction",
+          "startUtf16": 337067,
+          "endUtf16": 337601,
+          "sha256": "2ee3c99219c5d81498bbe824bd5e44e533ea974eebb48909e33000382aa7d49f"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "gE",
+          "kind": "ComponentFunction",
+          "startUtf16": 337601,
+          "endUtf16": 338211,
+          "sha256": "d0e97d621d13edc8acfdc8110fa87db5376533176072d2b503d51292770b041f"
+        }
+      ]
+    },
+    {
+      "id": "C18",
+      "title": "图片输出组件",
+      "locations": [
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "UGn",
+          "kind": "ComponentFunction",
+          "startUtf16": 3612398,
+          "endUtf16": 3620475,
+          "sha256": "ea9c7eda72d61b58a36e337d5f59e5c743f04ac35508e739000c170472f45c26"
+        }
+      ]
+    },
+    {
+      "id": "C19",
+      "title": "文件产物组件",
+      "locations": [
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "OW",
+          "kind": "ComponentFunction",
+          "startUtf16": 461830,
+          "endUtf16": 463912,
+          "sha256": "b93f3993f8414536cdfc5e462c6dbb58a3b57acadae99e75aec34ff4a7167103"
+        }
+      ]
+    },
+    {
+      "id": "C20",
+      "title": "输入区域适配与控制",
+      "locations": [
+        {
+          "asset": "webview/assets/local-conversation-thread-d62147e79bfc.js",
+          "symbol": "WO",
+          "kind": "ComponentFunction",
+          "startUtf16": 320804,
+          "endUtf16": 325338,
+          "sha256": "726bbc7cce69e1ce72efca920d608624f52e3dae0a94c6f3ac75eaf9f79313b4"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "_$r",
+          "kind": "ComponentFunction",
+          "startUtf16": 7768403,
+          "endUtf16": 7779199,
+          "sha256": "f3c5b7fde07371afe08ba83b4aa75cdd1611c8ffc573063c7bf9c1583292dddf"
+        }
+      ]
+    },
+    {
+      "id": "C21",
+      "title": "输入组件总成",
+      "locations": [
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "e$r",
+          "kind": "ComponentFunction",
+          "startUtf16": 7707011,
+          "endUtf16": 7750288,
+          "sha256": "1ccbd72c58df8a40f177362f6170bad03bd135fc1109828cdd8a47c9b6bb5b1a"
+        }
+      ]
+    },
+    {
+      "id": "C22",
+      "title": "富文本编辑器",
+      "locations": [
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "qH",
+          "kind": "ComponentFunction",
+          "startUtf16": 2011165,
+          "endUtf16": 2016076,
+          "sha256": "dbef43c7148866cd2a5f8c71daae5e00f77f4d84408c3a01b43f1ab703605dbf"
+        }
+      ]
+    },
+    {
+      "id": "C23",
+      "title": "附件托盘",
+      "locations": [
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "$Nr",
+          "kind": "ComponentFunction",
+          "startUtf16": 7143501,
+          "endUtf16": 7155918,
+          "sha256": "77d487a358c590fe13fd5ef046c5989e39314e574b21d8ab50a31c7a98872b07"
+        }
+      ]
+    },
+    {
+      "id": "C24",
+      "title": "输入操作区",
+      "locations": [
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "zLr",
+          "kind": "ComponentFunction",
+          "startUtf16": 7266884,
+          "endUtf16": 7280021,
+          "sha256": "02271d49ac2fdbe211bc97758ebff1a3b4dd0f3d973d611101b1952b1308aa70"
+        }
+      ]
+    },
+    {
+      "id": "C25",
+      "title": "主操作按钮",
+      "locations": [
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "Z3",
+          "kind": "ComponentFunction",
+          "startUtf16": 6442369,
+          "endUtf16": 6444925,
+          "sha256": "a0cb06076612eac5fd5272d03499cd626e205316c59f7ce2bee5e1b17639ef18"
+        }
+      ]
+    },
+    {
+      "id": "C26",
+      "title": "消息队列",
+      "locations": [
+        {
+          "asset": "webview/assets/queued-message-list-2fae7464065e.js",
+          "symbol": "Ce",
+          "kind": "ComponentFunction",
+          "startUtf16": 3324,
+          "endUtf16": 6864,
+          "sha256": "d2179f9231568532dad23bc845a4499611128c18bc8f4bba50f3879cbef1322a"
+        },
+        {
+          "asset": "webview/assets/queued-message-list-2fae7464065e.js",
+          "symbol": "we",
+          "kind": "ComponentFunction",
+          "startUtf16": 6933,
+          "endUtf16": 14913,
+          "sha256": "ca5164e63566736be37e2c975882e1c222105bf552099c038b78ae2fa6aa8ea7"
+        },
+        {
+          "asset": "webview/assets/queued-message-list-2fae7464065e.js",
+          "symbol": "X",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 15036,
+          "endUtf16": 15632,
+          "sha256": "ae06e2aedb0cc8a6ef63a39e4f9164aad6c6233e922002840013cbe714e27fcc"
+        }
+      ]
+    },
+    {
+      "id": "C27",
+      "title": "待处理问题与审批",
+      "locations": [
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "VBr",
+          "kind": "ComponentFunction",
+          "startUtf16": 7393060,
+          "endUtf16": 7395238,
+          "sha256": "7441400996aa6798ba45417a7c9d63272ea6cc9ab3f391a576d96ffbf6b73711"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "wBr",
+          "kind": "ComponentFunction",
+          "startUtf16": 7371418,
+          "endUtf16": 7373424,
+          "sha256": "27ad824e018bc9d62a026348afaa96926f280afc94c9b6dda237d73c6e0facb9"
+        }
+      ]
+    },
+    {
+      "id": "C28",
+      "title": "输入工具栏",
+      "locations": [
+        {
+          "asset": "webview/assets/composer-utility-bar-64f689a3b4d2.js",
+          "symbol": "pn",
+          "kind": "ComponentFunction",
+          "startUtf16": 9247,
+          "endUtf16": 21957,
+          "sha256": "1f5c90a6fd055aea18f9a5f24aaafabd87a8a75bdfac716de53d0fbf64c40da4"
+        }
+      ]
+    },
+    {
+      "id": "C29",
+      "title": "任务摘要侧栏与弹层",
+      "locations": [
+        {
+          "asset": "webview/assets/local-conversation-page-af4ba21b7167.js",
+          "symbol": "ts",
+          "kind": "ComponentFunction",
+          "startUtf16": 40014,
+          "endUtf16": 41906,
+          "sha256": "fd39e523ea5cd75fcc4e30e67995e32451c1a4789ac103eaea0eae85ae25f3b4"
+        },
+        {
+          "asset": "webview/assets/local-conversation-thread-d62147e79bfc.js",
+          "symbol": "sT",
+          "kind": "ComponentFunction",
+          "startUtf16": 214382,
+          "endUtf16": 214919,
+          "sha256": "1ee4439548515fc0d1e25de59c620e63d7474962d40a3d81953d559dfaab37d7"
+        },
+        {
+          "asset": "webview/assets/local-conversation-thread-d62147e79bfc.js",
+          "symbol": "uT",
+          "kind": "ComponentFunction",
+          "startUtf16": 215025,
+          "endUtf16": 217061,
+          "sha256": "fe6157acac2afa36268ec3c27368cfecfd1429a5dace5890dfb866fb4c0c09b1"
+        },
+        {
+          "asset": "webview/assets/toggle-thread-summary-panel-20d94d38aed9.js",
+          "symbol": "be",
+          "kind": "ComponentFunction",
+          "startUtf16": 7631,
+          "endUtf16": 8561,
+          "sha256": "9a00a20880cbf4c09f9db92626807fee807853c8474eddd45b8cfa828dbf8cea"
+        }
+      ]
+    },
+    {
+      "id": "C30",
+      "title": "滚动容器与返回底部",
+      "locations": [
+        {
+          "asset": "webview/assets/thread-scroll-layout-e1ad7d066d92.js",
+          "symbol": "Fe",
+          "kind": "ComponentFunction",
+          "startUtf16": 3639,
+          "endUtf16": 16876,
+          "sha256": "77383b63c73918535db32ea297c7900ebd52ae6b41f0e11e1fa5adc207f3b874"
+        },
+        {
+          "asset": "webview/assets/thread-scroll-layout-e1ad7d066d92.js",
+          "symbol": "je",
+          "kind": "ComponentFunction",
+          "startUtf16": 2573,
+          "endUtf16": 3432,
+          "sha256": "e17a692a2c6cefd82542c48940d387279d42c5441c65a79c8f2bbd8cc2fcc4fc"
+        }
+      ]
+    },
+    {
+      "id": "C31",
+      "title": "消息导航轨道",
+      "locations": [
+        {
+          "asset": "webview/assets/thread-user-message-navigation-rail-app-58ae0a1a2c2b.js",
+          "symbol": "Nt",
+          "kind": "ComponentFunction",
+          "startUtf16": 18524,
+          "endUtf16": 28150,
+          "sha256": "20f83d702ada22a0b7ab8c936f86181bad988075df75ce0c45100a617fa47a2b"
+        }
+      ]
+    },
+    {
+      "id": "C32",
+      "title": "工作状态占位",
+      "locations": [
+        {
+          "asset": "webview/assets/local-conversation-turn-91afa1cb9913.js",
+          "symbol": "Li",
+          "kind": "ComponentFunction",
+          "startUtf16": 40800,
+          "endUtf16": 41221,
+          "sha256": "fff9f043cc272c018b137a560e1da0a0c5768b6644952da38c612c559d71dc96"
+        },
+        {
+          "asset": "webview/assets/local-conversation-turn-91afa1cb9913.js",
+          "symbol": "Ii",
+          "kind": "ComponentFunction",
+          "startUtf16": 39962,
+          "endUtf16": 40800,
+          "sha256": "f09a2ee4c21112594d4f68f9baefd06202bf5eab2b59e2a41255891a2de7540a"
+        }
+      ]
+    },
+    {
+      "id": "C33",
+      "title": "组件布局和样式变量",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-5b0a474bff5e.css",
+          "symbol": "stylesheet",
+          "kind": "Stylesheet",
+          "startUtf16": 0,
+          "endUtf16": 817605,
+          "sha256": "3c3865c9f704dee3c444905a7625e757cd25c967a765d3f7710d8c14f46bd783"
+        },
+        {
+          "asset": "webview/assets/app-primary-7fe7c6486695.css",
+          "symbol": "stylesheet",
+          "kind": "Stylesheet",
+          "startUtf16": 0,
+          "endUtf16": 145937,
+          "sha256": "363510806a495e659f934a925556cbe0da7412ca1e99481fc5d06fd9508b13f7"
+        },
+        {
+          "asset": "webview/assets/thread-scroll-layout-26a32b412ec3.css",
+          "symbol": "stylesheet",
+          "kind": "Stylesheet",
+          "startUtf16": 0,
+          "endUtf16": 1432,
+          "sha256": "248304cf7dab96e4c7aff4ece74d336a5aeb32370000e2f09e12f7028f709ac6"
+        }
+      ]
+    },
+    {
+      "id": "C34",
+      "title": "折叠锚点保持",
+      "locations": [
+        {
+          "asset": "webview/assets/preserve-timeline-anchor-position-d4546e4e3d99.js",
+          "symbol": "a",
+          "kind": "FunctionDeclaration",
+          "startUtf16": 134,
+          "endUtf16": 646,
+          "sha256": "a4fbf8e0fd8ce0100ab0873427dff83146708f98072c6feb345b7ea3bac41f59"
+        }
+      ]
+    },
+    {
+      "id": "C35",
+      "title": "虚拟列表底层",
+      "locations": [
+        {
+          "asset": "webview/assets/conversation-source-92c561bb853b.js",
+          "symbol": "Ie",
+          "kind": "ComponentFunction",
+          "startUtf16": 2910,
+          "endUtf16": 17716,
+          "sha256": "c5f2213d2406dd271b171d545ae8ba8fd12d5ff7103e050529a8bad8d0b99ca8"
+        },
+        {
+          "asset": "webview/assets/conversation-source-92c561bb853b.js",
+          "symbol": "Re",
+          "kind": "ComponentFunction",
+          "startUtf16": 17764,
+          "endUtf16": 18869,
+          "sha256": "050bbba4b814e36b6557de4bf07660d70f8aff5394a195fbb51b39180e1bacf7"
+        }
+      ]
+    }
+  ]
+}

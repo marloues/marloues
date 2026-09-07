@@ -1,0 +1,714 @@
+{
+  "checkedAt": "2026-09-05T12:49:23.708Z",
+  "version": "26.901.41600",
+  "method": "Isolated execution of hash-verified original helper functions; no application UI, network, or stateful RPC exercised.",
+  "total": 59,
+  "passed": 59,
+  "failed": 0,
+  "results": [
+    {
+      "category": "status",
+      "label": "completed",
+      "expression": "hJn(\"completed\")",
+      "expected": "complete",
+      "actual": "complete",
+      "passed": true
+    },
+    {
+      "category": "status",
+      "label": "failed",
+      "expression": "hJn(\"failed\")",
+      "expected": "complete",
+      "actual": "complete",
+      "passed": true
+    },
+    {
+      "category": "status",
+      "label": "interrupted",
+      "expression": "hJn(\"interrupted\")",
+      "expected": "cancelled",
+      "actual": "cancelled",
+      "passed": true
+    },
+    {
+      "category": "status",
+      "label": "inProgress",
+      "expression": "hJn(\"inProgress\")",
+      "expected": "in_progress",
+      "actual": "in_progress",
+      "passed": true
+    },
+    {
+      "category": "timer",
+      "label": "没有工作则没有计时项",
+      "expression": "mqn({status:\"in_progress\",hasStartedWork:false,workStartedAtMs:10,workedCompletedAtMs:null})",
+      "expected": null,
+      "actual": null,
+      "passed": true
+    },
+    {
+      "category": "timer",
+      "label": "没有开始时间则没有计时项",
+      "expression": "mqn({status:\"in_progress\",hasStartedWork:true,workStartedAtMs:null,workedCompletedAtMs:null})",
+      "expected": null,
+      "actual": null,
+      "passed": true
+    },
+    {
+      "category": "timer",
+      "label": "运行但没有终点",
+      "expression": "mqn({status:\"in_progress\",hasStartedWork:true,workStartedAtMs:10,workedCompletedAtMs:null})",
+      "expected": {
+        "type": "worked-for",
+        "status": "working",
+        "startedAtMs": 10,
+        "completedAtMs": null
+      },
+      "actual": {
+        "type": "worked-for",
+        "status": "working",
+        "startedAtMs": 10,
+        "completedAtMs": null
+      },
+      "passed": true
+    },
+    {
+      "category": "timer",
+      "label": "终态缺少终点",
+      "expression": "mqn({status:\"complete\",hasStartedWork:true,workStartedAtMs:10,workedCompletedAtMs:null})",
+      "expected": null,
+      "actual": null,
+      "passed": true
+    },
+    {
+      "category": "timer",
+      "label": "轮次未结束但计时已有终点",
+      "expression": "mqn({status:\"in_progress\",hasStartedWork:true,workStartedAtMs:10,workedCompletedAtMs:20})",
+      "expected": {
+        "type": "worked-for",
+        "status": "worked",
+        "startedAtMs": 10,
+        "completedAtMs": 20
+      },
+      "actual": {
+        "type": "worked-for",
+        "status": "worked",
+        "startedAtMs": 10,
+        "completedAtMs": 20
+      },
+      "passed": true
+    },
+    {
+      "category": "timer",
+      "label": "运行中放在过程前",
+      "expression": "tQn({items:[{\"type\":\"user-message\"},{\"type\":\"exec\"},{\"type\":\"assistant-message\",\"phase\":\"final_answer\",\"content\":\"回答\",\"completed\":false}],status:\"in_progress\",workStartedAtMs:10,finalAssistantStartedAtMs:20}).map(x=>x.type)",
+      "expected": [
+        "user-message",
+        "worked-for",
+        "exec",
+        "assistant-message"
+      ],
+      "actual": [
+        "user-message",
+        "worked-for",
+        "exec",
+        "assistant-message"
+      ],
+      "passed": true
+    },
+    {
+      "category": "timer",
+      "label": "结束后放在回答前",
+      "expression": "tQn({items:[{\"type\":\"user-message\"},{\"type\":\"exec\"},{\"type\":\"assistant-message\",\"phase\":\"final_answer\",\"content\":\"回答\",\"completed\":false}],status:\"complete\",workStartedAtMs:10,finalAssistantStartedAtMs:20}).map(x=>x.type)",
+      "expected": [
+        "user-message",
+        "exec",
+        "worked-for",
+        "assistant-message"
+      ],
+      "actual": [
+        "user-message",
+        "exec",
+        "worked-for",
+        "assistant-message"
+      ],
+      "passed": true
+    },
+    {
+      "category": "timer",
+      "label": "取消不走普通插入",
+      "expression": "tQn({items:[{\"type\":\"user-message\"},{\"type\":\"exec\"},{\"type\":\"assistant-message\",\"phase\":\"final_answer\",\"content\":\"回答\",\"completed\":false}],status:\"cancelled\",workStartedAtMs:10,finalAssistantStartedAtMs:20}).map(x=>x.type)",
+      "expected": [
+        "user-message",
+        "exec",
+        "assistant-message"
+      ],
+      "actual": [
+        "user-message",
+        "exec",
+        "assistant-message"
+      ],
+      "passed": true
+    },
+    {
+      "category": "timer",
+      "label": "只有用户和回答不构成前置工作",
+      "expression": "tQn({items:[{\"type\":\"user-message\"},{\"type\":\"assistant-message\",\"phase\":\"final_answer\",\"content\":\"回答\",\"completed\":false}],status:\"complete\",workStartedAtMs:10,finalAssistantStartedAtMs:20}).length",
+      "expected": 2,
+      "actual": 2,
+      "passed": true
+    },
+    {
+      "category": "timer",
+      "label": "结束且没有回答不插入",
+      "expression": "tQn({items:[{\"type\":\"user-message\"},{\"type\":\"exec\"}],status:\"complete\",workStartedAtMs:10,finalAssistantStartedAtMs:20}).length",
+      "expected": 2,
+      "actual": 2,
+      "passed": true
+    },
+    {
+      "category": "timer",
+      "label": "排除用户、转录和 worktree 初始化",
+      "expression": "iQn([{type:\"user-message\"},{type:\"realtime-transcript\"},{type:\"worktree-init\"}],3)",
+      "expected": false,
+      "actual": false,
+      "passed": true
+    },
+    {
+      "category": "timer",
+      "label": "空 final 占位尚未开始展示",
+      "expression": "kGn({phase:\"final_answer\",content:\"  \",completed:false})",
+      "expected": false,
+      "actual": false,
+      "passed": true
+    },
+    {
+      "category": "timer",
+      "label": "空 final 已完成则满足识别",
+      "expression": "kGn({phase:\"final_answer\",content:\"\",completed:true})",
+      "expected": true,
+      "actual": true,
+      "passed": true
+    },
+    {
+      "category": "timer",
+      "label": "结构化 final 可识别",
+      "expression": "kGn({phase:\"final_answer\",content:\"\",completed:false,structuredOutput:{}})",
+      "expected": true,
+      "actual": true,
+      "passed": true
+    },
+    {
+      "category": "timer",
+      "label": "有文本的 commentary 不是 final",
+      "expression": "kGn({phase:\"commentary\",content:\"进度\",completed:true})",
+      "expected": false,
+      "actual": false,
+      "passed": true
+    },
+    {
+      "category": "timer",
+      "label": "空 final 不冻结计时",
+      "expression": "oQn({items:[{type:\"assistant-message\",phase:\"final_answer\",content:\"\",completed:false}],status:\"in_progress\",finalAssistantStartedAtMs:20})",
+      "expected": null,
+      "actual": null,
+      "passed": true
+    },
+    {
+      "category": "timer",
+      "label": "包含 sleep",
+      "expression": "hqn({items:[{type:\"sleep\"}]})",
+      "expected": true,
+      "actual": true,
+      "passed": true
+    },
+    {
+      "category": "timer",
+      "label": "普通工具不算 sleep",
+      "expression": "hqn({items:[{type:\"commandExecution\"}]})",
+      "expected": false,
+      "actual": false,
+      "passed": true
+    },
+    {
+      "category": "collapse",
+      "label": "默认折叠",
+      "expression": "$E({\"hasFinalAssistantStarted\":true,\"isTurnCancelled\":false,\"hasRenderableAgentItems\":true,\"forceExpanded\":false,\"preventAutoCollapse\":false})",
+      "expected": {
+        "shouldAllowCollapse": true,
+        "isCollapsed": true
+      },
+      "actual": {
+        "shouldAllowCollapse": true,
+        "isCollapsed": true
+      },
+      "passed": true
+    },
+    {
+      "category": "collapse",
+      "label": "还没有最终答复",
+      "expression": "$E({\"hasFinalAssistantStarted\":false,\"isTurnCancelled\":false,\"hasRenderableAgentItems\":true,\"forceExpanded\":false,\"preventAutoCollapse\":false})",
+      "expected": {
+        "shouldAllowCollapse": false,
+        "isCollapsed": false
+      },
+      "actual": {
+        "shouldAllowCollapse": false,
+        "isCollapsed": false
+      },
+      "passed": true
+    },
+    {
+      "category": "collapse",
+      "label": "取消",
+      "expression": "$E({\"hasFinalAssistantStarted\":true,\"isTurnCancelled\":true,\"hasRenderableAgentItems\":true,\"forceExpanded\":false,\"preventAutoCollapse\":false})",
+      "expected": {
+        "shouldAllowCollapse": false,
+        "isCollapsed": false
+      },
+      "actual": {
+        "shouldAllowCollapse": false,
+        "isCollapsed": false
+      },
+      "passed": true
+    },
+    {
+      "category": "collapse",
+      "label": "没有过程",
+      "expression": "$E({\"hasFinalAssistantStarted\":true,\"isTurnCancelled\":false,\"hasRenderableAgentItems\":false,\"forceExpanded\":false,\"preventAutoCollapse\":false})",
+      "expected": {
+        "shouldAllowCollapse": false,
+        "isCollapsed": false
+      },
+      "actual": {
+        "shouldAllowCollapse": false,
+        "isCollapsed": false
+      },
+      "passed": true
+    },
+    {
+      "category": "collapse",
+      "label": "保留手动展开",
+      "expression": "$E({\"hasFinalAssistantStarted\":true,\"isTurnCancelled\":false,\"hasRenderableAgentItems\":true,\"forceExpanded\":false,\"preventAutoCollapse\":false,\"persistedCollapsed\":false})",
+      "expected": {
+        "shouldAllowCollapse": true,
+        "isCollapsed": false
+      },
+      "actual": {
+        "shouldAllowCollapse": true,
+        "isCollapsed": false
+      },
+      "passed": true
+    },
+    {
+      "category": "collapse",
+      "label": "防止自动折叠",
+      "expression": "$E({\"hasFinalAssistantStarted\":true,\"isTurnCancelled\":false,\"hasRenderableAgentItems\":true,\"forceExpanded\":false,\"preventAutoCollapse\":true})",
+      "expected": {
+        "shouldAllowCollapse": true,
+        "isCollapsed": false
+      },
+      "actual": {
+        "shouldAllowCollapse": true,
+        "isCollapsed": false
+      },
+      "passed": true
+    },
+    {
+      "category": "collapse",
+      "label": "已有折叠选择优先于自动默认值",
+      "expression": "$E({\"hasFinalAssistantStarted\":true,\"isTurnCancelled\":false,\"hasRenderableAgentItems\":true,\"forceExpanded\":false,\"preventAutoCollapse\":true,\"persistedCollapsed\":true})",
+      "expected": {
+        "shouldAllowCollapse": true,
+        "isCollapsed": true
+      },
+      "actual": {
+        "shouldAllowCollapse": true,
+        "isCollapsed": true
+      },
+      "passed": true
+    },
+    {
+      "category": "collapse",
+      "label": "强制展开优先",
+      "expression": "$E({\"hasFinalAssistantStarted\":true,\"isTurnCancelled\":false,\"hasRenderableAgentItems\":true,\"forceExpanded\":true,\"preventAutoCollapse\":false,\"persistedCollapsed\":true})",
+      "expected": {
+        "shouldAllowCollapse": true,
+        "isCollapsed": false
+      },
+      "actual": {
+        "shouldAllowCollapse": true,
+        "isCollapsed": false
+      },
+      "passed": true
+    },
+    {
+      "category": "blocking",
+      "label": "无请求",
+      "expression": "P_r(null)",
+      "expected": false,
+      "actual": false,
+      "passed": true
+    },
+    {
+      "category": "blocking",
+      "label": "普通审批",
+      "expression": "P_r({type:\"approval\"})",
+      "expected": true,
+      "actual": true,
+      "passed": true
+    },
+    {
+      "category": "blocking",
+      "label": "有轮次的 toolSuggestion",
+      "expression": "P_r({type:\"mcpServerElicitation\",request:{params:{turnId:\"t1\"}},elicitation:{kind:\"toolSuggestion\"}})",
+      "expected": false,
+      "actual": false,
+      "passed": true
+    },
+    {
+      "category": "blocking",
+      "label": "有轮次的 connectorAuth",
+      "expression": "P_r({type:\"mcpServerElicitation\",request:{params:{turnId:\"t1\"}},elicitation:{kind:\"connectorAuth\"}})",
+      "expected": false,
+      "actual": false,
+      "passed": true
+    },
+    {
+      "category": "blocking",
+      "label": "有轮次的 urlAction",
+      "expression": "P_r({type:\"mcpServerElicitation\",request:{params:{turnId:\"t1\"}},elicitation:{kind:\"urlAction\"}})",
+      "expected": false,
+      "actual": false,
+      "passed": true
+    },
+    {
+      "category": "blocking",
+      "label": "有轮次的 form",
+      "expression": "P_r({type:\"mcpServerElicitation\",request:{params:{turnId:\"t1\"}},elicitation:{kind:\"form\"}})",
+      "expected": true,
+      "actual": true,
+      "passed": true
+    },
+    {
+      "category": "blocking",
+      "label": "无轮次的 connectorAuth",
+      "expression": "P_r({type:\"mcpServerElicitation\",request:{params:{}},elicitation:{kind:\"connectorAuth\"}})",
+      "expected": true,
+      "actual": true,
+      "passed": true
+    },
+    {
+      "category": "image",
+      "label": "运行时保留完成图片和占位",
+      "expression": "r({items:[{\"type\":\"generated-image\",\"src\":\"/example.png\",\"status\":\"completed\"},{\"type\":\"generated-image\",\"status\":\"in_progress\"}],isTurnInProgress:true,interruptedByThisClient:false})",
+      "expected": {
+        "completedImages": [
+          {
+            "type": "generated-image",
+            "src": "/example.png",
+            "status": "completed"
+          }
+        ],
+        "hasPendingItems": true,
+        "pendingPlaceholderCount": 1
+      },
+      "actual": {
+        "completedImages": [
+          {
+            "type": "generated-image",
+            "src": "/example.png",
+            "status": "completed"
+          }
+        ],
+        "hasPendingItems": true,
+        "pendingPlaceholderCount": 1
+      },
+      "passed": true
+    },
+    {
+      "category": "image",
+      "label": "停止隐藏占位但不丢 pending 标志",
+      "expression": "r({items:[{\"type\":\"generated-image\",\"status\":\"in_progress\"}],isTurnInProgress:true,interruptedByThisClient:true})",
+      "expected": {
+        "completedImages": [],
+        "hasPendingItems": true,
+        "pendingPlaceholderCount": 0
+      },
+      "actual": {
+        "completedImages": [],
+        "hasPendingItems": true,
+        "pendingPlaceholderCount": 0
+      },
+      "passed": true
+    },
+    {
+      "category": "image",
+      "label": "轮次结束不计算生成中占位",
+      "expression": "r({items:[{\"type\":\"generated-image\",\"status\":\"in_progress\"}],isTurnInProgress:false,interruptedByThisClient:false})",
+      "expected": {
+        "completedImages": [],
+        "hasPendingItems": false,
+        "pendingPlaceholderCount": 0
+      },
+      "actual": {
+        "completedImages": [],
+        "hasPendingItems": false,
+        "pendingPlaceholderCount": 0
+      },
+      "passed": true
+    },
+    {
+      "category": "image",
+      "label": "追加后清除旧占位",
+      "expression": "r({items:[{\"type\":\"generated-image\",\"src\":\"/example.png\",\"status\":\"completed\"},{\"type\":\"generated-image\",\"status\":\"in_progress\"},{\"type\":\"user-message\",\"steeringStatus\":\"accepted\"}],isTurnInProgress:true,interruptedByThisClient:false})",
+      "expected": {
+        "completedImages": [
+          {
+            "type": "generated-image",
+            "src": "/example.png",
+            "status": "completed"
+          }
+        ],
+        "hasPendingItems": false,
+        "pendingPlaceholderCount": 0
+      },
+      "actual": {
+        "completedImages": [
+          {
+            "type": "generated-image",
+            "src": "/example.png",
+            "status": "completed"
+          }
+        ],
+        "hasPendingItems": false,
+        "pendingPlaceholderCount": 0
+      },
+      "passed": true
+    },
+    {
+      "category": "image",
+      "label": "steered 不重复清除同次追加后的新占位",
+      "expression": "r({items:[{\"type\":\"generated-image\",\"status\":\"in_progress\"},{\"type\":\"user-message\",\"steeringStatus\":\"accepted\"},{\"type\":\"generated-image\",\"status\":\"in_progress\"},{\"type\":\"steered\"}],isTurnInProgress:true,interruptedByThisClient:false}).pendingPlaceholderCount",
+      "expected": 1,
+      "actual": 1,
+      "passed": true
+    },
+    {
+      "category": "image",
+      "label": "失败状态不产生 pending 占位",
+      "expression": "r({items:[{type:\"generated-image\",status:\"failed\"}],isTurnInProgress:true,interruptedByThisClient:false}).pendingPlaceholderCount",
+      "expected": 0,
+      "actual": 0,
+      "passed": true
+    },
+    {
+      "category": "indicator",
+      "label": "普通运行",
+      "expression": "Xr({\"isTurnInProgress\":true,\"assistantItem\":null,\"proposedPlanItem\":null,\"isExploring\":false,\"hasActiveWebSearch\":false,\"hasActiveDynamicToolCallSummary\":false,\"isAnyNonExploringAgentItemInProgress\":false,\"hasBlockingRequest\":false,\"forceThinking\":false})",
+      "expected": {
+        "type": "thinking",
+        "isVisible": true
+      },
+      "actual": {
+        "type": "thinking",
+        "isVisible": true
+      },
+      "passed": true
+    },
+    {
+      "category": "indicator",
+      "label": "结束",
+      "expression": "Xr({\"isTurnInProgress\":false,\"assistantItem\":null,\"proposedPlanItem\":null,\"isExploring\":false,\"hasActiveWebSearch\":false,\"hasActiveDynamicToolCallSummary\":false,\"isAnyNonExploringAgentItemInProgress\":false,\"hasBlockingRequest\":false,\"forceThinking\":false})",
+      "expected": {
+        "type": "none"
+      },
+      "actual": {
+        "type": "none"
+      },
+      "passed": true
+    },
+    {
+      "category": "indicator",
+      "label": "force 覆盖结束",
+      "expression": "Xr({\"isTurnInProgress\":false,\"assistantItem\":null,\"proposedPlanItem\":null,\"isExploring\":false,\"hasActiveWebSearch\":false,\"hasActiveDynamicToolCallSummary\":false,\"isAnyNonExploringAgentItemInProgress\":false,\"hasBlockingRequest\":false,\"forceThinking\":true})",
+      "expected": {
+        "type": "thinking",
+        "isVisible": true
+      },
+      "actual": {
+        "type": "thinking",
+        "isVisible": true
+      },
+      "passed": true
+    },
+    {
+      "category": "indicator",
+      "label": "探索",
+      "expression": "Xr({\"isTurnInProgress\":true,\"assistantItem\":null,\"proposedPlanItem\":null,\"isExploring\":true,\"hasActiveWebSearch\":false,\"hasActiveDynamicToolCallSummary\":false,\"isAnyNonExploringAgentItemInProgress\":false,\"hasBlockingRequest\":false,\"forceThinking\":false})",
+      "expected": {
+        "type": "exploring"
+      },
+      "actual": {
+        "type": "exploring"
+      },
+      "passed": true
+    },
+    {
+      "category": "indicator",
+      "label": "计划",
+      "expression": "Xr({\"isTurnInProgress\":true,\"assistantItem\":null,\"proposedPlanItem\":{\"type\":\"proposed-plan\",\"completed\":false},\"isExploring\":false,\"hasActiveWebSearch\":false,\"hasActiveDynamicToolCallSummary\":false,\"isAnyNonExploringAgentItemInProgress\":false,\"hasBlockingRequest\":false,\"forceThinking\":false})",
+      "expected": {
+        "type": "planning"
+      },
+      "actual": {
+        "type": "planning"
+      },
+      "passed": true
+    },
+    {
+      "category": "indicator",
+      "label": "阻塞请求",
+      "expression": "Xr({\"isTurnInProgress\":true,\"assistantItem\":null,\"proposedPlanItem\":null,\"isExploring\":false,\"hasActiveWebSearch\":false,\"hasActiveDynamicToolCallSummary\":false,\"isAnyNonExploringAgentItemInProgress\":false,\"hasBlockingRequest\":true,\"forceThinking\":false})",
+      "expected": {
+        "type": "none"
+      },
+      "actual": {
+        "type": "none"
+      },
+      "passed": true
+    },
+    {
+      "category": "indicator",
+      "label": "搜索自己显示状态",
+      "expression": "Xr({\"isTurnInProgress\":true,\"assistantItem\":null,\"proposedPlanItem\":null,\"isExploring\":false,\"hasActiveWebSearch\":true,\"hasActiveDynamicToolCallSummary\":false,\"isAnyNonExploringAgentItemInProgress\":false,\"hasBlockingRequest\":false,\"forceThinking\":false})",
+      "expected": {
+        "type": "none"
+      },
+      "actual": {
+        "type": "none"
+      },
+      "passed": true
+    },
+    {
+      "category": "indicator",
+      "label": "工具有专门摘要",
+      "expression": "Xr({\"isTurnInProgress\":true,\"assistantItem\":null,\"proposedPlanItem\":null,\"isExploring\":false,\"hasActiveWebSearch\":false,\"hasActiveDynamicToolCallSummary\":true,\"isAnyNonExploringAgentItemInProgress\":false,\"hasBlockingRequest\":false,\"forceThinking\":false})",
+      "expected": {
+        "type": "none"
+      },
+      "actual": {
+        "type": "none"
+      },
+      "passed": true
+    },
+    {
+      "category": "indicator",
+      "label": "其他工具活跃",
+      "expression": "Xr({\"isTurnInProgress\":true,\"assistantItem\":null,\"proposedPlanItem\":null,\"isExploring\":false,\"hasActiveWebSearch\":false,\"hasActiveDynamicToolCallSummary\":false,\"isAnyNonExploringAgentItemInProgress\":true,\"hasBlockingRequest\":false,\"forceThinking\":false})",
+      "expected": {
+        "type": "none"
+      },
+      "actual": {
+        "type": "none"
+      },
+      "passed": true
+    },
+    {
+      "category": "indicator",
+      "label": "最终答复已有文字",
+      "expression": "Xr({\"isTurnInProgress\":true,\"assistantItem\":{\"type\":\"assistant-message\",\"phase\":\"final_answer\",\"content\":\"回答\",\"completed\":false},\"proposedPlanItem\":null,\"isExploring\":false,\"hasActiveWebSearch\":false,\"hasActiveDynamicToolCallSummary\":false,\"isAnyNonExploringAgentItemInProgress\":false,\"hasBlockingRequest\":false,\"forceThinking\":false})",
+      "expected": {
+        "type": "none"
+      },
+      "actual": {
+        "type": "none"
+      },
+      "passed": true
+    },
+    {
+      "category": "indicator",
+      "label": "最终答复只有空占位",
+      "expression": "Xr({\"isTurnInProgress\":true,\"assistantItem\":{\"type\":\"assistant-message\",\"phase\":\"final_answer\",\"content\":\"\",\"completed\":false},\"proposedPlanItem\":null,\"isExploring\":false,\"hasActiveWebSearch\":false,\"hasActiveDynamicToolCallSummary\":false,\"isAnyNonExploringAgentItemInProgress\":false,\"hasBlockingRequest\":false,\"forceThinking\":false})",
+      "expected": {
+        "type": "thinking",
+        "isVisible": true
+      },
+      "actual": {
+        "type": "thinking",
+        "isVisible": true
+      },
+      "passed": true
+    },
+    {
+      "category": "output",
+      "label": "短输出追加",
+      "expression": "Ltn({current:\"ab\",delta:\"cd\",maxChars:5})",
+      "expected": {
+        "next": "abcd",
+        "didTruncate": false
+      },
+      "actual": {
+        "next": "abcd",
+        "didTruncate": false
+      },
+      "passed": true
+    },
+    {
+      "category": "output",
+      "label": "输出超限保留尾部",
+      "expression": "Ltn({current:\"abcd\",delta:\"ef\",maxChars:5})",
+      "expected": {
+        "next": "bcdef",
+        "didTruncate": true
+      },
+      "actual": {
+        "next": "bcdef",
+        "didTruncate": true
+      },
+      "passed": true
+    },
+    {
+      "category": "output",
+      "label": "大增量保留自身尾部",
+      "expression": "Ltn({current:\"abcd\",delta:\"1234567\",maxChars:5})",
+      "expected": {
+        "next": "34567",
+        "didTruncate": true
+      },
+      "actual": {
+        "next": "34567",
+        "didTruncate": true
+      },
+      "passed": true
+    },
+    {
+      "category": "output",
+      "label": "空增量不再次裁剪原文",
+      "expression": "Ltn({current:\"1234567\",delta:\"\",maxChars:5})",
+      "expected": {
+        "next": "1234567",
+        "didTruncate": true
+      },
+      "actual": {
+        "next": "1234567",
+        "didTruncate": true
+      },
+      "passed": true
+    },
+    {
+      "category": "output",
+      "label": "零容量",
+      "expression": "Ltn({current:\"ab\",delta:\"c\",maxChars:0})",
+      "expected": {
+        "next": "",
+        "didTruncate": true
+      },
+      "actual": {
+        "next": "",
+        "didTruncate": true
+      },
+      "passed": true
+    }
+  ]
+}

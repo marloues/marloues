@@ -7,6 +7,8 @@
 
 专题方案：[Skill 与 MCP 市场接入](./marketplace-integration.md)
 
+对话区专题：[Marloues 组件、规则与适配差距](./marloues-conversation-area.md)（2026-09-05，原分析基于 main；专用 worktree 已有实现，见文首基线更正）
+
 ---
 
 ## 目录
