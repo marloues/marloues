@@ -23,7 +23,7 @@ describe("TurnPresentationBlocks", () => {
     const html = render(
       turn({
         items: [
-          { type: "webSearch", id: "search", query: "Codex app-server" },
+          { type: "webSearch", id: "search", action: { type: "openPage", url: "https://example.com", title: "Project" }, query: "Codex app-server" },
           { type: "agentMessage", id: "answer", text: "Implemented once." },
         ],
       }),

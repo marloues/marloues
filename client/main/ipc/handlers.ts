@@ -1,3 +1,8 @@
+import {
+  loadConversationApp,
+  callConversationAppTool,
+} from "../services/conversation-app-service";
+import { conversationInputBroker } from "../core/runtime/conversation-input";
 /**
  * Main process IPC handlers wired to AgentRuntime.
  * Provides the full IPC surface expected by the marloues UI.
@@ -157,6 +162,7 @@ import type { WorkflowReadThreadResponse } from "@shared/workflow-read-thread-co
 import { workspacePathsEqual } from "@shared/workspace-path";
 import { store, type StoredSession } from "../store";
 import { workflowThreadStore } from "../core/runtime/workflow-thread-store";
+import { storedMessagesForRuntimeTurn } from "../core/runtime/workflow-turn-persistence";
 import {
   listAuditEvents,
   recordAuditEvent,
@@ -187,6 +193,10 @@ import {
   validateChannelConfig,
 } from "../im/bridge/im-config-store";
 import { ImSessionRegistry } from "../im/bridge/im-session-registry";
+import {
+  readStoredJsonlReplay,
+  assertMutableSession,
+} from "../codex/jsonl-replay-session";
 import {
   emitImItemEvent,
   emitImUIEvent,
@@ -237,7 +247,13 @@ type RendererWorkflowTurnItem =
 
 async function readRuntimeThreadSnapshot(
   threadId: string,
+  page?: { cursor?: string | null; limit?: number },
 ): Promise<WorkflowReadThreadResponse | null> {
+  const replaySession = store.getSession(threadId);
+  if (replaySession?.codexReplay)
+    return sanitizeReadThreadForRenderer(
+      readStoredJsonlReplay(replaySession, page),
+    );
   const runtime = getRuntime();
   if (!runtime.readThread) return null;
   // Rehydrate in-memory thread store from persisted messages after restart
@@ -249,7 +265,11 @@ async function readRuntimeThreadSnapshot(
       cwd: stored.cwd,
     });
   }
-  const snapshot = await runtime.readThread({ threadId, limit: 100 });
+  const snapshot = await runtime.readThread({
+    threadId,
+    limit: Math.max(1, Math.min(10000, page?.limit ?? 100)),
+    cursor: page?.cursor ?? undefined,
+  });
   return snapshot.turns.length > 0
     ? sanitizeReadThreadForRenderer(snapshot)
     : null;
@@ -1771,6 +1791,7 @@ async function sendChatTurn(
     imTarget?: ImStreamTarget;
   } = {},
 ): Promise<ChatSendReceipt> {
+  assertMutableSession(store.getSession(request.sessionId));
   const runtime = getRuntime();
   const threadId = request.sessionId;
   const content = overrides.displayContent ?? request.text;
@@ -1817,13 +1838,35 @@ async function sendChatTurn(
     overrides.userContent ??
     userContentFromAttachments(content, request.attachments);
   const imTarget = overrides.imTarget;
-  const emitImItemUpdate = (item: MessageItem, prevItem?: MessageItem) => {
+  const publishedItems = new Map<string, WorkflowTurnItem>();
+  const publishItem = (item: WorkflowTurnItem) => {
+    const prevItem = publishedItems.get(item.id);
+    publishedItems.set(item.id, item);
+    mainWindow.webContents.send(IPC.CHAT_ITEM_EVENT, {
+      schemaVersion: 2,
+      type: "item.updated",
+      sessionId: threadId,
+      turnId,
+      item,
+    });
     emitImItemEvent(imTarget, threadId, turnId, {
       type: "item.updated",
       turnId,
-      item: messageItemToWorkflowTurnItem(item),
-      prevItem: prevItem ? messageItemToWorkflowTurnItem(prevItem) : undefined,
+      item,
+      prevItem,
     });
+  };
+  const publishLegacyItem = (item: MessageItem) =>
+    publishItem(messageItemToWorkflowTurnItem(item));
+  const settlePublishedText = () => {
+    for (const item of publishedItems.values()) {
+      if (
+        (item.type === "agentMessage" || item.type === "reasoning") &&
+        !item.settled
+      ) {
+        publishItem({ ...item, settled: true });
+      }
+    }
   };
   const emitImTurnComplete = (
     result: string,
@@ -1936,10 +1979,10 @@ async function sendChatTurn(
     let tokenUsage: ChatSessionRecord["messages"][number]["usage"] | undefined;
 
     const fullAgentText = () =>
-      Array.from(items.values())
-        .filter((item) => item.type === "agent_message")
-        .map((item) => item.text ?? "")
-        .join("");
+      [...publishedItems.values()]
+        .filter((item) => item.type === "agentMessage")
+        .map((item) => item.text)
+        .join("\n\n");
 
     const closeCurrentAgentMessage = (completedAt: number) => {
       if (!lastAgentId || !items.has(lastAgentId)) return;
@@ -1950,13 +1993,7 @@ async function sendChatTurn(
         completedAt,
       };
       items.set(lastAgentId, item);
-      mainWindow.webContents.send(IPC.CHAT_ITEM_EVENT, {
-        type: "item.updated",
-        sessionId: threadId,
-        turnId,
-        item,
-      });
-      emitImItemUpdate(item);
+      publishLegacyItem(item);
       lastAgentId = "";
     };
 
@@ -1978,31 +2015,17 @@ async function sendChatTurn(
           updatedAt,
         };
         items.set(lastAgentId, item);
-        mainWindow.webContents.send(IPC.CHAT_ITEM_EVENT, {
-          type: "item.updated",
-          sessionId: threadId,
-          turnId,
-          item,
-        });
-        emitImItemUpdate(item);
+        publishLegacyItem(item);
         return;
       }
 
       const existing = items.get(lastAgentId)!;
       const existingText = existing.text ?? "";
-      const nextText = content.startsWith(existingText)
-        ? content
-        : existingText + content;
+      const nextText = existingText + content;
       if (nextText === existingText) return;
       const item = { ...existing, text: nextText, updatedAt };
       items.set(lastAgentId, item);
-      mainWindow.webContents.send(IPC.CHAT_ITEM_EVENT, {
-        type: "item.updated",
-        sessionId: threadId,
-        turnId,
-        item,
-      });
-      emitImItemUpdate(item, existing);
+      publishLegacyItem(item);
     };
 
     try {
@@ -2184,6 +2207,10 @@ async function sendChatTurn(
       });
       for await (const evt of eventStream) {
         const ts = Date.now();
+        if (evt.kind === "item-updated") {
+          publishItem(evt.payload.item);
+          continue;
+        }
         const uiEvent = translateRuntimeEventToUIEvent(evt, threadId, turnId);
         if (!uiEvent) continue;
         emitImUIEvent(imTarget, threadId, turnId, uiEvent);
@@ -2235,37 +2262,25 @@ async function sendChatTurn(
             updatedAt: ts,
           };
           items.set(id, item);
-          mainWindow.webContents.send(IPC.CHAT_ITEM_EVENT, {
-            type: "item.updated",
-            sessionId: threadId,
-            turnId,
-            item,
-          });
-          emitImItemUpdate(item, existing);
+          publishLegacyItem(item);
           continue;
         }
 
-        if (uiEvent.type === "tool.start") {
+        if (uiEvent.type === "tool.start" || uiEvent.type === "tool.progress") {
           closeCurrentAgentMessage(ts);
           const item: MessageItem = {
             id: uiEvent.toolId,
             type: "mcp_tool_call",
             rawType: "tool_use",
-            phase: "started",
+            phase: uiEvent.type === "tool.start" ? "started" : "updated",
             tool: uiEvent.toolName,
             args: uiEvent.input ?? {},
             arguments: uiEvent.input ?? {},
-            status: "in_progress",
+            status: uiEvent.isReady === false ? "pending" : "in_progress",
             startedAt: ts,
           };
           items.set(uiEvent.toolId, item);
-          mainWindow.webContents.send(IPC.CHAT_ITEM_EVENT, {
-            type: "item.updated",
-            sessionId: threadId,
-            turnId,
-            item,
-          });
-          emitImItemUpdate(item);
+          publishLegacyItem(item);
           continue;
         }
 
@@ -2288,13 +2303,7 @@ async function sendChatTurn(
             completedAt: ts,
           };
           items.set(uiEvent.toolId, item);
-          mainWindow.webContents.send(IPC.CHAT_ITEM_EVENT, {
-            type: "item.updated",
-            sessionId: threadId,
-            turnId,
-            item,
-          });
-          emitImItemUpdate(item, existing);
+          publishLegacyItem(item);
           continue;
         }
 
@@ -2320,13 +2329,7 @@ async function sendChatTurn(
             reason: uiEvent.reason,
             timeoutMs: uiEvent.timeout,
           });
-          mainWindow.webContents.send(IPC.CHAT_ITEM_EVENT, {
-            type: "item.updated",
-            sessionId: threadId,
-            turnId,
-            item,
-          });
-          emitImItemUpdate(item);
+          publishLegacyItem(item);
           imRuntimeBridge.approvalDispatcher.dispatch(
             threadId,
             {
@@ -2372,6 +2375,7 @@ async function sendChatTurn(
             phase: "turn_end",
           });
           closeCurrentAgentMessage(completedAt);
+          settlePublishedText();
 
           mainWindow.webContents.send(IPC.CHAT_ITEM_EVENT, {
             type: "turn.complete",
@@ -2383,27 +2387,38 @@ async function sendChatTurn(
             completedAt,
           });
           emitImTurnComplete(uiEvent.result, uiEvent.error, completedAt);
-          appendStoredMessage(
-            threadId,
-            {
-              id: `assistant-${turnId}`,
-              role: "assistant",
-              content: fullAgentText() || uiEvent.error || "",
-              timestamp: startedAt,
-              status: uiEvent.result === "error" ? "failed" : "completed",
-              startedAt,
-              completedAt,
-              modelId: turnModelSnapshot.modelId,
-              modelName: turnModelSnapshot.modelName,
-              usage: tokenUsage,
-              items: Array.from(items.values()).map(
-                messageItemToWorkflowTurnItem,
-              ),
-            },
-            undefined,
-            uiEvent.sdkSessionId,
-            activeRuntimeId,
+          const canonicalMessages = storedMessagesForRuntimeTurn(
+            workflowThreadStore.readRuntimeTurnSegments(threadId, turnId),
+            turnId,
           );
+          const completedMessages: StoredSession["messages"] =
+            canonicalMessages.length
+              ? canonicalMessages
+              : [
+                  {
+                    id: `assistant-${turnId}`,
+                    role: "assistant",
+                    content: fullAgentText() || uiEvent.error || "",
+                    error: uiEvent.error,
+                    timestamp: startedAt,
+                    status: uiEvent.result === "error" ? "failed" : "completed",
+                    startedAt,
+                    completedAt,
+                    modelId: turnModelSnapshot.modelId,
+                    modelName: turnModelSnapshot.modelName,
+                    usage: tokenUsage,
+                    items: [...publishedItems.values()],
+                  },
+                ];
+          for (const message of completedMessages) {
+            appendStoredMessage(
+              threadId,
+              message,
+              undefined,
+              uiEvent.sdkSessionId,
+              activeRuntimeId,
+            );
+          }
           const usageInput = tokenUsage?.inputTokens;
           const usageOutput = tokenUsage?.outputTokens;
           const usageStr =
@@ -2429,6 +2444,7 @@ async function sendChatTurn(
             phase: "turn_end",
           });
           closeCurrentAgentMessage(completedAt);
+          settlePublishedText();
           mainWindow.webContents.send(IPC.CHAT_ITEM_EVENT, {
             type: "turn.complete",
             sessionId: threadId,
@@ -2442,6 +2458,7 @@ async function sendChatTurn(
             id: `assistant-${turnId}`,
             role: "assistant",
             content: fullAgentText() || uiEvent.message,
+            error: uiEvent.message,
             timestamp: startedAt,
             status: "failed",
             startedAt,
@@ -2449,9 +2466,7 @@ async function sendChatTurn(
             modelId: turnModelSnapshot.modelId,
             modelName: turnModelSnapshot.modelName,
             usage: tokenUsage,
-            items: Array.from(items.values()).map(
-              messageItemToWorkflowTurnItem,
-            ),
+            items: [...publishedItems.values()],
           });
         }
       }
@@ -2478,6 +2493,7 @@ async function sendChatTurn(
         phase: "turn_end",
       });
       closeCurrentAgentMessage(completedAt);
+      settlePublishedText();
       mainWindow.webContents.send(IPC.CHAT_ITEM_EVENT, {
         type: "turn.complete",
         sessionId: threadId,
@@ -2491,6 +2507,7 @@ async function sendChatTurn(
         id: `assistant-${turnId}`,
         role: "assistant",
         content: fullAgentText() || errorMessage,
+        error: errorMessage,
         timestamp: startedAt,
         status: "failed",
         startedAt,
@@ -2498,8 +2515,13 @@ async function sendChatTurn(
         modelId: turnModelSnapshot.modelId,
         modelName: turnModelSnapshot.modelName,
         usage: tokenUsage,
-        items: Array.from(items.values()).map(messageItemToWorkflowTurnItem),
+        items: [...publishedItems.values()],
       });
+    } finally {
+      // A turn ending changes whether durable outbox messages are deliverable,
+      // even when no outbox row changed. Publish after the runtime iterator has
+      // closed so a stopped turn exposes its remaining queue as paused.
+      await broadcastPendingState();
     }
   })();
 
@@ -2680,6 +2702,15 @@ function registerTerminalBrowserBroadcast(): void {
 }
 
 export function registerHandlers(): void {
+  ipcMain.handle(IPC.CHAT_APP_RESOURCE, (_event, owner) =>
+    loadConversationApp(owner),
+  );
+  ipcMain.handle(IPC.CHAT_APP_TOOL, (_event, input) =>
+    callConversationAppTool(input),
+  );
+  ipcMain.handle(IPC.CHAT_RESPOND_QUESTION, (_event, response) =>
+    conversationInputBroker.respond(response),
+  );
   registerReadThreadBroadcast();
   registerPendingStateBroadcast();
   registerImHandlers();
@@ -2868,11 +2899,14 @@ export function registerHandlers(): void {
   ipcMain.handle(
     IPC.CHAT_FORK_SESSION,
     async (_e, request: ChatForkRequest) => {
+      assertMutableSession(store.getSession(request.sessionId));
       const runtime = getRuntime();
       if (!runtime.capabilities.forkThread || !runtime.forkThread) return null;
+      await readRuntimeThreadSnapshot(request.sessionId);
+      const sourceSession = store.getSession(request.sessionId);
       const newThread = await runtime.forkThread(
         request.sessionId,
-        request.upToMessageId,
+        request.upToMessageId ?? request.lastTurnId,
       );
       const record = {
         id: newThread.id,
@@ -2880,20 +2914,47 @@ export function registerHandlers(): void {
         createdAt: newThread.createdAt,
         updatedAt: newThread.updatedAt,
         isPinned: false,
+        workspacePath: sourceSession?.cwd,
+        workspaceName: findWorkspaceByPath(sourceSession?.cwd)?.name,
         messages: newThread.messages.map(chatMessageFromRuntimeMessage),
       } as ChatSessionRecord;
       persistSessionRecord(record);
+      // Preserve the canonical display history, including the selected turn
+      // boundary. Runtime message arrays may be empty after a disk restore.
+      workflowThreadStore.cloneThread(request.sessionId, newThread.id, {
+        title: record.title,
+        upToTurnId: request.lastTurnId,
+        upToMessageId: request.upToMessageId,
+      });
+      const snapshot = workflowThreadStore.readThread({
+        threadId: newThread.id,
+        limit: Math.max(100, (sourceSession?.messages.length ?? 0) + 1),
+      });
+      const turnIds = snapshot.turns
+        .map((turn) => turn.id)
+        .filter((id) => !id.includes(":steer:"));
+      if (snapshot.page.order === "newest_first") turnIds.reverse();
+      const canonicalMessages = turnIds.flatMap((id) =>
+        storedMessagesForRuntimeTurn(snapshot, id),
+      );
+      if (canonicalMessages.length) {
+        store.saveSession({
+          ...store.getSession(newThread.id)!,
+          messages: canonicalMessages,
+        });
+      }
       logInfo("chat.sessionForked", {
         parentSessionId: request.sessionId,
         newSessionId: newThread.id,
       });
-      return record;
+      return sessionRecordFromStoredSession(store.getSession(newThread.id)!);
     },
   );
 
   ipcMain.handle(
     IPC.CHAT_REWIND_FILES,
     async (_e, request: ChatRewindRequest): Promise<ChatRewindResult> => {
+      assertMutableSession(store.getSession(request.sessionId));
       const dryRun = request.dryRun !== false;
       const result = dryRun
         ? previewWorkspaceRewind({
@@ -2938,6 +2999,7 @@ export function registerHandlers(): void {
   ipcMain.handle(
     IPC.CHAT_RESEND_FROM_MESSAGE,
     async (_event, request: ChatResendRequest) => {
+      assertMutableSession(store.getSession(request.sessionId));
       const runtime = getRuntime();
       if (!runtime.capabilities.editMessage || !runtime.truncateThread) {
         throw new Error(
@@ -3104,8 +3166,13 @@ export function registerHandlers(): void {
     },
   );
 
-  ipcMain.handle(IPC.CHAT_READ_THREAD, async (_e, sessionId: string) =>
-    readRuntimeThreadSnapshot(sessionId),
+  ipcMain.handle(
+    IPC.CHAT_READ_THREAD,
+    async (
+      _e,
+      sessionId: string,
+      page?: { cursor?: string | null; limit?: number },
+    ) => readRuntimeThreadSnapshot(sessionId, page),
   );
 
   ipcMain.handle(IPC.CHAT_CANCEL_TOOL, async (_e, toolCallId: string) => {
@@ -3117,6 +3184,7 @@ export function registerHandlers(): void {
   });
 
   ipcMain.handle(IPC.CHAT_COMPACT, async (_e, sessionId: string) => {
+    assertMutableSession(store.getSession(sessionId));
     const stored = store.getSession(sessionId);
     if (!stored) return;
     const settings = getAgentSettings();

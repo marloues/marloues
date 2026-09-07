@@ -12,6 +12,16 @@
   margin-bottom: 0;
 }
 
+/* Virtuoso wraps each turn separately, so :last-child cannot mark the final
+   conversation turn. Keep the gap inside the measured frame. */
+.workflow-turn-frame:not([data-last-turn="true"]) {
+  padding-bottom: 28px;
+}
+
+.workflow-turn-frame > .workflow-turn {
+  margin-bottom: 0;
+}
+
 .workflow-assistant-turn {
   position: relative;
   width: 100%;
@@ -27,16 +37,6 @@
   justify-content: flex-end;
   gap: var(--space-2);
   margin-bottom: var(--space-6);
-}
-
-.workflow-user-message-images,
-.workflow-user-message-attachments {
-  display: flex;
-  max-width: 100%;
-  flex-direction: row-reverse;
-  align-self: flex-end;
-  gap: var(--space-2);
-  overflow-x: auto;
 }
 
 .workflow-user-message-bubble-row {
@@ -244,29 +244,6 @@
 .workflow-user-image-shell:hover .workflow-user-image-tooltip,
 .workflow-user-image-shell:focus-within .workflow-user-image-tooltip {
   display: block;
-}
-
-.workflow-user-attachment-pill {
-  display: inline-flex;
-  height: 32px;
-  min-width: 0;
-  max-width: 240px;
-  flex: none;
-  align-items: center;
-  gap: 6px;
-  padding: 0 10px;
-  border-radius: var(--radius-md);
-  background: var(--raised-1);
-  color: var(--text-2);
-  font-size: var(--text-sm);
-  line-height: 16px;
-  text-decoration: none;
-}
-
-.workflow-user-attachment-pill.is-link:hover,
-.workflow-user-attachment-pill.is-link:focus-visible {
-  background: var(--raised-2);
-  color: var(--text-1);
 }
 
 .workflow-conversation-icon {
@@ -702,6 +679,7 @@ button.workflow-turn-header-button:focus-visible {
   text-align: left;
 }
 
+.message-footer[data-feedback="true"],
 [data-kind="assistant-turn"]:hover .message-footer,
 [data-kind="assistant-turn"]:focus-within .message-footer {
   opacity: 1;
@@ -953,6 +931,12 @@ button.workflow-turn-header-button:focus-visible {
     transform: none;
   }
 }
+.workflow-turn-body {
+  display: grid;
+  min-width: 0;
+  gap: 16px;
+}
+
 .turn-presentation-block {
   display: contents;
 }
@@ -969,4 +953,9 @@ button.workflow-turn-header-button:focus-visible {
 .workflow-turn-header[data-activity="failed"] .workflow-turn-assistant-mark {
   background: var(--danger-soft);
   color: var(--danger);
+}
+
+.assistant-action:disabled {
+  cursor: var(--cursor-disabled);
+  opacity: 0.55;
 }

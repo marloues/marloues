@@ -236,6 +236,11 @@ const api: MarlouesAPI = {
       ipcRenderer.invoke(IPC.SKILL_TEST_MARKETPLACE_ENDPOINT, endpoint),
   },
   chat: {
+    loadAppResource: (owner) =>
+      ipcRenderer.invoke(IPC.CHAT_APP_RESOURCE, owner),
+    callAppTool: (input) => ipcRenderer.invoke(IPC.CHAT_APP_TOOL, input),
+    respondToQuestion: (response) =>
+      ipcRenderer.invoke(IPC.CHAT_RESPOND_QUESTION, response),
     listSessions: () => ipcRenderer.invoke(IPC.CHAT_LIST_SESSIONS),
     listAllSessions: () => ipcRenderer.invoke(IPC.CHAT_LIST_ALL_SESSIONS),
     searchSessions: (query: string, limit?: number) =>
@@ -284,8 +289,10 @@ const api: MarlouesAPI = {
       ipcRenderer.on(IPC.CHAT_PENDING_STATE_UPDATE, listener);
       return () => ipcRenderer.off(IPC.CHAT_PENDING_STATE_UPDATE, listener);
     },
-    readThread: (sessionId: string) =>
-      ipcRenderer.invoke(IPC.CHAT_READ_THREAD, sessionId),
+    readThread: (
+      sessionId: string,
+      page?: { cursor?: string | null; limit?: number },
+    ) => ipcRenderer.invoke(IPC.CHAT_READ_THREAD, sessionId, page),
     onReadThread: (callback) => {
       const listener = (
         _event: Electron.IpcRendererEvent,

@@ -33,6 +33,7 @@ export interface ShellOperatorMatch {
 export interface ShellRedirectionMatch {
   operator: "<" | "<<" | ">" | ">>";
   commandIndex: number;
+  target?: string;
 }
 
 export interface ShellRiskHint {
@@ -110,9 +111,14 @@ export function analyzeShellCommand(command: string): ShellCommandAnalysis {
   let segmentStart = 0;
   let lastOperator: ShellChainOperator | undefined;
   let parseError: ShellCommandAnalysis["error"];
+  let pendingRedirection: ShellRedirectionMatch | undefined;
 
   const pushCurrent = (): void => {
     if (!hasCurrent) return;
+    if (pendingRedirection) {
+      pendingRedirection.target = current;
+      pendingRedirection = undefined;
+    }
     argv.push(current);
     current = "";
     hasCurrent = false;
@@ -190,6 +196,12 @@ export function analyzeShellCommand(command: string): ShellCommandAnalysis {
       continue;
     }
 
+    // A descriptor target (2>&1) is part of the redirect, not a new command.
+    if (pendingRedirection && char === "&" && /[\d-]/.test(next ?? "")) {
+      current += char;
+      hasCurrent = true;
+      continue;
+    }
     const chain = readChainOperator(command, index);
     if (chain) {
       const pushed = pushSegment(index);
@@ -208,16 +220,18 @@ export function analyzeShellCommand(command: string): ShellCommandAnalysis {
       }
       index += chain.length - 1;
       segmentStart = index + 1;
+      pendingRedirection = undefined;
       continue;
     }
 
     const redirection = readRedirection(command, index);
     if (redirection) {
       pushCurrent();
-      redirections.push({
+      pendingRedirection = {
         operator: redirection.operator,
         commandIndex: commands.length,
-      });
+      };
+      redirections.push(pendingRedirection);
       index += redirection.length - 1;
       continue;
     }
@@ -446,9 +460,10 @@ function detectRiskHints(analysis: ShellCommandAnalysis): ShellRiskHint[] {
       analysis.redirections.some(
         (redirection) =>
           redirection.commandIndex === commandIndex &&
-          (redirection.operator === ">" || redirection.operator === ">>"),
-      ) &&
-      args.some(isSystemPath)
+          (redirection.operator === ">" || redirection.operator === ">>") &&
+          redirection.target !== "/dev/null" &&
+          Boolean(redirection.target && isSystemPath(redirection.target)),
+      )
     ) {
       add(
         "system_path_modification",

@@ -1,0 +1,1458 @@
+{
+  "schemaVersion": 1,
+  "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+  "packageName": "openai-codex-electron",
+  "version": "26.901.41600",
+  "capturedAt": "2026-09-05",
+  "rangeConvention": "UTF-16 code units, zero based, end exclusive",
+  "assets": [
+    {
+      "path": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+      "bytes": 469201,
+      "sha256": "85e7a17d5bf5a1e3d4fec04beb0ce4e3cf7ab2f9965edb56e611d88c34cf512a"
+    },
+    {
+      "path": "webview/assets/app-primary-139889e10fbd.js",
+      "bytes": 7978559,
+      "sha256": "5f2eb43484da39a9459a918c52cb6d0ff8df6ea8184d23bfc448f0702a86d010"
+    },
+    {
+      "path": "webview/assets/app-initial-86767c3d23e5.js",
+      "bytes": 10301862,
+      "sha256": "fb72076ee44f6596f8dafa9a3effe37a3527a87db21fde8b4042233957b554bb"
+    },
+    {
+      "path": "webview/assets/mcp-tool-item-content-639a5760eb4c.js",
+      "bytes": 39062,
+      "sha256": "0535f26e84a86c69509f7959b262ef1ee491a27d79878ef6583d7ab4e0614dfe"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "D01",
+      "label": "消息类型与嵌套分发",
+      "locations": [
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "YT",
+          "startUtf16": 302079,
+          "endUtf16": 323957,
+          "sha256": "0647fab6ca3e41a699b2ffc3f060dbd127bf3b55ffbb42c9d9c03fe2670b23f2"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "pE",
+          "startUtf16": 331746,
+          "endUtf16": 333121,
+          "sha256": "3f9208b8444cb3b8260cfc9ac2b3d9854dd0ecfb31a8169254f08432cd31c673"
+        }
+      ]
+    },
+    {
+      "id": "D02",
+      "label": "助手正文、操作栏和时间戳",
+      "locations": [
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "Oy",
+          "startUtf16": 114722,
+          "endUtf16": 125340,
+          "sha256": "426520cc19882209154c2a490227bdee830cb34221454f000273caa2b86990cc"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "zy",
+          "startUtf16": 130458,
+          "endUtf16": 134437,
+          "sha256": "3a34246bf094d841e9714d9c32aa7457ed5bd4a5639e4ef5c3fde7b47d33a4e8"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "lg",
+          "startUtf16": 19914,
+          "endUtf16": 20373,
+          "sha256": "3c4b92506d903ba0b9dc9ac18b962eef4337035b3c9d06897e36fe3e4d24d932"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "hy",
+          "startUtf16": 113094,
+          "endUtf16": 114216,
+          "sha256": "35ac99bbdb99a238b7a9a3f8bd59ff46bed49e37242a8151b13e781fdbb7e2e0"
+        }
+      ]
+    },
+    {
+      "id": "D03",
+      "label": "流式 Markdown 与修复",
+      "locations": [
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "GBt",
+          "startUtf16": 1732746,
+          "endUtf16": 1733011,
+          "sha256": "7384d1a09e80a3307299e3a882dda77f55f533519f86e3a3ca5efb0d45821357"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "qBt",
+          "startUtf16": 1733080,
+          "endUtf16": 1738561,
+          "sha256": "ea88610ee9f292580930c49480104bb500a68121d7b77d5d7338f692dd392f1a"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "hIt",
+          "startUtf16": 1616080,
+          "endUtf16": 1616209,
+          "sha256": "cdf31d710a3dd2d968da9a1767dfe316dfc6d5052dcb0ff07a9da532b68a177c"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "Qzt",
+          "startUtf16": 1721617,
+          "endUtf16": 1722352,
+          "sha256": "82ab42d886d741b2bd541661f031f4e35a2fdd2f27dfcd7f00cea365352e95b0"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "fIt",
+          "startUtf16": 1613669,
+          "endUtf16": 1614320,
+          "sha256": "dec45fd5103c34c12e04e70e849891a7ae13571f0bc7b9894ef5be9dcb8a7e54"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "xBt",
+          "startUtf16": 1729520,
+          "endUtf16": 1729862,
+          "sha256": "296a9656575b4b21d232b835da2a08d73304215c092f8ac5b987b98fd732880c"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "IBt",
+          "startUtf16": 1731439,
+          "endUtf16": 1731561,
+          "sha256": "73f814aaf0241374266ec909cc88bb4e9a782a97a8575018ddc490cbefea46b1"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "KBt",
+          "startUtf16": 1733011,
+          "endUtf16": 1733080,
+          "sha256": "5059998d11f4ba32430d2671e707e3e28527d7ce91993a45a065b396e39de018"
+        }
+      ]
+    },
+    {
+      "id": "D04",
+      "label": "代码块、行内代码和写作块",
+      "locations": [
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "pIt",
+          "startUtf16": 1614320,
+          "endUtf16": 1615218,
+          "sha256": "439e8cb41f3c6523eddfc2e6efbc8fef2bdb8867d38a55729a6d25973e1e2653"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "NFt",
+          "startUtf16": 1607521,
+          "endUtf16": 1609035,
+          "sha256": "4e0a8526122489b10afe42548005a7e04b0e9517a679e45fc1cfa9b4a2f39fa6"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "sIt",
+          "startUtf16": 1612481,
+          "endUtf16": 1613274,
+          "sha256": "555924669e604c5ffd9730b63166691aee613a4d8e569a941133efa3b69da3d9"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "FFt",
+          "startUtf16": 1609499,
+          "endUtf16": 1609939,
+          "sha256": "c06a8ea63a98bc27cf44ea3c527d37fcc51d07253bc1ae7ff36bffe3c94ef29d"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "PFt",
+          "startUtf16": 1609035,
+          "endUtf16": 1609499,
+          "sha256": "bb042bcb742c45c8ec5ed441c40f7c64ee04cdf53f919993ee69a82868050519"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "IFt",
+          "startUtf16": 1609939,
+          "endUtf16": 1610227,
+          "sha256": "4267792a8a268e241f229311975f36ead806c0791604f50af780621ef02b5853"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "OFt",
+          "startUtf16": 1605787,
+          "endUtf16": 1607393,
+          "sha256": "855ec7d17980d2badbafaccb77fe9ee139bdfcf34a131614248c66c2f88e0dd1"
+        }
+      ]
+    },
+    {
+      "id": "D05",
+      "label": "代码块分支与高亮、复制",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "maa",
+          "startUtf16": 6561690,
+          "endUtf16": 6564339,
+          "sha256": "91a9ec421737cadaa474e62338568dc882fd983ae50296613f0f919d03344d27"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "gia",
+          "startUtf16": 6549972,
+          "endUtf16": 6555143,
+          "sha256": "587c0bde749abd0f5b539a96fe71ff291f1d26695ac09a9089d6bd9b893e21b2"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "yia",
+          "startUtf16": 6555318,
+          "endUtf16": 6557410,
+          "sha256": "5be931ae8184c1302d3d665ef0dbcfd81cc0246b6e7cb8a7f1a7054c4ddf56ac"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "haa",
+          "startUtf16": 6564339,
+          "endUtf16": 6564501,
+          "sha256": "ef6ee22e627378fd3740acb97bd8c531bc947ed98a85f33807cc708d1df7d314"
+        }
+      ]
+    },
+    {
+      "id": "D06",
+      "label": "Mermaid 容器",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Tla",
+          "startUtf16": 6640110,
+          "endUtf16": 6640227,
+          "sha256": "963c84495f82ecb6bcd0fcc3b2454b3389df463cc2636186cc7482003f5e0abb"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "xla",
+          "startUtf16": 6638153,
+          "endUtf16": 6640031,
+          "sha256": "e628f620b1447b05c16bda129458f54394981c797c5244739a292d9dbfc77a1e"
+        }
+      ]
+    },
+    {
+      "id": "D07",
+      "label": "表格与基础排版",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Qca",
+          "startUtf16": 6629997,
+          "endUtf16": 6633371,
+          "sha256": "edb526f43c401f686e8e12e447fcca3976b830a9e95ab526d4fc2b256aabc3f2"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "ala",
+          "startUtf16": 6633981,
+          "endUtf16": 6636847,
+          "sha256": "17e3be6f56faaddce6656aede6efcb64792619ac6ceeb7d200af06597ee7a252"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Pua",
+          "startUtf16": 6651389,
+          "endUtf16": 6652112,
+          "sha256": "2f1c17ded708eed6bce036752a829ddf3b14e844614cd141f82d6073aa6b4e41"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "jua",
+          "startUtf16": 6650891,
+          "endUtf16": 6651348,
+          "sha256": "9b3f9d67e32d8f654c4a3acaa6595d3bbd7d32768d0640ee56f5dabd3d5e5e28"
+        }
+      ]
+    },
+    {
+      "id": "D08",
+      "label": "Markdown token 与公式",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "mda",
+          "startUtf16": 6657781,
+          "endUtf16": 6659285,
+          "sha256": "2f9d1a8dfec8f6c6027206dc211dbb92574646db1dd08407c20ce0d99cd003fa"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "zua",
+          "startUtf16": 6653381,
+          "endUtf16": 6654163,
+          "sha256": "459041b3fbc68692c52d0d5735dd76c234b98938c45b326b6f07233f7c3d7854"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Rua",
+          "startUtf16": 6652997,
+          "endUtf16": 6653381,
+          "sha256": "7a3a35934a130a9c817b9e333c994aff49372b0c0b18961d0b28a03276d90a48"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Iua",
+          "startUtf16": 6652141,
+          "endUtf16": 6652681,
+          "sha256": "5e05139a032c4aae6cef9c81258935f16eaa31e8035a9a9575bd2b5394f35cb6"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "rda",
+          "startUtf16": 6657093,
+          "endUtf16": 6657213,
+          "sha256": "c2e8cd262235330cc63fa2936e6e34c33bb8e628c55422e9376053f589379b51"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "$la",
+          "startUtf16": 6642889,
+          "endUtf16": 6643044,
+          "sha256": "2c5579a73996b385978a621f47a6f6758b6c094bfdd85fe9278720356b014032"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Kua",
+          "startUtf16": 6655399,
+          "endUtf16": 6655487,
+          "sha256": "110a1fb446bc23c95dddbb4a697d70d6ea8863dc5407f9c114d733bbd8ed7648"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Xla",
+          "startUtf16": 6642292,
+          "endUtf16": 6642445,
+          "sha256": "3cc67a6f4531063b8d1baf59ce76ae4a90c37738559f6c1d36081cf3fd0dd32f"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Zla",
+          "startUtf16": 6642445,
+          "endUtf16": 6642774,
+          "sha256": "68fa045a8b0a126e568761780eaeb6bb9bec643b1108fb5e0d6b14513a2d2195"
+        }
+      ]
+    },
+    {
+      "id": "D09",
+      "label": "链接分发",
+      "locations": [
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "_B",
+          "startUtf16": 1615218,
+          "endUtf16": 1615969,
+          "sha256": "b9e38ebd25826a1db6db1185bad1f0133e8d9ea4635f47296569936f1ca0a59e"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "Jkt",
+          "startUtf16": 1482579,
+          "endUtf16": 1484641,
+          "sha256": "4851b8b0f187cdaf0de9b57c6df76b21ea1aa149261d67804bc4edc815e3eeba"
+        }
+      ]
+    },
+    {
+      "id": "D10",
+      "label": "图片、音频、视频",
+      "locations": [
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Isa",
+          "startUtf16": 6610685,
+          "endUtf16": 6615501,
+          "sha256": "5a4818afbfce0a4e936e54c68f24b30a6efaecb91e0faf8a48833845b73cb609"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Lsa",
+          "startUtf16": 6615501,
+          "endUtf16": 6616384,
+          "sha256": "af0fe838598fa75f6735eb610756dcd6844d9029c86d2ae1c46e8cfefebee350"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Zoa",
+          "startUtf16": 6599118,
+          "endUtf16": 6603174,
+          "sha256": "695615f7b023cfbde3d8ac13389bbc2f65a4ec1a5c7dbca879530caf9a7012f9"
+        },
+        {
+          "asset": "webview/assets/app-initial-86767c3d23e5.js",
+          "symbol": "Bsa",
+          "startUtf16": 6619975,
+          "endUtf16": 6621099,
+          "sha256": "ea40131c4541f34d40fdffb9db4e8431d3b35a3a452e035dc10fd89f73d5509a"
+        }
+      ]
+    },
+    {
+      "id": "D11",
+      "label": "正文指令与资源引用",
+      "locations": [
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "Zzt",
+          "startUtf16": 1721184,
+          "endUtf16": 1721617,
+          "sha256": "1f60627775efecb4002b4ec8fca38179ec49302bba8af715b8434d984dc04b7c"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "Bzt",
+          "startUtf16": 1718629,
+          "endUtf16": 1719019,
+          "sha256": "f9ea114e3e0768a47aa2e7a1fe33d9825d29d7d04f53e918b141064a77cb7a4f"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "lzt",
+          "startUtf16": 1708404,
+          "endUtf16": 1708702,
+          "sha256": "7446c37ae16ce2e238ba17641a2a7745bb671975d398320228fafa7c6c72ebd6"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "Jzt",
+          "startUtf16": 1721019,
+          "endUtf16": 1721137,
+          "sha256": "8642c5f0a1f5c1f5514862eaf3ba59c7d5c7394f62fa24f4938feb9b9140145b"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "Uzt",
+          "startUtf16": 1719077,
+          "endUtf16": 1719640,
+          "sha256": "10c10f66fd8fee3d74131f173172660648939d7595b1c30f7e8db6dd290f997f"
+        }
+      ]
+    },
+    {
+      "id": "D12",
+      "label": "用户消息、附件、编辑",
+      "locations": [
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "Eg",
+          "startUtf16": 26394,
+          "endUtf16": 35580,
+          "sha256": "7ebc72705983fb38ad3a9fd02cef5673e67f7e9ce9758e187865e6f4af6881e8"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "pg",
+          "startUtf16": 20427,
+          "endUtf16": 25908,
+          "sha256": "2334ecccffda2de721c905b829cf2b54d468554c21b252d88a27205c16ca6d0c"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "qx",
+          "startUtf16": 185789,
+          "endUtf16": 186615,
+          "sha256": "2bd831e69480d0a941846a37ff204bf6f6963b6e45b04be1310f4c0bc8a99347"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "Jx",
+          "startUtf16": 186615,
+          "endUtf16": 188836,
+          "sha256": "05b653d9361331748f1fa3e54ea435fae0f49496ccf9c3617fca55a3d0c7d934"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "Xx",
+          "startUtf16": 188864,
+          "endUtf16": 191152,
+          "sha256": "a88a1539c1f36b6156f82a88f894264e8f29ecc8a2680a4760fb98b721cb79e4"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "Rx",
+          "startUtf16": 177634,
+          "endUtf16": 178947,
+          "sha256": "8524ffd5997488ed9a30dcd6d84866970e660d4b8d6ef71fed4af86b29d86868"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "A_",
+          "startUtf16": 71790,
+          "endUtf16": 72366,
+          "sha256": "f302c6a96abf6eb6c46ddca1bb3123ff46b5dd9dfcef547616c4061b39fdf74b"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "Hx",
+          "startUtf16": 179021,
+          "endUtf16": 180154,
+          "sha256": "551f329aa0042172fb8007cdff28deb57d14a52f75b71e21f94c86385e4c1ff7"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "Cb",
+          "startUtf16": 142576,
+          "endUtf16": 143612,
+          "sha256": "0735957e481f6a68a616e88ee2eef4604be8a05508292070ed36550421fe9b17"
+        }
+      ]
+    },
+    {
+      "id": "D13",
+      "label": "命令和文件补丁",
+      "locations": [
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "tx",
+          "startUtf16": 151651,
+          "endUtf16": 153544,
+          "sha256": "1b7a8d6c0dfdf28a5de2b98f233e323d32ed95d815e46af678932a3ca91152b4"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "rx",
+          "startUtf16": 154731,
+          "endUtf16": 158874,
+          "sha256": "b9a30e81d4daa9ccee5aa3be9e674a7f6c2e7fcf2cd8a641390907576913a25c"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "$S",
+          "startUtf16": 215188,
+          "endUtf16": 216860,
+          "sha256": "f9f12b1aa9a6f7d51cf2cc5aee7199ec972ca34ce24bb36058482457e5e418d2"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "tC",
+          "startUtf16": 217232,
+          "endUtf16": 228083,
+          "sha256": "8e823d91d34b3493a04293c203b26ed95c627ac94452b5d91b5dc308495d3344"
+        }
+      ]
+    },
+    {
+      "id": "D14",
+      "label": "MCP 工具、原始结果和内容类型",
+      "locations": [
+        {
+          "asset": "webview/assets/mcp-tool-item-content-639a5760eb4c.js",
+          "symbol": "Vn",
+          "startUtf16": 18215,
+          "endUtf16": 27655,
+          "sha256": "a7565e73ec4cdd59a4f2f699447402e98786d3d117e8d6e76f672d31b115d929"
+        },
+        {
+          "asset": "webview/assets/mcp-tool-item-content-639a5760eb4c.js",
+          "symbol": "qn",
+          "startUtf16": 31360,
+          "endUtf16": 37920,
+          "sha256": "7331015c3709485d8d5b599c356a2aebaac300626f8b3a3b58ed6e71115d5f3c"
+        },
+        {
+          "asset": "webview/assets/mcp-tool-item-content-639a5760eb4c.js",
+          "symbol": "Kn",
+          "startUtf16": 31148,
+          "endUtf16": 31360,
+          "sha256": "b47c6a0c1fc0effdf7b6f3737f940a218665c0464141b12f2fae8c4e288483d3"
+        },
+        {
+          "asset": "webview/assets/mcp-tool-item-content-639a5760eb4c.js",
+          "symbol": "Un",
+          "startUtf16": 30310,
+          "endUtf16": 30871,
+          "sha256": "a024b1f35dd14beb544b2d5fa271f12128a5988d381915138802325ce68889f8"
+        }
+      ]
+    },
+    {
+      "id": "D15",
+      "label": "提问、回答与 elicitation",
+      "locations": [
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "tE",
+          "startUtf16": 324489,
+          "endUtf16": 328723,
+          "sha256": "f9ac24fece2f4ecf5cda21149d8a36c0522d3c3947e73b14d73e719d5751817c"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "xT",
+          "startUtf16": 293144,
+          "endUtf16": 294590,
+          "sha256": "a8358e957cb0345470073e14620150fd7b294c0d79a22a8550d1ce70921b768d"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "gC",
+          "startUtf16": 232831,
+          "endUtf16": 234859,
+          "sha256": "6dc34e11b78bf65be406892475a9dd218a5332b41a3adf963ac37c566c1ef69c"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "aE",
+          "startUtf16": 330310,
+          "endUtf16": 330679,
+          "sha256": "7233023c9210431745d60c0c16ab45d216b424cbb200328578610591ddc3bc1b"
+        }
+      ]
+    },
+    {
+      "id": "D16",
+      "label": "计划与待办",
+      "locations": [
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "hw",
+          "startUtf16": 254738,
+          "endUtf16": 255177,
+          "sha256": "4b7d49a8dd3da704cb1f9afc4f8438f50360c4277873101ef9baf21e5e12bc6c"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "gw",
+          "startUtf16": 255177,
+          "endUtf16": 256816,
+          "sha256": "d9b6385acdcb2740add8f4cea2b72116183034b54bb90698f1f3d35da0672582"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "Sw",
+          "startUtf16": 257783,
+          "endUtf16": 262105,
+          "sha256": "d3c031a22150f45b92fd043072a5afa408410de84a51ff1423ffa401cdd2a8e2"
+        }
+      ]
+    },
+    {
+      "id": "D17",
+      "label": "整轮 diff",
+      "locations": [
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "eT",
+          "startUtf16": 273676,
+          "endUtf16": 274395,
+          "sha256": "b0b5b8449ebea0d360b456b783ddce40de5ad8a17a279cc77198cb86c0cbf025"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "rT",
+          "startUtf16": 277150,
+          "endUtf16": 286702,
+          "sha256": "d7d332a1e29461f29629cb0d91829042648c5ee9c0dffae208267c8317a9c67b"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "tT",
+          "startUtf16": 274395,
+          "endUtf16": 276206,
+          "sha256": "9da07d2af07ce65e56c208e493ba5c99110f1c100619cd91df1235dbb54150ba"
+        }
+      ]
+    },
+    {
+      "id": "D18",
+      "label": "生成图片画廊",
+      "locations": [
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "UGn",
+          "startUtf16": 3612398,
+          "endUtf16": 3620475,
+          "sha256": "ea9c7eda72d61b58a36e337d5f59e5c743f04ac35508e739000c170472f45c26"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "GGn",
+          "startUtf16": 3620499,
+          "endUtf16": 3626617,
+          "sha256": "3adea32e6ccc6a253ff8e199507e523657ec927f0ec768e6ae1e6d34c2a32237"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "$Gn",
+          "startUtf16": 3631826,
+          "endUtf16": 3632030,
+          "sha256": "9c79553d3cfe5a93410245238637cfad8ebd2f2bf43cd56f4167bb67b8214f09"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "XGn",
+          "startUtf16": 3628733,
+          "endUtf16": 3631748,
+          "sha256": "a353f2d155b76d50d2b52cf30617702d7ddf577166950fb513af4a8fb878784c"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "cGn",
+          "startUtf16": 3602547,
+          "endUtf16": 3603671,
+          "sha256": "0f50f81cbeccd3c7610d6d1b6e5fd0209ace805ed329e8955d1670528ce959b7"
+        }
+      ]
+    },
+    {
+      "id": "D19",
+      "label": "结果资源分发",
+      "locations": [
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "OW",
+          "startUtf16": 461830,
+          "endUtf16": 463912,
+          "sha256": "b93f3993f8414536cdfc5e462c6dbb58a3b57acadae99e75aec34ff4a7167103"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "UU",
+          "startUtf16": 436130,
+          "endUtf16": 436966,
+          "sha256": "33a4b6922b9caa8d43cf056ce2da3af3d97fdc73f126657fffd227a899543d05"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "fW",
+          "startUtf16": 440689,
+          "endUtf16": 450650,
+          "sha256": "5109ed5ae29280cfdc844417959db2ed15c32066241d99ebb9d24a70872a1bbe"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "vW",
+          "startUtf16": 456411,
+          "endUtf16": 459660,
+          "sha256": "8c304748d266f327b23964242f2c0aa500d5aa6a27a54898f3f02f427f83bf3c"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "_W",
+          "startUtf16": 450822,
+          "endUtf16": 456411,
+          "sha256": "103c983afc50d631b3257a1c579da361dd94242e80b681effe785905f1b2ec8f"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "JU",
+          "startUtf16": 437253,
+          "endUtf16": 439202,
+          "sha256": "7c1e5036f7e9f14a1b839c8a31343b432b7963f8d65f475168464c25678d0fd1"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "RU",
+          "startUtf16": 429583,
+          "endUtf16": 429902,
+          "sha256": "d4b6d1e57a41e49421b5e3c83a4bc73019d350cad8406ea393d21d439fd7ad88"
+        }
+      ]
+    },
+    {
+      "id": "D20",
+      "label": "流式错误与警告",
+      "locations": [
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "HC",
+          "startUtf16": 241666,
+          "endUtf16": 245803,
+          "sha256": "5cff7286657b3fef608b84561243656d09b4e16b3fc2e57e433d2e0bd7073f71"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "ub",
+          "startUtf16": 139315,
+          "endUtf16": 140492,
+          "sha256": "e314bd11ed110aafa5ed38e08414854d6218e6259d5dacee968b805fa8f84c21"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "ob",
+          "startUtf16": 138636,
+          "endUtf16": 139256,
+          "sha256": "e326ee3db04190bd36e0cb48ce99914efb722b00ca1484afb9b57f78b2782c52"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "mb",
+          "startUtf16": 140561,
+          "endUtf16": 141442,
+          "sha256": "b4a6518ce7df064becc92acd0c941b9c8cfe8653f5114b734cb2a6cf223a40fc"
+        }
+      ]
+    },
+    {
+      "id": "D21",
+      "label": "系统错误",
+      "locations": [
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "DDr",
+          "startUtf16": 6982614,
+          "endUtf16": 6984858,
+          "sha256": "bf7097e8d0b67b43f08a7681811d991641b134b1e1de698c23b5dec28ea3cb90"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "MDr",
+          "startUtf16": 6987270,
+          "endUtf16": 6988177,
+          "sha256": "0675dafbe793301a63d0aeaff51f4b0b4e402f16fa8f2ba9c6f12247c462a759"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "ADr",
+          "startUtf16": 6985388,
+          "endUtf16": 6986269,
+          "sha256": "114c0a566aee7c5c53f4b6832987c17ba2832e63a7690a50f0282025591bc49b"
+        },
+        {
+          "asset": "webview/assets/app-primary-139889e10fbd.js",
+          "symbol": "kDr",
+          "startUtf16": 6985244,
+          "endUtf16": 6985388,
+          "sha256": "8e84633bdb9eaffa310a9a2706cf855688295618ca5980ef170061e2df43ca99"
+        }
+      ]
+    },
+    {
+      "id": "D22",
+      "label": "动态工具、协作",
+      "locations": [
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "Ub",
+          "startUtf16": 148862,
+          "endUtf16": 149581,
+          "sha256": "312ab44762be2d144d86b6a1e8f4f84c2511fc16bafd2206dd25dc1fd0500a1a"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "Nb",
+          "startUtf16": 145963,
+          "endUtf16": 147303,
+          "sha256": "3f143b4477d7837ab8c19ef764b89d643c05a2864f6a466845e454ccf289fc6e"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "xS",
+          "startUtf16": 197945,
+          "endUtf16": 200292,
+          "sha256": "a8523ec0201b92136547ba43dbf406ee2053fe48b0414e07d33141d34c8251bc"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "iw",
+          "startUtf16": 249957,
+          "endUtf16": 250993,
+          "sha256": "becadc9bca961c19eb4864e4088ad076edbf09944e0be231e0bbc01b96391853"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "ZS",
+          "startUtf16": 214903,
+          "endUtf16": 215183,
+          "sha256": "40e95513b48f2d4124945ed00c7f6315bb5a993c6b0a5b37313e70bd99046aab"
+        }
+      ]
+    },
+    {
+      "id": "D23",
+      "label": "会话内的来源与状态事件",
+      "locations": [
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "tb",
+          "startUtf16": 137507,
+          "endUtf16": 138561,
+          "sha256": "251956ef56c13bf5a1f0a6d8cb215c093d7dcd3ea560e70f1064d51102ad597f"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "Db",
+          "startUtf16": 143685,
+          "endUtf16": 144194,
+          "sha256": "29383917361665ecdca69244db1fac8fe4a94de9fa2598d527c8867b5dc61a25"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "HT",
+          "startUtf16": 297806,
+          "endUtf16": 298468,
+          "sha256": "a2193188cf22c61119696deaa757e19c5a6f44593f636bfc8a37ff2898804421"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "dS",
+          "startUtf16": 194513,
+          "endUtf16": 196101,
+          "sha256": "fa9eeb458371b99263b2a0e6b06bad29cd6df57da0821a4629d70b57e2e7a40a"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "gS",
+          "startUtf16": 196385,
+          "endUtf16": 197709,
+          "sha256": "f8a12acbc59a4bd0dade4dcba2237a55dfc6f2d2ef55f220a5c99ccb8f524fb6"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "RC",
+          "startUtf16": 240497,
+          "endUtf16": 241603,
+          "sha256": "c99a4c5dfd724637a0bb3d5135e0902686cab6e4f4b31a689e7f634521ddeadb"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "fC",
+          "startUtf16": 231950,
+          "endUtf16": 232772,
+          "sha256": "0d1eab23cb0dd8358db5fd166a6a69994288976cd27246cf53e1e2810c92c72c"
+        }
+      ]
+    },
+    {
+      "id": "D24",
+      "label": "整段过程折叠",
+      "locations": [
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "tD",
+          "startUtf16": 360402,
+          "endUtf16": 364392,
+          "sha256": "64cba1e31abeeea4f2d2a3a6e1d17b7eda3cc6fa6025f34bf2ae77e737858804"
+        },
+        {
+          "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+          "symbol": "YE",
+          "startUtf16": 359384,
+          "endUtf16": 360062,
+          "sha256": "a0765c06227f7325520350d202b2124b1d0da78e49066b8a3f2ab91b5192a62f"
+        }
+      ]
+    }
+  ],
+  "dispatchers": [
+    {
+      "id": "message",
+      "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+      "symbol": "YT",
+      "discriminant": "n.type",
+      "branches": [
+        {
+          "label": "external-event",
+          "startUtf16": 304522,
+          "endUtf16": 304632,
+          "sha256": "c7443b3f95ca9f272cffa1305f0ffb4a07fda0188f935fb2b456c62d7f269b6f"
+        },
+        {
+          "label": "realtime-transcript",
+          "startUtf16": 304632,
+          "endUtf16": 304912,
+          "sha256": "ed8178a6cea733336e0d50dc7550e24ab98680a91b4d477a980bd1dc43d42fd2"
+        },
+        {
+          "label": "user-message",
+          "startUtf16": 304912,
+          "endUtf16": 313556,
+          "sha256": "6ac83305df143f911f4bafb69c6d75b0f6e582df7e3045cf2f0ecbc4c16c3160"
+        },
+        {
+          "label": "assistant-message",
+          "startUtf16": 313556,
+          "endUtf16": 316657,
+          "sha256": "d9cdc983107b85b2386f47266c4bca8bc4e7b00981c98efcdcc3d84e9ac18683"
+        },
+        {
+          "label": "generated-image",
+          "startUtf16": 316657,
+          "endUtf16": 317183,
+          "sha256": "a0708feb5d8bdc07b7c8a8c026d7e7a7d38fd9d5476ef3d32f4a5de525f802d1"
+        },
+        {
+          "label": "steered",
+          "startUtf16": 317183,
+          "endUtf16": 317209,
+          "sha256": "b25ba668ce99d332f3706d8b774036330d39f1af6e241c518cfca9287eb0ad33"
+        },
+        {
+          "label": "image-view",
+          "startUtf16": 317209,
+          "endUtf16": 317376,
+          "sha256": "ccdff0a960d5d7b8bd7d74725fdcb5947901a69667ae580642f33c0bf9285d5d"
+        },
+        {
+          "label": "web-search",
+          "startUtf16": 317376,
+          "endUtf16": 317505,
+          "sha256": "e91e903357afa6a7d21e09e8292aa8c8cbc2cf731588b494a9882de89e97abd4"
+        },
+        {
+          "label": "worked-for",
+          "startUtf16": 317505,
+          "endUtf16": 317819,
+          "sha256": "a2cb62c547ca067ce983c0dcf73874d57b64d60deb68bcb2b4582a4fed643cb9"
+        },
+        {
+          "label": "reasoning",
+          "startUtf16": 317819,
+          "endUtf16": 318052,
+          "sha256": "9a02952ccb45dfb9f5dd368c70a2756d50b68d1e7acb90c54f367656c62daf1a"
+        },
+        {
+          "label": "exec",
+          "startUtf16": 318052,
+          "endUtf16": 318628,
+          "sha256": "ffcd4864795e6374bd7540fd5a35335df0c17537705f33717adaeedde97c66bd"
+        },
+        {
+          "label": "patch",
+          "startUtf16": 318628,
+          "endUtf16": 318937,
+          "sha256": "459a00fda832fbe2bb721086675d0035e0b7b546e6ec47a4091425cda9cb2813"
+        },
+        {
+          "label": "userInput",
+          "startUtf16": 318937,
+          "endUtf16": 318965,
+          "sha256": "b2ebc64dc667dfdac493d157a93fe1be3da7a8f2d59fb23a874ce361d7cf4f3e"
+        },
+        {
+          "label": "user-input-response",
+          "startUtf16": 318965,
+          "endUtf16": 319103,
+          "sha256": "031f29bf7019727e141bfbfd05a537104ebb247160fa10ecfaa5aaeecabe8dfe"
+        },
+        {
+          "label": "mcp-server-elicitation",
+          "startUtf16": 319103,
+          "endUtf16": 319359,
+          "sha256": "a5a87f7e134bc4b85c8cdd3fcc475b44a5388a1f01bfe0fce2c89ba69d0bfb68"
+        },
+        {
+          "label": "permission-request",
+          "startUtf16": 319359,
+          "endUtf16": 319496,
+          "sha256": "53fe7853c9e2ec1613ae4ba3b3c297cfd0e5da7bc6da4c56cd7356443e9789d7"
+        },
+        {
+          "label": "todo-list",
+          "startUtf16": 319496,
+          "endUtf16": 319593,
+          "sha256": "0e89fec7673141cf0dd0c743870433b4fa416911f36a48f381166b60dc5bbfda"
+        },
+        {
+          "label": "plan-implementation",
+          "startUtf16": 319593,
+          "endUtf16": 319631,
+          "sha256": "b1fc5fd5d638ea3d1bea63d739d7b28f1b3d19981d149c9e72f23c182149392d"
+        },
+        {
+          "label": "proposed-plan",
+          "startUtf16": 319631,
+          "endUtf16": 319663,
+          "sha256": "6c46c6318035adb1c5133058a82202fe5163ed0b9730fc874b1bedd8fcd64b8a"
+        },
+        {
+          "label": "stream-error",
+          "startUtf16": 319663,
+          "endUtf16": 319794,
+          "sha256": "bb797200774a8cfbedbcbab89bfc199ccf3a6f1ac042d615b79b4f56152ef692"
+        },
+        {
+          "label": "system-error",
+          "startUtf16": 319794,
+          "endUtf16": 320028,
+          "sha256": "8150d2ca779ef79799d781b560419274fbd294c5540a9f19f875d62ef1085f3c"
+        },
+        {
+          "label": "auto-review-interruption-warning",
+          "startUtf16": 320028,
+          "endUtf16": 320151,
+          "sha256": "3fe1ac4b00eba02e1d81f2acfb767982c1d2d4f2ceaf713dee422bd78875f111"
+        },
+        {
+          "label": "turn-diff",
+          "startUtf16": 320151,
+          "endUtf16": 320390,
+          "sha256": "070d04d1665310a137b92eaa772b7e4b6961a0c06134b300d1ea4f4e245ab04a"
+        },
+        {
+          "label": "remote-task-created",
+          "startUtf16": 320390,
+          "endUtf16": 320520,
+          "sha256": "a2e4866a6509b31f7c91e8837b1ad344abaf5967b6b35dfcf842d3943763cd5b"
+        },
+        {
+          "label": "personality-changed",
+          "startUtf16": 320520,
+          "endUtf16": 320670,
+          "sha256": "e324d90e3fe9df855643889ac45e77ce0adfad46590d9cb075eb91e54edf7b6d"
+        },
+        {
+          "label": "forked-from-conversation",
+          "startUtf16": 320670,
+          "endUtf16": 320861,
+          "sha256": "c1a7aa048b40c17faa9c13144ada6ad392207998e2abca83da9ed59bc928a6a3"
+        },
+        {
+          "label": "model-changed",
+          "startUtf16": 320861,
+          "endUtf16": 321052,
+          "sha256": "2c7679cef06ed5b6e652e93fc1711b3ee2048f86f70b197fd9af7208aefbebee"
+        },
+        {
+          "label": "model-rerouted",
+          "startUtf16": 321052,
+          "endUtf16": 321232,
+          "sha256": "cd6e3c7b416fe2a4220360bedf4942e57e2cdadc5977d92aeb1aa0eb9cd00c81"
+        },
+        {
+          "label": "context-compaction",
+          "startUtf16": 321232,
+          "endUtf16": 321492,
+          "sha256": "95573c9495cee75faedccbe6c6c1d599f5994f4fe12b7502754ca84624c391bc"
+        },
+        {
+          "label": "worktree-init",
+          "startUtf16": 321492,
+          "endUtf16": 322230,
+          "sha256": "044fef4772591474bcdb7e9d9d99bfefea31b9eb0b09470308c7bc9125362dcb"
+        },
+        {
+          "label": "mcp-tool-call",
+          "startUtf16": 322230,
+          "endUtf16": 322928,
+          "sha256": "16988db6b40eff784ade401eb51f1afb2a69fd2859d0b02ce87071db8519791d"
+        },
+        {
+          "label": "automation-update",
+          "startUtf16": 322928,
+          "endUtf16": 323112,
+          "sha256": "2dc68040a081ad23d2cb7e65566a0dc0b1c70db700b0b9bf1971202dcdf03663"
+        },
+        {
+          "label": "dynamic-tool-call",
+          "startUtf16": 323112,
+          "endUtf16": 323347,
+          "sha256": "1f59803d5d7f082eeeec01760ad8468087c91cfae0b84512e280e5fd984f075b"
+        },
+        {
+          "label": "automatic-approval-review",
+          "startUtf16": 323347,
+          "endUtf16": 323491,
+          "sha256": "6df635feb5fec265b9cea22d4b0ff76806bb2c6099e1bfc66b0cfbde837bf61f"
+        },
+        {
+          "label": "strict-review-notice",
+          "startUtf16": 323491,
+          "endUtf16": 323622,
+          "sha256": "99c06601f88abac5d969c6f115f2d561eba86d5774cc74f063614e12e1d5cd03"
+        },
+        {
+          "label": "multi-agent-action",
+          "startUtf16": 323622,
+          "endUtf16": 323850,
+          "sha256": "c1a78f79cebd1da34f3e6c2ae1df68e4a8a17f5a40881f4892e9cc2320a28347"
+        },
+        {
+          "label": "subagent-activity",
+          "startUtf16": 323850,
+          "endUtf16": 323955,
+          "sha256": "8f5f5efb53e77c6677023c4c83a6c9ed66d49a7b043b5d8faffba941f3659b26"
+        }
+      ]
+    },
+    {
+      "id": "markdown",
+      "asset": "webview/assets/app-initial-86767c3d23e5.js",
+      "symbol": "zua",
+      "discriminant": "e.type",
+      "branches": [
+        {
+          "label": "space",
+          "startUtf16": 6653542,
+          "endUtf16": 6653566,
+          "sha256": "cf067ee5ccf5366073a85d1776eb850de68086f58a5af2ed2167119a38238ca3"
+        },
+        {
+          "label": "hr",
+          "startUtf16": 6653566,
+          "endUtf16": 6653591,
+          "sha256": "ab7cacbe71fe34dea993e23a8f8613b5084ebb00aef86e7e6f95792e35d2971d"
+        },
+        {
+          "label": "heading",
+          "startUtf16": 6653591,
+          "endUtf16": 6653623,
+          "sha256": "d3ab5a6463f244ff770b7877366678caf236f89a943ddaef282176943b2d149c"
+        },
+        {
+          "label": "paragraph",
+          "startUtf16": 6653623,
+          "endUtf16": 6653657,
+          "sha256": "943d58f7edf5a4d184f0ac002f7d51ed7b20a838ce83117724b93a10fa001ed3"
+        },
+        {
+          "label": "text",
+          "startUtf16": 6653657,
+          "endUtf16": 6653686,
+          "sha256": "c9d74314b309cea234cc10551edb0b40b9568135871428b7dfd05543316749eb"
+        },
+        {
+          "label": "escape",
+          "startUtf16": 6653686,
+          "endUtf16": 6653713,
+          "sha256": "472070078bbdffcc6dea3082fe813327d1aced3a1a4c650a916a1c9117e9b21a"
+        },
+        {
+          "label": "strong",
+          "startUtf16": 6653713,
+          "endUtf16": 6653744,
+          "sha256": "6cfd911701237b4e2bd854d71de11bddde43330c0c61a4e6a6bc82b4e27e723e"
+        },
+        {
+          "label": "em",
+          "startUtf16": 6653744,
+          "endUtf16": 6653771,
+          "sha256": "d869328e84ff8d4db26cc8fe65631cbe41bc9ecfbea5be838c2a2cc3573eb0b1"
+        },
+        {
+          "label": "del",
+          "startUtf16": 6653771,
+          "endUtf16": 6653799,
+          "sha256": "37e143fa34c6095d533f38c4d4acf6649b4c00aa3e67d618f00a53b3f56eefa6"
+        },
+        {
+          "label": "codespan",
+          "startUtf16": 6653799,
+          "endUtf16": 6653834,
+          "sha256": "be5365425c2d75559e3a661e20847c8860773ed91aaf9a46a7e8ccdc3da3ed4d"
+        },
+        {
+          "label": "br",
+          "startUtf16": 6653834,
+          "endUtf16": 6653871,
+          "sha256": "e47d4161a06f6ddfac869c2c2f0d29c6223e0cb2cc92586a91c2321738803a10"
+        },
+        {
+          "label": "link",
+          "startUtf16": 6653871,
+          "endUtf16": 6653900,
+          "sha256": "80b74050ef9fc45127f95542187b6f1abcd07d7554fd78ac81d21739a5657b89"
+        },
+        {
+          "label": "image",
+          "startUtf16": 6653900,
+          "endUtf16": 6653930,
+          "sha256": "e08f56c19b9dab602345ff6af4d1e93132d6c0ccda19815b9e91e05b731aa884"
+        },
+        {
+          "label": "code",
+          "startUtf16": 6653930,
+          "endUtf16": 6653959,
+          "sha256": "967b6859ad5b802352452d57dd4614599f91b564b16c082a8bbde2f6041a7cea"
+        },
+        {
+          "label": "blockquote",
+          "startUtf16": 6653959,
+          "endUtf16": 6653994,
+          "sha256": "267be174b33134775d9b100139ac3a8f6cd440de21acdb189e9d7ee410ec51b6"
+        },
+        {
+          "label": "list",
+          "startUtf16": 6653994,
+          "endUtf16": 6654023,
+          "sha256": "fe63a5a0e226dc7e7cdfeec0e286740cf88eb3a3902ccb4d42e0828011f13f26"
+        },
+        {
+          "label": "list_item",
+          "startUtf16": 6654023,
+          "endUtf16": 6654057,
+          "sha256": "dc30407e3475262ef2dddc8e7e6bebd52e82b859c2d4ff32727feeae7716646a"
+        },
+        {
+          "label": "table",
+          "startUtf16": 6654057,
+          "endUtf16": 6654087,
+          "sha256": "35409326cfa014a6871b4b0a69dbc43eb948777c7f1c5395f2775c6474425514"
+        },
+        {
+          "label": "html",
+          "startUtf16": 6654087,
+          "endUtf16": 6654140,
+          "sha256": "30452083822ce6a8cecbb721cc35708c82a8eaa0c43d573694dd5893e911a5f0"
+        },
+        {
+          "label": "def",
+          "startUtf16": 6654140,
+          "endUtf16": 6654161,
+          "sha256": "e01a56945f1249428732beeb27199b01f8ba8cef9bb003d4d1deb6804e79e65b"
+        }
+      ]
+    },
+    {
+      "id": "mcp-content",
+      "asset": "webview/assets/mcp-tool-item-content-639a5760eb4c.js",
+      "symbol": "qn",
+      "discriminant": "n.type",
+      "branches": [
+        {
+          "label": "image",
+          "startUtf16": 31462,
+          "endUtf16": 32700,
+          "sha256": "a8bb79299fb9c5e101b2fb164edf33ef5527c307779c88eb105dd52425ff0af6"
+        },
+        {
+          "label": "audio",
+          "startUtf16": 32700,
+          "endUtf16": 33292,
+          "sha256": "5c6a1f7311dc03ae33d0be9536a435ce222e66f9316e03fae4c9ede245fcd0e8"
+        },
+        {
+          "label": "resource_link",
+          "startUtf16": 33292,
+          "endUtf16": 34073,
+          "sha256": "dd296d6794541322308687b08f807c0d418b66c734966e99f3001767b5e0b52f"
+        },
+        {
+          "label": "embedded_resource",
+          "startUtf16": 34073,
+          "endUtf16": 36305,
+          "sha256": "bea97d096ebfa13e032f12b9d55a54ca80b670b70c98c465d6439cb9ed655d1f"
+        },
+        {
+          "label": "unknown",
+          "startUtf16": 36305,
+          "endUtf16": 36699,
+          "sha256": "e906164a70fbe30032efde19d43d62a24d121e63d73806d0d70761f682234707"
+        },
+        {
+          "label": "text",
+          "startUtf16": 36699,
+          "endUtf16": 37918,
+          "sha256": "15ee0ff9e49cdabe2eab6eebd48795dcedcd4204f56c23c6ab8318c8d6fce7b8"
+        }
+      ]
+    },
+    {
+      "id": "resource",
+      "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+      "symbol": "OW",
+      "discriminant": "e.type",
+      "branches": [
+        {
+          "label": "artifact-session",
+          "startUtf16": 462357,
+          "endUtf16": 462454,
+          "sha256": "ca78f89b88a0674de61e0945c172d24e911aec2ad6891718d6d4d917aaff2d57"
+        },
+        {
+          "label": "file",
+          "startUtf16": 462454,
+          "endUtf16": 462603,
+          "sha256": "2528648e6d5ac84b54331716d20bca40d7393f330afd03d697457fd6f991a8e2"
+        },
+        {
+          "label": "google-drive",
+          "startUtf16": 462603,
+          "endUtf16": 462774,
+          "sha256": "d0cc61b8189163e039ce7841249f8c1a05dab251a91a11c074ca0bd85a097d42"
+        },
+        {
+          "label": "appgen-app",
+          "startUtf16": 462774,
+          "endUtf16": 462882,
+          "sha256": "c52fa406cee31e950180df8e4f0d48bb9311cb581a4b70cabd2a2593d457f143"
+        },
+        {
+          "label": "website",
+          "startUtf16": 462882,
+          "endUtf16": 462970,
+          "sha256": "38f050ddf68c9655a3180b098bfca2c4065740038160f0c4d1dc2b04da48cf51"
+        }
+      ]
+    },
+    {
+      "id": "elicitation",
+      "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+      "symbol": "tE",
+      "discriminant": "o.elicitation.kind",
+      "branches": [
+        {
+          "label": "toolSuggestion",
+          "startUtf16": 324822,
+          "endUtf16": 325707,
+          "sha256": "56d00070f7b876b83aebbdbce351078b9067d8e0b1f4a5ab927fdd2c07a157a7"
+        },
+        {
+          "label": "connectorAuth",
+          "startUtf16": 325707,
+          "endUtf16": 325942,
+          "sha256": "049992f83440c7823d95fcc763e9582748381e6886e0028fb0a2686a6ac6f243"
+        },
+        {
+          "label": "urlAction",
+          "startUtf16": 325942,
+          "endUtf16": 326203,
+          "sha256": "5060ed867dfccf9e198bd685ad16ada98a872631dbf4e006b004aab2adefa1af"
+        },
+        {
+          "label": "formElicitation",
+          "startUtf16": 326203,
+          "endUtf16": 326225,
+          "sha256": "2c844c7a0d600f147dd29484235ba1f21ec2495d973d379fed557a766b71fc9a"
+        },
+        {
+          "label": "generic",
+          "startUtf16": 326225,
+          "endUtf16": 326239,
+          "sha256": "f23c8adab4c553228d94a19a8a30e82347633c702fcfb0a7ef9dbd3b594cc307"
+        },
+        {
+          "label": "mcpToolCall",
+          "startUtf16": 326239,
+          "endUtf16": 326257,
+          "sha256": "400cd0b5eb99d4bbf276252ed5db645a2081f3c463c598434921a9219e1bebd1"
+        },
+        {
+          "label": "openaiForm",
+          "startUtf16": 326257,
+          "endUtf16": 326274,
+          "sha256": "9770fb3f0eb9dd7c082d6368ecb7346dc90905fed14dc5aae03476a514a1bb66"
+        },
+        {
+          "label": "unsupportedOpenAIForm",
+          "startUtf16": 326274,
+          "endUtf16": 326403,
+          "sha256": "40672e97ebbc84dc13224e12049c790f5f832e555a9fe9644a6c2d3c11d940d1"
+        }
+      ]
+    }
+  ]
+}

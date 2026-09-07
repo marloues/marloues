@@ -4,8 +4,33 @@ import {
   WorkflowUserMessage,
   formatUserMessageTime,
 } from "../../../../../../../client/renderer/src/components/workflow-chat/turns/UserMessage";
+import { workflowUserMessagePresentation } from "../../../../../../../client/renderer/src/components/workflow-chat/turns/user-message-contract";
 
 describe("WorkflowUserMessage", () => {
+  it("does not repeat envelope image references as files, preserving explicit files and protocol image order", () => {
+    const content = [
+      {
+        type: "text" as const,
+        text: "# Files mentioned by the user:\n\n## photo.png: /tmp/photo.png\n\n## note.txt: /tmp/note.txt\n\n## My request:\n看图",
+      },
+      { type: "localImage" as const, path: "/tmp/photo.png" },
+      { type: "localImage" as const, path: "/tmp/photo.png" },
+      {
+        type: "file" as const,
+        path: "/tmp/photo.png",
+        name: "explicit.png",
+        mimeType: "image/png",
+        text: "",
+      },
+    ];
+    const presentation = workflowUserMessagePresentation(content);
+    expect(presentation.protocolContent).toBe(content);
+    expect(presentation.images).toEqual(content.slice(1, 3));
+    expect(
+      presentation.attachments.map((entry) => "name" in entry && entry.name),
+    ).toEqual(["note.txt", "explicit.png"]);
+    expect(presentation.text).toBe("看图");
+  });
   it("renders images, attachment context, body and icon-only metadata in contract order", () => {
     const html = renderToStaticMarkup(
       <WorkflowUserMessage
@@ -32,7 +57,7 @@ describe("WorkflowUserMessage", () => {
       html.indexOf('data-kind="user-message-bubble"'),
     );
     expect(html).toContain('title="复制这条消息"');
-    expect(html).toContain('title="编辑这条消息"');
+    expect(html).toContain('title="放回输入框"');
     expect(html).not.toContain(">复制<");
   });
 

@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   CornerDownLeft,
   FileText,
@@ -47,13 +48,19 @@ export function QueuedSteersPanel({
 }: QueuedSteersPanelProps) {
   const dragRef = useRef<{ from: number; to: number } | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const popupRef = useRef<HTMLDivElement | null>(null);
+  const [menuPosition, setMenuPosition] = useState({ right: 0, bottom: 0 });
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!openMenuId) return;
 
     const closeOnOutsidePointer = (event: PointerEvent) => {
-      if (!menuRef.current?.contains(event.target as Node)) setOpenMenuId(null);
+      if (
+        !menuRef.current?.contains(event.target as Node) &&
+        !popupRef.current?.contains(event.target as Node)
+      )
+        setOpenMenuId(null);
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpenMenuId(null);
@@ -212,6 +219,11 @@ export function QueuedSteersPanel({
                   aria-haspopup="menu"
                   onClick={(event) => {
                     event.stopPropagation();
+                    const rect = event.currentTarget.getBoundingClientRect();
+                    setMenuPosition({
+                      right: Math.max(8, window.innerWidth - rect.right),
+                      bottom: Math.max(8, window.innerHeight - rect.top + 6),
+                    });
                     setOpenMenuId((current) =>
                       current === steer.id ? null : steer.id,
                     );
@@ -219,33 +231,41 @@ export function QueuedSteersPanel({
                 >
                   <MoreHorizontal size={14} aria-hidden="true" />
                 </button>
-                {openMenuId === steer.id ? (
-                  <div className="composer-steer-menu" role="menu">
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        setOpenMenuId(null);
-                        onEdit?.(steer.id, steer.text);
-                      }}
-                    >
-                      <Pencil size={13} aria-hidden="true" />
-                      编辑
-                    </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className="is-danger"
-                      onClick={() => {
-                        setOpenMenuId(null);
-                        onCancel?.(steer.id);
-                      }}
-                    >
-                      <X size={13} aria-hidden="true" />
-                      关闭引导
-                    </button>
-                  </div>
-                ) : null}
+                {openMenuId === steer.id
+                  ? createPortal(
+                      <div
+                        ref={popupRef}
+                        className="composer-steer-menu"
+                        role="menu"
+                        style={{ position: "fixed", ...menuPosition }}
+                      >
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            setOpenMenuId(null);
+                            onEdit?.(steer.id, steer.text);
+                          }}
+                        >
+                          <Pencil size={13} aria-hidden="true" />
+                          编辑
+                        </button>
+                        <button
+                          type="button"
+                          role="menuitem"
+                          className="is-danger"
+                          onClick={() => {
+                            setOpenMenuId(null);
+                            onCancel?.(steer.id);
+                          }}
+                        >
+                          <X size={13} aria-hidden="true" />
+                          关闭引导
+                        </button>
+                      </div>,
+                      document.body,
+                    )
+                  : null}
               </div>
             </div>
           </div>

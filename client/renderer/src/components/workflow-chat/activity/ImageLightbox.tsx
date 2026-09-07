@@ -39,8 +39,17 @@ export function WorkflowImageLightbox({
     : -1;
   const canNavigate = imageIndex >= 0 && gallery.length > 1;
 
+  const controls = useRef({
+    imageIndex,
+    canNavigate,
+    gallery,
+    onClose,
+    onNavigate,
+  });
+  controls.current = { imageIndex, canNavigate, gallery, onClose, onNavigate };
+  const visible = Boolean(image);
   useEffect(() => {
-    if (!image) return;
+    if (!visible) return;
     const previousActive =
       document.activeElement instanceof HTMLElement
         ? document.activeElement
@@ -52,16 +61,24 @@ export function WorkflowImageLightbox({
     );
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-      if (event.key === "ArrowLeft" && canNavigate) {
+      const { imageIndex, canNavigate, gallery, onClose, onNavigate } =
+        controls.current;
+      if (event.key === "Escape") {
         event.preventDefault();
-        onNavigate?.(
-          gallery[(imageIndex - 1 + gallery.length) % gallery.length],
-        );
+        event.stopPropagation();
+        onClose();
       }
-      if (event.key === "ArrowRight" && canNavigate) {
+      if (event.key === "ArrowLeft" && canNavigate && imageIndex > 0) {
         event.preventDefault();
-        onNavigate?.(gallery[(imageIndex + 1) % gallery.length]);
+        onNavigate?.(gallery[imageIndex - 1]);
+      }
+      if (
+        event.key === "ArrowRight" &&
+        canNavigate &&
+        imageIndex < gallery.length - 1
+      ) {
+        event.preventDefault();
+        onNavigate?.(gallery[imageIndex + 1]);
       }
       if (event.key !== "Tab") return;
       const focusables = [
@@ -86,18 +103,18 @@ export function WorkflowImageLightbox({
       cancelAnimationFrame(focusFrame);
       window.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = previousOverflow;
-      if (previousActive?.isConnected) previousActive.focus();
+      if (previousActive?.isConnected)
+        previousActive.focus({ preventScroll: true });
     };
-  }, [canNavigate, gallery, image, imageIndex, onClose, onNavigate]);
+  }, [visible]);
 
   useEffect(() => setZoom(100), [image?.src]);
   if (!image) return null;
 
   const navigate = (offset: number) => {
     if (!canNavigate) return;
-    onNavigate?.(
-      gallery[(imageIndex + offset + gallery.length) % gallery.length],
-    );
+    const next = gallery[imageIndex + offset];
+    if (next) onNavigate?.(next);
   };
 
   return createPortal(
@@ -136,7 +153,7 @@ export function WorkflowImageLightbox({
           </button>
         </div>
         <div className="image-lightbox-stage" aria-label={image.name}>
-          {canNavigate ? (
+          {canNavigate && imageIndex > 0 ? (
             <button
               type="button"
               className="image-lightbox-nav image-lightbox-nav-prev"
@@ -158,7 +175,7 @@ export function WorkflowImageLightbox({
               );
             }}
           />
-          {canNavigate ? (
+          {canNavigate && imageIndex < gallery.length - 1 ? (
             <button
               type="button"
               className="image-lightbox-nav image-lightbox-nav-next"

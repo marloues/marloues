@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useItemDisclosure } from "../content/conversation-ui-state";
 import { Brain } from "lucide-react";
 import type { WorkflowTurnItem } from "../../../../../shared/adapters/workflow-messages-to-read-thread";
 
@@ -10,10 +10,7 @@ interface Props {
 }
 
 export function WorkflowReasoningRow({ item, defaultOpen = false }: Props) {
-  const [open, setOpen] = useState(defaultOpen);
-  useEffect(() => {
-    if (defaultOpen) setOpen(true);
-  }, [defaultOpen, item.id]);
+  const [open, setOpen] = useItemDisclosure(item.id, defaultOpen);
 
   const text =
     item.content

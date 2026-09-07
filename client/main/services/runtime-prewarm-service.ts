@@ -41,11 +41,12 @@ async function prewarmEndpoint(
 ): Promise<void> {
   const startedAt = Date.now();
   const modelProvider = resolveModelProvider(settings);
-  const route = resolveRuntimeProviderRoutes(settings).routes[0];
+  const plan = resolveRuntimeProviderRoutes(settings);
+  const route = plan.routes[0];
   if (!route) {
     logRuntime("prewarm.endpoint.skipped", {
       elapsedMs: Date.now() - startedAt,
-      reason: "missing endpoint configuration",
+      reason: plan.unavailableReason ?? "missing endpoint configuration",
       providerId: modelProvider.selection.providerId,
       modelId: modelProvider.selection.modelId,
     });

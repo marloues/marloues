@@ -1318,6 +1318,15 @@ export interface MarlouesAPI {
     ): Promise<EndpointTestResult>;
   };
   chat: {
+    loadAppResource(
+      owner: import("./conversation-app").ConversationAppOwner,
+    ): Promise<import("./conversation-app").ConversationAppResource | null>;
+    callAppTool(
+      input: import("./conversation-app").ConversationAppCall,
+    ): Promise<import("./conversation-app").ConversationAppCallResult>;
+    respondToQuestion(
+      response: import("./conversation-input").ConversationInputResponse,
+    ): Promise<void>;
     listSessions(): Promise<ChatSessionRecord[]>;
     listAllSessions(): Promise<ChatSessionRecord[]>;
     searchSessions(
@@ -1358,7 +1367,10 @@ export interface MarlouesAPI {
     onPendingState(
       callback: (snapshot: PendingStateSnapshot) => void,
     ): () => void;
-    readThread(sessionId: string): Promise<WorkflowReadThreadResponse | null>;
+    readThread(
+      sessionId: string,
+      page?: { cursor?: string | null; limit?: number },
+    ): Promise<WorkflowReadThreadResponse | null>;
     onReadThread(
       callback: (snapshot: WorkflowReadThreadResponse | null) => void,
     ): () => void;
@@ -1596,6 +1608,9 @@ export const IPC = {
   CHAT_SEND: "chat:send",
   CHAT_RESEND_FROM_MESSAGE: "chat:resend-from-message",
   CHAT_ABORT: "chat:abort",
+  CHAT_APP_RESOURCE: "chat:app-resource",
+  CHAT_APP_TOOL: "chat:app-tool",
+  CHAT_RESPOND_QUESTION: "chat:respond-question",
   CHAT_CANCEL_TOOL: "chat:cancel-tool",
   CHAT_GET_PENDING_STATE: "chat:get-pending-state",
   CHAT_RESUME_OUTBOX: "chat:resume-outbox",

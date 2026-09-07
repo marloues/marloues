@@ -142,6 +142,8 @@ export function buildClaudeRuntimeOptions(input: {
   cwd: string;
   env: Record<string, string | undefined>;
   canUseTool: ClaudeCanUseTool;
+  hooks?: Record<string, unknown>;
+  onElicitation?: (request: import("@anthropic-ai/claude-agent-sdk").ElicitationRequest, options: { signal: AbortSignal }) => Promise<unknown>;
   sdkMcpServers?: Record<string, unknown>;
   toolAliases?: Record<string, string>;
   pluginPaths?: string[];
@@ -152,6 +154,7 @@ export function buildClaudeRuntimeOptions(input: {
     cwd,
     env,
     canUseTool,
+    onElicitation,
     sdkMcpServers,
     toolAliases,
     pluginPaths,
@@ -208,6 +211,8 @@ export function buildClaudeRuntimeOptions(input: {
     permissionMode,
     allowDangerouslySkipPermissions: false,
     canUseTool,
+    onElicitation,
+    hooks: input.hooks,
     stderr: (data: string) =>
       logWarn("sdk.claude.stderr", { data: data.trim().slice(0, 2000) }),
     // 打包环境显式指向 app.asar.unpacked 内的真实二进制（SDK 自动发现只认 asar 虚拟路径）。

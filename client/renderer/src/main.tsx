@@ -21,7 +21,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   </React.StrictMode>,
 );
 
-void window.marloues.app
+void window.marloues?.app
   .markRendererReady({
     uiVersion: UI_BUILD_VERSION,
     protocolVersion: HOT_UPDATE_PROTOCOL_VERSION,

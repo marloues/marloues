@@ -78,6 +78,7 @@ export interface WorkflowComposerShellProps {
   onSecurityModeChange?: (mode: AgentSecurityMode) => void;
   onOpenSecuritySettings?: () => void;
   permissionPanel?: ReactNode;
+  planPrompt?: ReactNode;
   emptyHeader?: ReactNode;
   modelControl?: ReactNode;
   placeholder?: string;

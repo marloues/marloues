@@ -1,3 +1,4 @@
+import { mediaSource } from "../content/content-target";
 export function workflowImageSource(value: string): string {
   const source = value.trim();
   if (!source) return "";
@@ -7,9 +8,5 @@ export function workflowImageSource(value: string): string {
   if (/^[A-Za-z0-9+/=\s]+$/.test(source) && source.length > 120) {
     return `data:image/png;base64,${source.replace(/\s/g, "")}`;
   }
-  return localImageSource(source);
-}
-
-function localImageSource(path: string): string {
-  return `file:///${path.replace(/\\/g, "/")}`;
+  return mediaSource(source);
 }

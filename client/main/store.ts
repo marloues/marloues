@@ -1,8 +1,9 @@
+import type { ConversationTiming } from "@shared/conversation-timing";
 import { app } from "electron";
 import { join } from "path";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { logError, logInfo } from "./core/logging/app-logger";
-import { getStateDir } from "./app-paths";
+import { getStateDir, getMarlouesHome } from "./app-paths";
 import type { RuntimeKind, TokenUsage } from "../shared/types";
 import type { WorkflowUserMessageContent } from "../shared/workflow-read-thread-contract";
 import type { WorkflowTurnItem } from "../shared/workflow-read-thread-contract";
@@ -71,12 +72,21 @@ export interface StoredMessageItem {
 }
 
 export interface StoredMessage {
+  userClientId?: string;
+  userSettled?: boolean;
+  durationMs?: number | null;
+  timing?: ConversationTiming;
+  turnId?: string;
+  continuationFragment?: boolean;
+  continuesPreviousTurn?: boolean;
   id: string;
+  error?: string;
+  errorDetails?: unknown;
   role: "user" | "assistant";
   content: string;
   userContent?: WorkflowUserMessageContent[];
   timestamp: number;
-  status?: "thinking" | "running" | "completed" | "failed";
+  status?: "thinking" | "running" | "completed" | "failed" | "cancelled";
   startedAt?: number;
   updatedAt?: number;
   completedAt?: number;
@@ -88,6 +98,13 @@ export interface StoredMessage {
 }
 
 export interface StoredSession {
+  codexReplay?: {
+    source: string;
+    sourceSha256: string;
+    throughLine: number;
+    turnId?: string;
+    clockAt: number;
+  };
   id: string;
   title: string;
   updatedAt: number;
@@ -358,6 +375,10 @@ class SimpleStore {
 }
 
 function getStoreUserDataPath(): string {
+  // This singleton is created during imports, before index.ts sets userData.
+  // Explicit homes must stay isolated even during that early initialization.
+  if (process.env.MARLOUES_HOME?.trim())
+    return join(getMarlouesHome(), "electron-user-data");
   try {
     if (app?.getPath) return app.getPath("userData");
   } catch {

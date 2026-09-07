@@ -1,0 +1,282 @@
+{
+  "schemaVersion": 1,
+  "worktree": "/Users/xuzong/workspace/marloues-architecture-review-20260905",
+  "branch": "codex/architecture-review-20260905",
+  "gitHead": "edebdae45ce19f787125584750e636f56ecb30d3",
+  "includesUncommittedChanges": true,
+  "capturedAt": "2026-09-05",
+  "files": [
+    {
+      "path": "client/main/core/runtime/binary-event-adapter.ts",
+      "sha256": "1d9096e0e1cee9709393783b15cd7cad08bb4077579d28d22a272078a6220541"
+    },
+    {
+      "path": "client/main/core/runtime/codex-item-adapter.ts",
+      "sha256": "e24a5421a0becfd92f3e9b9d02beff173f83bd1a23f017c566261f5781ed9dff"
+    },
+    {
+      "path": "client/main/core/runtime/read-thread-serializer.ts",
+      "sha256": "4ae3d4854d8c727b6504924c7cd119722e305c8500f546951c80fa599836e18c"
+    },
+    {
+      "path": "client/main/core/runtime/workflow-thread-store.ts",
+      "sha256": "28087b996696dfed584f30d504006782e43d27ebc61c017fe151996cc77eba34"
+    },
+    {
+      "path": "client/main/core/runtime/workflow-turn-persistence.ts",
+      "sha256": "b6fea63643aaaa615fbb2578eb7c7f61acb7189a679d98f7dc32ff774caf9b23"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ActivityGroup.tsx",
+      "sha256": "321b0349ba83d65d23750170678d8a6a48fcf91f343e4cd634118def2566799f"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ActivityRenderer.tsx",
+      "sha256": "50cc9afbaf95d75a29b679fc63f9f99313430a3899c070b7f90d7bae09e9ad6e"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ActivityRow.tsx",
+      "sha256": "4e39f832055c462a77eb85385b903e88d8387f791f4458c5c7c528d42a34ed26"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/AgentFlowSection.tsx",
+      "sha256": "d85d4959c719f02f3efddd8c41a0d2ae00d8ef51e26ce0cbe78494e974fe9fae"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/CommandDetailCard.tsx",
+      "sha256": "ada93ed4d64dc6297731c89e16476599fcdaaa8eb0304309d71ef55e7fc003d6"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/CommandExecutionRow.tsx",
+      "sha256": "929777945b6ef3d28e6f6cf67e5812636105be302c341e78c611a55fa45d9ce2"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/DetailCopyButton.tsx",
+      "sha256": "f33b3d729e4e1026fcff1f929f52c60157a1e09c4d695bef9711afe97bbd525f"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ImageGenerationRow.tsx",
+      "sha256": "58d8459445c2352a034310cbe3fce5f0c9ccbb19288c895b2f48ea73b78106c9"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ImageLightbox.tsx",
+      "sha256": "1f3d21e002d6eb5d188b58520d42ffb23fe9050d4272017550d6e278cf549c4b"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/PermissionRequestRow.tsx",
+      "sha256": "e15a9faa37ce8ec5d765f3296f520b5fd3f67ec5e1de939997982cc2b48a765e"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ResultCards.tsx",
+      "sha256": "6bd25899bdb6bc138e3610a767883613d631edee8e47940a6186fac6f3e5dffa"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ToolCallRow.tsx",
+      "sha256": "a411c99dd61a18c27f035a6bc2c3bad29badc463bdf65a0200576eee1c0be71e"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ToolCallRowDetails/ToolDetail.tsx",
+      "sha256": "c0913bb6c9c86f757809fd2040559f2d98d6f6ba43ee16ae014c87868585c5a1"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ToolCallRowDetails/ToolDetailFrame.tsx",
+      "sha256": "153288f7e82def9e15c06a9bb0097eace2a0725340599a906172794f11cc04e3"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ToolCallRowDetails/detail-sections.tsx",
+      "sha256": "2a6dcc7725455684f06bacf9c670f7bacefd831049f0b14887cdbcb231d7fcac"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ToolCallRowDetails/helpers.ts",
+      "sha256": "12320af063ad7ccfa1b5ed301bb3382f3c6aebc17c8005adf82f4ebac20b4f0b"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ToolCallRowDetails/parsers.ts",
+      "sha256": "cb972b289e2177e55a9e119feeb1b0d2cffc1f5f85f9d3e0845c736bb3eceaf9"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/TurnItemRenderer.tsx",
+      "sha256": "d5e15797767a07270b5af5f5a5d988afa08159dd5774c0eb94dd2f08be255020"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/codex-activity-contract.ts",
+      "sha256": "fab7e984f7184989eebd7b86ce1b1492bb3c4ae1dd73080b1d9e76666cee231f"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/command-presentation.ts",
+      "sha256": "07240219a2888501ceb03a54705ec9f9359c205e7183c022b2cc69c8e232c6b3"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/image-lightbox-model.ts",
+      "sha256": "31e5931e1748e84729b007719332f7ba5d7fd13bfccb7eae780e02e9822f21e2"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/image-source.ts",
+      "sha256": "7bc5744f2d33591a18e781c1de764f52cd3834524bad39074f82897d7f2a1b07"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/composer/use-conversation-scroll.ts",
+      "sha256": "94c4cfb47037774b43ff527175733bd2b21c592488c06d958a773c15d13c7671"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/content/CodeBlock.tsx",
+      "sha256": "49b1d466e241c2ce2a9c2d9436701b95345a5237ec528a20e48072b1000c46ef"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/content/MarkdownContent.tsx",
+      "sha256": "3c832670323916077992ea1a606a26cab3c6bc57ef4caff9588628b7908189d1"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/AssistantAnswer.tsx",
+      "sha256": "c2b364218375019788d7b4b3da0ca93424768d5c41004a8602c7cef8d126e176"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/AssistantTurn.tsx",
+      "sha256": "25e9347539ac4d0a41c30632576cce03718da3dc85c22536451a73f8f2594b8e"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/ReadThreadTurnList.tsx",
+      "sha256": "70b83601608d67d83af0197edf2c4761face7f691543b1f94f86dacf440b3db1"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/ThinkingPlaceholder.tsx",
+      "sha256": "b135d079be4d95b5413332e04455d50e3574729c1a1982a6aff2399aace4536e"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/TurnFlowSection.tsx",
+      "sha256": "1725016d86225b6071b2f94d57362b350e98581abf4bcfe415e707c8095c0f63"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/TurnFooterView.tsx",
+      "sha256": "9a1fea3f9aae9c185231f05610f92d3bb8d45a6f9a6919cbf55d4dca65ca989d"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/TurnPresentationBlocks.tsx",
+      "sha256": "a5526724fde29469a0a6b7bd2fabe8957e7589231e03ffd698c039ba61608e8e"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/TurnShell.tsx",
+      "sha256": "fdae7c5542169b2f34907a6f2ae29a062dedb587b5d61b554728552229177f8b"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/TurnView.tsx",
+      "sha256": "92a8228f32afdacbea3a70acc4d225aca2a4b79bd1e210292ee9c78ebb832038"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/UserMessage.tsx",
+      "sha256": "190a46a05d897aeb8325541e815d9948d18bc9e07c9fedd8a123966986dfb33b"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/turn-collapse-rules.ts",
+      "sha256": "bc485a13cea5cf657120232adfe920acdd401bffddb6c4e25550aae3eb2ea35a"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/turn-collapse-state.ts",
+      "sha256": "fd8e859380ae4e8bc9a86ce0185fa527e59320b76ac08bd21d2455efbaad1b24"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/turn-layout/flow-helpers.ts",
+      "sha256": "20c76b59ee82a7db16d54e556330b7eb85b110f4a50043a3bdba3b3b3e497aad"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/turn-layout/turn-layout.ts",
+      "sha256": "2b6d6e53ffb94ea9f82cfc47b59351106dbb2188e7ebd6708af942b5abd0591c"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/turn-presentation-model-helpers.ts",
+      "sha256": "dc680ccbe0c457da657dfb395c88f72f69352c03ba1fefd14607875ae6ed64cc"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/turn-presentation-model-types.ts",
+      "sha256": "f6504d8a0a6012c3501daab7ec34adf3c82a8c2648fcf413781efcbe733e04d2"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/turn-presentation-model.ts",
+      "sha256": "798b668ec5b34492a706fd3c1979015a65348e565098d3a83e2bd8567d5d7fca"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/turn-presentation.ts",
+      "sha256": "805ba1460099456a314832505edb5aaed91e5a4a1cdc692ebd76389bf79b9373"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/turn-status.ts",
+      "sha256": "1d58de39f8c23ee446611782bb0e081fdbd7adda5fa1ac373c7c28f436b8356d"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/use-collapse-state.ts",
+      "sha256": "e3954d5fb6f5a6a68936d95ce0445b640165368231725eebc73bb4a95ffa7fe0"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/user-message-contract.ts",
+      "sha256": "618399f16e90bc3e85f872c4d56dcfe6f98107d4823950dff8a217b4f9bafe57"
+    },
+    {
+      "path": "client/renderer/src/pages/WorkflowChatPage.tsx",
+      "sha256": "b104fb9b3379a30e362905ed16ac165f73ff6462b3a1c9db554d940674295c7a"
+    },
+    {
+      "path": "client/renderer/src/styles/components/workflow-activity.css",
+      "sha256": "487f6da3f40e33ee049900fba400ca20466b23367afc9020b7059fbe1137cc85"
+    },
+    {
+      "path": "client/renderer/src/styles/components/workflow-message-turn.css",
+      "sha256": "35fc7689fdf5b04e0747dc646418071933e1ba9f4ee24ca718482a896358a13f"
+    },
+    {
+      "path": "client/shared/adapters/workflow-item-event.ts",
+      "sha256": "197a8a97c0eac914695bc87279a59419e9b60eea98c7c81bc820ffdd7595fbfd"
+    },
+    {
+      "path": "client/shared/adapters/workflow-messages-to-read-thread.ts",
+      "sha256": "436009e4877060afa1f8228141bd29f344faa17714a8dfddcc945edf16690756"
+    },
+    {
+      "path": "client/shared/conversation-page-contract.ts",
+      "sha256": "f1881e98404c41cbbe7b5eda01f004bce448fea33688e5942bc4f1e2b7a3846a"
+    },
+    {
+      "path": "client/shared/workflow-read-thread-contract.ts",
+      "sha256": "6d425ef7728854b89b3181160c4fd6bea09bad272f641fb85b60c65faa99986b"
+    },
+    {
+      "path": "tests/unit/conversation-contract.integration.test.tsx",
+      "sha256": "0ed58e3278822578cbee7b54243acb3c873ed697ba1f8f8423735420604a1d8d"
+    },
+    {
+      "path": "tests/unit/main/core/runtime/binary-event-adapter.test.ts",
+      "sha256": "d7467f9a001d9321c8003556becb25433fae4d2ce53a7eda0b406cfd22b85ed1"
+    },
+    {
+      "path": "tests/unit/renderer/src/components/workflow-chat/activity/tool-presentation.test.ts",
+      "sha256": "24b560b5244537fa6d8b5bd1472dae2a116fc739c42fb8d00d44f4ad098506b6"
+    },
+    {
+      "path": "tests/unit/renderer/src/components/workflow-chat/turns/long-turn-performance.test.tsx",
+      "sha256": "bfb8f52609334a97da8944454f45563c3aee66386f2d93cca78ce7f05d12f02d"
+    },
+    {
+      "path": "tests/unit/renderer/src/components/workflow-chat/turns/turn-collapse-state.test.ts",
+      "sha256": "09c99f61e3afdd1ecdf8485c20e6dd08ef6ee71f869d466c066de01cd7276f96"
+    },
+    {
+      "path": "tests/unit/renderer/src/components/workflow-chat/turns/turn-presentation-model.test.ts",
+      "sha256": "6a78aacb017d45d9b733e16f86ff4571f47d97a7117b79e5fae3f2b3910de221"
+    }
+  ],
+  "priorVerification": {
+    "kind": "existing targeted unit/integration tests",
+    "filesPassed": 6,
+    "testsPassed": 44,
+    "exitCode": 0,
+    "testFiles": [
+      "tests/unit/conversation-contract.integration.test.tsx",
+      "tests/unit/main/core/runtime/binary-event-adapter.test.ts",
+      "tests/unit/renderer/src/components/workflow-chat/activity/tool-presentation.test.ts",
+      "tests/unit/renderer/src/components/workflow-chat/turns/long-turn-performance.test.tsx",
+      "tests/unit/renderer/src/components/workflow-chat/turns/turn-collapse-state.test.ts",
+      "tests/unit/renderer/src/components/workflow-chat/turns/turn-presentation-model.test.ts"
+    ],
+    "electronUiRerun": false
+  },
+  "note": "No new product tests or UI runs in this documentation extension."
+}

@@ -1,0 +1,63 @@
+{
+  "baseline": "edebdae",
+  "probeCount": 9,
+  "findings": [
+    {
+      "id": "F1",
+      "observed": "51 saves -> 50 JSON sessions; pinned s0 absent after reload; 51 metadata records"
+    },
+    {
+      "id": "F3a",
+      "observed": "started receipt, without any completion event -> scheduled run success"
+    },
+    {
+      "id": "F3b",
+      "observed": "available runtime + no window -> send rejected with no_window"
+    },
+    {
+      "id": "F2",
+      "observed": "in-flight model-a request after global switch -> provider b / model-b"
+    },
+    {
+      "id": "F5",
+      "observed": "stored assistant status=failed + error text -> rehydrated status=completed, error=null"
+    },
+    {
+      "id": "F6",
+      "observed": "101 turns; repeated loadMore yields 100 with hasMore=true; every runtime request omits cursor"
+    },
+    {
+      "id": "R1",
+      "observed": "10 assistant-side types return null in the active item renderer",
+      "missingTypes": [
+        "plan",
+        "collabAgentToolCall",
+        "imageView",
+        "imageGeneration",
+        "enteredReviewMode",
+        "exitedReviewMode",
+        "hookPrompt",
+        "permissionRequest",
+        "contextCompaction",
+        "unknown"
+      ]
+    },
+    {
+      "id": "R2",
+      "observed": "explicit final_answer is ignored by collapsed summary and footer copy",
+      "summaryText": "later progress",
+      "copyText": "progress\n\nfinal answer\n\nlater progress"
+    },
+    {
+      "id": "R3",
+      "observed": "native final_answer -> canonical phase=completed; settled=true",
+      "canonicalFinal": {
+        "type": "agentMessage",
+        "id": "final",
+        "text": "answer",
+        "phase": "completed",
+        "settled": true
+      }
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import { workflowToolResult } from "../workflow-tool-result";
 import type { AppZone } from "../workflow-read-thread-contract";
 import type {
   WorkflowAgentMessageItem,
@@ -84,6 +85,21 @@ export function textOutputFromUnknown(
   if (value === undefined || value === null) return undefined;
   if (typeof value === "string") {
     return { text: value, truncated: false };
+  }
+  if (
+    Array.isArray(value) &&
+    value.every(
+      (block) =>
+        block &&
+        typeof block === "object" &&
+        block.type === "text" &&
+        typeof block.text === "string",
+    )
+  ) {
+    return {
+      text: value.map((block) => block.text).join("\n"),
+      truncated: false,
+    };
   }
   try {
     return { text: JSON.stringify(value, null, 2), truncated: false };
@@ -185,6 +201,7 @@ export function createTurnItemBuilder(
       status: patch.status ?? existing?.status ?? "running",
       durationMs: patch.durationMs ?? existing?.durationMs,
       output: patch.output ?? existing?.output,
+      result: patch.result ?? existing?.result,
       modelOutput: patch.modelOutput ?? existing?.modelOutput,
       contextEconomy: patch.contextEconomy ?? existing?.contextEconomy,
       settled: patch.settled ?? existing?.settled,
@@ -271,7 +288,8 @@ export function createTurnItemBuilder(
         case "tool.complete":
           return upsertMcpToolCall(event.toolId, {
             output: textOutputFromUnknown(event.output),
-            status: event.isError ? "error" : "completed",
+            result: workflowToolResult(event.output),
+            status: event.status ?? (event.isError ? "error" : "completed"),
             settled: true,
           });
 

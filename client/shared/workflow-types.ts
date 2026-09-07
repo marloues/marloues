@@ -1,6 +1,6 @@
 export interface MessageItem {
   id: string
-  type: 'agent_message' | 'reasoning' | 'command_execution' | 'file_change' | 'mcp_tool_call' | 'web_search' | 'todo_list' | 'permission_request' | 'error'
+  type: 'agent_message' | 'reasoning' | 'command_execution' | 'file_change' | 'mcp_tool_call' | 'web_search' | 'todo_list' | 'permission_request' | 'error' | 'unknown'
   rawType?: string
   phase?: 'started' | 'updated' | 'completed'
   text?: string

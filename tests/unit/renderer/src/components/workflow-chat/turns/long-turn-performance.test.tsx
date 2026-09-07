@@ -21,6 +21,41 @@ vi.hoisted(() => {
 });
 
 describe("long running turn rendering", () => {
+  it("does not mount process bodies for a collapsed historical turn", () => {
+    const message: WorkflowMessageBlock = {
+      id: "history",
+      user: "历史任务",
+      activity: "done",
+      status: "completed",
+      durationMs: 1000,
+      items: [
+        ...Array.from({ length: 1000 }, (_, index): WorkflowTurnItem => ({
+          id: `progress-${index}`,
+          type: "agentMessage",
+          phase: "commentary",
+          text: `过程 ${index}`,
+        })),
+        {
+          id: "final",
+          type: "agentMessage",
+          phase: "final_answer",
+          text: "最终答复",
+          settled: true,
+        },
+      ],
+    };
+    const html = renderToStaticMarkup(
+      <WorkflowTurnView
+        message={message}
+        expanded={false}
+        isLastStreaming={false}
+        onToggle={() => undefined}
+      />,
+    );
+    expect(html).not.toContain('data-kind="agent-flow-section"');
+    expect(html.match(/data-kind="assistant-answer"/g)).toHaveLength(1);
+    expect(html).toContain("最终答复");
+  });
   it("keeps mounted activity rows bounded for a very large active turn", () => {
     const itemCount = 20_000;
     const message: WorkflowMessageBlock = {
@@ -48,8 +83,8 @@ describe("long running turn rendering", () => {
         onToggle={() => undefined}
       />,
     );
-    // 新渲染：工具行按 items 逐条渲染，live turn 窗口化后只保留最后 N 条。
-    const mountedRows = html.match(/data-tool="exec_command"/g)?.length ?? 0;
+    // The presentation groups completed work and retains the latest running row.
+    const mountedRows = html.match(/data-kind="activity-row"/g)?.length ?? 0;
 
     expect(mountedRows).toBeGreaterThan(0);
     expect(mountedRows).toBeLessThanOrEqual(256);

@@ -33,6 +33,15 @@
     "test:smoke:electron-live-ui": "npm run test:smoke:electron-live-ui --workspace marloues",
     "test:smoke:electron-binary-live-ui": "npm run test:smoke:electron-binary-live-ui --workspace marloues",
     "test:visual": "npm run test:visual --workspace marloues",
+    "test:conversation:preview": "npm run dev:conversation --workspace marloues",
+    "test:conversation:build": "node tests/contract/conversation-build.probe.mjs",
+    "test:conversation:desktop": "node tests/smoke/conversation-app.integration.mjs",
+    "test:conversation:visual": "node tests/visual/conversation-details.interaction.mjs",
+    "test:conversation:complete": "node tests/visual/conversation-complete.electron.mjs",
+    "test:conversation:real": "node tests/visual/conversation-real.electron.mjs",
+    "test:conversation:real:report": "node tests/contract/conversation-real-report.mjs",
+    "test:conversation:live": "node tests/smoke/conversation-app.integration.mjs --live",
+    "test:conversation:report": "node tests/contract/conversation-verification-report.mjs",
     "lint": "npm run lint:client && npm run lint:tests",
     "lint:client": "npm run lint --workspace marloues",
     "lint:tests": "node node_modules/eslint/bin/eslint.js --config tests/eslint.config.mjs tests",
@@ -53,7 +62,11 @@
     "site:build": "npm run build --workspace @marloues/website",
     "verify": "npm run test:layout && npm run lint && npm run typecheck && npm run test:unit && npm run test:contract && npm run build",
     "verify:push": "npm run test:layout && npm run lint && npm run typecheck && npm run test:unit",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:conversation:case": "node tests/visual/conversation-case.electron.mjs",
+    "test:conversation:case:markdown": "node tests/visual/conversation-case-actions.mjs",
+    "test:conversation:case:tools": "node tests/visual/conversation-case-tools.mjs",
+    "test:conversation:case:report": "node tests/contract/conversation-generated-report.mjs"
   },
   "lint-staged": {
     "client/**/*.{ts,tsx}": "node node_modules/eslint/bin/eslint.js --config client/eslint.config.mjs --fix",

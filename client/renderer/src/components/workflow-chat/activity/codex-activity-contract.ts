@@ -1,6 +1,7 @@
 import type { WorkflowTurnItem } from "@shared/workflow-read-thread-contract";
 import type { WorkflowActivitySummary } from "../turns/turn-layout";
-import { itemInputText } from "../adapter/item-text";
+import { commandLabel } from "./command-presentation";
+import { toolLabel } from "./ToolCallRowDetails/labels";
 
 type ProcessItem = Exclude<
   WorkflowTurnItem,
@@ -114,10 +115,15 @@ export function codexActivityGroupSummaryLabel(
 ): string {
   const browserToolCount = items.filter(codexActivityIsBrowserTool).length;
   const genericToolCount = Math.max(0, summary.toolCount - browserToolCount);
-  const fileCount =
-    summary.fileCreateCount + summary.fileEditCount + summary.fileDeleteCount;
-  const explorationCount =
-    summary.exploredFileCount + summary.searchCount + summary.listCount;
+  const fileItems = items.filter((item) => item.type === "fileChange");
+  const unsuccessfulFileCount = fileItems.filter(
+    (item) => !["completed", "done"].includes(String(item.status)),
+  ).length;
+  const fileCount = fileItems.length
+    ? fileItems
+        .filter((item) => ["completed", "done"].includes(String(item.status)))
+        .reduce((sum, item) => sum + Math.max(1, item.changes.length), 0)
+    : summary.fileCreateCount + summary.fileEditCount + summary.fileDeleteCount;
   const parts: string[] = [];
   if (browserToolCount > 0) parts.push("已使用 浏览器");
   if (fileCount > 0)
@@ -128,12 +134,29 @@ export function codexActivityGroupSummaryLabel(
           ? "编辑了文件"
           : "编辑了多个文件",
     );
-  if (explorationCount > 0) parts.push("读取文件");
+  if (unsuccessfulFileCount > 0) {
+    const failed = fileItems.some((item) =>
+      ["failed", "error"].includes(String(item.status)),
+    );
+    const rejected = fileItems.some((item) =>
+      ["rejected", "denied"].includes(String(item.status)),
+    );
+    const stopped = fileItems.some((item) =>
+      ["cancelled", "canceled", "stopped"].includes(String(item.status)),
+    );
+    if (failed) parts.push("文件编辑失败");
+    if (rejected) parts.push("文件编辑被拒绝");
+    if (stopped) parts.push("文件编辑已停止");
+    if (fileItems.some(itemIsRunning)) parts.push("文件编辑尚未完成");
+  }
+  if (summary.exploredFileCount > 0) parts.push("读取文件");
+  if (summary.searchCount > 0) parts.push("搜索工作区");
+  if (summary.listCount > 0) parts.push("查找文件");
   if (summary.commandCount > 0) parts.push("运行了命令");
   if (summary.webSearchCount > 0) parts.push("已搜索网页");
   if (genericToolCount > 0) parts.push("调用了工具");
   if (summary.imageCount > 0) parts.push("查看了图像");
-  return parts.join("");
+  return parts.join("、");
 }
 
 export function codexActivityGroupDisplayLabel(
@@ -170,10 +193,14 @@ export function codexActivityItemStateLabel(
 ): string {
   const running = forceRunning || itemIsRunning(item);
   if (item.type === "commandExecution") {
-    const command = compactActivityText(item.command);
-    return running
-      ? `正在运行 ${command || "命令"}`
-      : `已运行 ${command || "命令"}`;
+    return commandLabel(
+      item,
+      item.status === "pending"
+        ? "pending"
+        : running
+          ? "running"
+          : item.status || "completed",
+    );
   }
   if (item.type === "fileChange")
     return running ? "正在编辑文件" : "已编辑文件";
@@ -184,8 +211,7 @@ export function codexActivityItemStateLabel(
         return title.replace(/^(已|正在)/, running ? "正在" : "已");
       return running ? `正在运行 ${title}` : title;
     }
-    const tool = item.tool || compactActivityText(itemInputText(item));
-    return running ? `正在运行 ${tool}` : `已运行 ${tool}`;
+    return toolLabel(running ? { ...item, status: "running" } : item);
   }
   if (item.type === "webSearch")
     return `${running ? "正在搜索" : "已搜索"} ${item.query ?? ""}`.trim();
@@ -229,11 +255,6 @@ function itemIsRunning(item: ProcessItem): boolean {
   if (!("status" in item)) return false;
   const status = String(item.status).toLowerCase();
   return ["running", "pending", "in_progress", "inprogress"].includes(status);
-}
-
-function compactActivityText(value: string): string {
-  const firstLine = value.trim().split(/\r?\n/)[0] ?? "";
-  return firstLine.length > 132 ? `${firstLine.slice(0, 129)}…` : firstLine;
 }
 
 function isCodeModeWrapper(items: WorkflowTurnItem[], index: number): boolean {

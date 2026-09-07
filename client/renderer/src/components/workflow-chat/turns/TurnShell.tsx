@@ -14,6 +14,7 @@ interface Props {
   expanded: boolean;
   onToggle: () => void;
   modelName?: string;
+  deferHeader?: boolean;
 }
 
 export function WorkflowTurnShell({
@@ -23,18 +24,19 @@ export function WorkflowTurnShell({
   expanded,
   onToggle,
   modelName,
+  deferHeader = false,
 }: Props) {
   const { chrome, process, runtime } = model;
   const { presentation } = chrome;
   return (
     <div className="group relative" data-kind="assistant-turn">
-      {presentation.showHeader ? (
+      {presentation.showHeader && !deferHeader ? (
         <AssistantTurnHeader
           activity={runtime.activity}
           duration={duration}
           expanded={expanded}
           hasActivityItems={process.hasActivityItems}
-          canToggle={!runtime.isLastStreaming}
+          canToggle={process.canCollapse && process.hasActivityItems}
           label={model.chrome.label}
           tone={chrome.tone}
           usage={model.metadata.usage}

@@ -1,4 +1,5 @@
 import type { WorkflowUserMessageContent } from "@shared/workflow-read-thread-contract";
+import { userMessageDisplayText } from "./user-message-text";
 
 export type WorkflowUserMessageImage = Extract<
   WorkflowUserMessageContent,
@@ -70,7 +71,11 @@ export function workflowUserMessagePresentation(
       (part): part is Extract<WorkflowUserMessageContent, { type: "text" }> =>
         part.type === "text",
     )
-    .map((part) => part.text)
+    .map((part) =>
+      part.displayFormat === "markdown"
+        ? userMessageDisplayText(part.text)
+        : part.text,
+    )
     .join("\n");
   const images = protocolContent.filter(
     (part): part is WorkflowUserMessageImage =>
@@ -127,8 +132,20 @@ export function workflowUserMessagePresentation(
       return [];
     });
   const envelope = parseUserInputEnvelope(rawText || fallbackText);
+  // The transport envelope repeats uploaded image paths as "mentioned files".
+  // Codex renders the actual image once; explicit user file references remain.
+  const imagePaths = new Set(
+    images.map((image) =>
+      image.type === "localImage" ? image.path : image.url,
+    ),
+  );
   const attachments = [
-    ...envelope.contextAttachments,
+    ...envelope.contextAttachments.filter(
+      (attachment) =>
+        attachment.kind !== "file" ||
+        !attachment.path ||
+        !imagePaths.has(attachment.path),
+    ),
     ...explicitAttachments,
   ].sort(
     (left, right) => attachmentVisualRank(left) - attachmentVisualRank(right),
@@ -312,7 +329,7 @@ function extractMentionedFiles(
   source: string,
 ): WorkflowUserMessageAttachment[] {
   const section = source.match(
-    /# Files mentioned by the user:\s*\n([\s\S]*?)(?=\n(?:#|<in-app-browser-context)|$)/,
+    /# Files mentioned by the user:\s*\n([\s\S]*?)(?=\n(?:#(?:[ \t]|$)|## My request|<in-app-browser-context)|$)/,
   )?.[1];
   if (!section) return [];
   return [...section.matchAll(/##\s+([^:\n]+):\s*(.+)$/gm)].map((match) => ({
@@ -326,7 +343,7 @@ function extractMentionedApplications(
   source: string,
 ): WorkflowUserMessageAttachment[] {
   const section = source.match(
-    /# Applications mentioned by the user:\s*\n([\s\S]*?)(?=\n(?:#|<in-app-browser-context)|$)/,
+    /# Applications mentioned by the user:\s*\n([\s\S]*?)(?=\n(?:#(?:[ \t]|$)|## My request|<in-app-browser-context)|$)/,
   )?.[1];
   if (!section) return [];
   return [...section.matchAll(/##\s+([^:\n]+)(?::\s*(.+))?$/gm)].map(

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { WorkflowActivityRenderer, WorkflowAgentFlowSection } from "../";
+import { WorkflowActivityRenderer } from "../activity/ActivityRenderer";
+import { WorkflowAgentFlowSection } from "../activity/AgentFlowSection";
 import type { AgentMessageItem, WorkflowFlowEntry } from "./turn-layout";
 
 /**
@@ -42,6 +43,7 @@ export function WorkflowTurnFlowSection({
           key={item.id}
           kind="activityItem"
           item={item}
+          expanded={expanded}
         />
       )}
       renderAssistantMessage={renderAssistantMessage}

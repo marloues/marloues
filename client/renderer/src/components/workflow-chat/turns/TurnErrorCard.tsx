@@ -1,36 +1,25 @@
 import { useState } from "react";
-import { AlertTriangle, Check, Copy, Wrench } from "lucide-react";
+import { AlertTriangle, Wrench } from "lucide-react";
+import { WorkflowDetailCopyButton } from "../activity/DetailCopyButton";
 
 /**
  * 错误卡片：错误分类 + 主错误段落 + 建议动作 + 复制详情。
  * 从 AssistantTurn 提取（Phase 4），渲染逻辑不变。
  */
-export function WorkflowTurnErrorCard({ message }: { message: string }) {
+export function WorkflowTurnErrorCard({
+  message,
+  additionalDetails,
+}: {
+  message: string;
+  additionalDetails?: unknown;
+}) {
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const guidance = classifyError(message);
   const primary = splitErrorPrimary(message);
-  const [copied, setCopied] = useState(false);
-
-  const copyDetails = async () => {
-    try {
-      await copyToClipboard(message);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1200);
-    } catch {
-      setCopied(false);
-    }
-  };
 
   return (
     <div className="message-error-card" role="alert">
-      <button
-        type="button"
-        className="message-error-copy"
-        onClick={() => void copyDetails()}
-        title={copied ? "已复制" : "复制错误详情"}
-        aria-label={copied ? "已复制错误详情" : "复制错误详情"}
-      >
-        {copied ? <Check size={13} /> : <Copy size={13} />}
-      </button>
+      <WorkflowDetailCopyButton value={message} label="复制错误详情" />
       <div className="message-error-head">
         <AlertTriangle size={16} />
         <div>
@@ -38,6 +27,24 @@ export function WorkflowTurnErrorCard({ message }: { message: string }) {
           <span>{guidance.summary}</span>
         </div>
       </div>
+      {additionalDetails != null ? (
+        <div>
+          <button
+            type="button"
+            aria-expanded={detailsOpen}
+            onClick={() => setDetailsOpen((value) => !value)}
+          >
+            错误详情
+          </button>
+          {detailsOpen ? (
+            <pre>
+              {typeof additionalDetails === "string"
+                ? additionalDetails
+                : JSON.stringify(additionalDetails, null, 2)}
+            </pre>
+          ) : null}
+        </div>
+      ) : null}
       {primary ? <p className="message-error-primary">{primary}</p> : null}
       {guidance.actions.length > 0 ? (
         <div className="message-error-actions">
@@ -168,25 +175,4 @@ function splitErrorPrimary(message: string): string {
   const normalized = message.trim();
   const [primary] = normalized.split(/\n\s*\n/);
   return primary?.trim() ?? normalized;
-}
-
-async function copyToClipboard(text: string): Promise<void> {
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(text);
-    return;
-  }
-
-  const textarea = document.createElement("textarea");
-  textarea.value = text;
-  textarea.setAttribute("readonly", "");
-  textarea.style.position = "fixed";
-  textarea.style.opacity = "0";
-  textarea.style.pointerEvents = "none";
-  document.body.appendChild(textarea);
-  textarea.select();
-  try {
-    document.execCommand("copy");
-  } finally {
-    document.body.removeChild(textarea);
-  }
 }

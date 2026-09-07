@@ -108,11 +108,6 @@ function defaultAgentSettings(): AgentSettings {
     activeToolProfileId: "default-tool-policy",
     toolPermissionPolicy: {
       rules: [
-        {
-          pattern: "AskUserQuestion",
-          action: "deny",
-          description: "Marloues handles user questions through chat UI.",
-        },
         { pattern: "Read", action: "allow" },
         { pattern: "Glob", action: "allow" },
         { pattern: "Grep", action: "allow" },
@@ -120,7 +115,7 @@ function defaultAgentSettings(): AgentSettings {
         { pattern: "TodoWrite", action: "allow" },
       ],
       allowedTools: ["Read", "Glob", "Grep", "LS", "TodoWrite"],
-      disallowedTools: ["AskUserQuestion"],
+      disallowedTools: [],
       sensitiveToolAllowlist: ["Read", "Glob", "Grep", "LS", "TodoWrite"],
       requireConfirmationForSensitiveTools: true,
     } satisfies ExtendedToolPermissionPolicy,
@@ -901,17 +896,40 @@ function normalizeToolPermissionPolicy(
     .toolPermissionPolicy as ExtendedToolPermissionPolicy;
   const rules =
     (policy as ExtendedToolPermissionPolicy | undefined)?.rules ??
-    defaults.rules;
+    defaults.rules ??
+    [];
+  const legacyQuestionDeny = rules.some(
+    (rule) =>
+      rule.pattern === "AskUserQuestion" &&
+      rule.action === "deny" &&
+      rule.description === "Marloues handles user questions through chat UI.",
+  );
+  const migratedRules = rules.filter(
+    (rule) =>
+      !(
+        rule.pattern === "AskUserQuestion" &&
+        rule.action === "deny" &&
+        rule.description === "Marloues handles user questions through chat UI."
+      ),
+  );
+  const disallowed =
+    normalizeToolList(policy?.disallowedTools) ??
+    fallbackProfile?.disallowedTools ??
+    defaults.disallowedTools ??
+    [];
   return {
-    rules,
+    rules: migratedRules,
     allowedTools:
       normalizeToolList(policy?.allowedTools) ??
       fallbackProfile?.allowedTools ??
       defaults.allowedTools,
     disallowedTools:
-      normalizeToolList(policy?.disallowedTools) ??
-      fallbackProfile?.disallowedTools ??
-      defaults.disallowedTools,
+      legacyQuestionDeny &&
+      !migratedRules.some(
+        (rule) => rule.pattern === "AskUserQuestion" && rule.action === "deny",
+      )
+        ? disallowed.filter((tool) => tool !== "AskUserQuestion")
+        : disallowed,
     sensitiveToolAllowlist:
       normalizeToolList(policy?.sensitiveToolAllowlist) ??
       defaults.sensitiveToolAllowlist,

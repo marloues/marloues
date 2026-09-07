@@ -1,0 +1,13 @@
+.replayNotice {
+  margin: var(--space-4) var(--space-6);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-workspace);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.replayNotice p {
+  margin: var(--space-1) 0 0;
+  color: var(--text-3);
+}

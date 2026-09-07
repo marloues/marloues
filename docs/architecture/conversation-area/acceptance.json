@@ -1,0 +1,697 @@
+{
+  "schemaVersion": 1,
+  "kind": "Acceptance scenarios, not automated test results",
+  "scenarios": [
+    {
+      "id": "CA01",
+      "title": "有效工作到最终答复",
+      "ruleIds": [
+        "MR09",
+        "MR10",
+        "MR11",
+        "MR12",
+        "MR14"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "只有用户消息",
+        "在 t=1000 开始首个有效工具",
+        "在 t=6000 收到明确 final phase 的首个有效正文",
+        "final 流式至 t=10000"
+      ],
+      "expected": [
+        "之前不造工作时长",
+        "t=6000 冻结为 5 秒，正文继续增长",
+        "位置按模型切换，避免两份时长"
+      ]
+    },
+    {
+      "id": "CA02",
+      "title": "历史缺时间、裁剪窗口",
+      "ruleIds": [
+        "MR03",
+        "MR09",
+        "MR11",
+        "MR37"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "打开没有 item 起点的旧历史",
+        "第一条工作事件位于 256 条窗口外",
+        "重新挂载轮次"
+      ],
+      "expected": [
+        "挂载时间不冒充执行起点",
+        "计时事实来自全量数据",
+        "缺可靠 final 时不造冻结点"
+      ]
+    },
+    {
+      "id": "CA03",
+      "title": "命令展开生命周期",
+      "ruleIds": [
+        "MR15",
+        "MR17",
+        "MR18",
+        "MR65",
+        "MR66",
+        "MR67"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "命令开始，exitCode 未知",
+        "用户展开然后收起",
+        "命令完成 exitCode=0",
+        "离屏再返回"
+      ],
+      "expected": [
+        "默认收起",
+        "用户选择按 item 身份保持",
+        "终态成功但没有自动打开详情",
+        "隐藏内容不进入键盘焦点"
+      ]
+    },
+    {
+      "id": "CA04",
+      "title": "MCP 普通/交互卡",
+      "ruleIds": [
+        "MR17",
+        "MR73",
+        "MR74",
+        "MR86"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "普通 MCP 开始且 autoExpand=false",
+        "切换为有资源的 App，collapsible=false",
+        "资源加载后整段过程收起",
+        "离屏再回到该轮"
+      ],
+      "expected": [
+        "普通详情不因 running 强开",
+        "不可折叠 App 按规则呈现",
+        "交互状态保持且高度变化不拉走旧阅读位置"
+      ]
+    },
+    {
+      "id": "CA05",
+      "title": "取消与 steer",
+      "ruleIds": [
+        "MR02",
+        "MR05",
+        "MR13",
+        "MR14",
+        "MR57"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "工具运行并已有说明文字",
+        "用户停止或 steer（分别回放）",
+        "生图没有 src 进入 cancelled"
+      ],
+      "expected": [
+        "停止归因明确",
+        "steer 形成可恢复的前后片段",
+        "不显示已生成图片或空成功卡"
+      ]
+    },
+    {
+      "id": "CA06",
+      "title": "流式代码闭合",
+      "ruleIds": [
+        "MR42",
+        "MR43",
+        "MR44"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "依次输入代码 fence、语言前缀、多行代码",
+        "切换全局换行偏好",
+        "补齐结束 fence"
+      ],
+      "expected": [
+        "开放 fence 不显示复制",
+        "未高亮时文本可读",
+        "闭合后复制完整内容，块不闪失"
+      ]
+    },
+    {
+      "id": "CA07",
+      "title": "代码与写作块",
+      "ruleIds": [
+        "MR45",
+        "MR51",
+        "MR62"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "writingBlockMode=false 的无语言代码",
+        "启用模式并生成 markdown fence",
+        "流式中尝试选区，完成后重试",
+        "行内代码分别为普通标识符和可解析文件引用"
+      ],
+      "expected": [
+        "仅指定模式进入写作块",
+        "流式不提供添加选区操作",
+        "普通标识符不被误识别为可打开资源"
+      ]
+    },
+    {
+      "id": "CA08",
+      "title": "Mermaid 未完成和错误",
+      "ruleIds": [
+        "MR46"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "mermaid 语言前缀长度从 1 到 2",
+        "输出不完整语法",
+        "闭合后有效/无效各回放一次",
+        "切换主题并追加代码"
+      ],
+      "expected": [
+        "不完整片段不提前报终态错误",
+        "有效图更新尺寸",
+        "闭合后当前 key 失败回退代码",
+        "旧 key 的结果不能覆盖新图"
+      ]
+    },
+    {
+      "id": "CA09",
+      "title": "宽表与复制",
+      "ruleIds": [
+        "MR47",
+        "MR48",
+        "MR64"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "生成超出正文宽度的表格",
+        "复制，检查 text/plain 与 text/html",
+        "打开预览、横向滚动、Escape 关闭"
+      ],
+      "expected": [
+        "正文整体不被撑宽",
+        "剪贴板含表格而不含操作文案",
+        "预览无图片缩放/下载",
+        "关闭恢复触发按钮焦点"
+      ]
+    },
+    {
+      "id": "CA10",
+      "title": "列表、方向与公式",
+      "ruleIds": [
+        "MR49",
+        "MR50"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "混合中文/RTL、非 1 起点列表、任务列表",
+        "生成行内与块公式",
+        "延迟数学 renderer 加载"
+      ],
+      "expected": [
+        "列表起点不丢",
+        "任务框只读",
+        "公式加载前可读原文，加载后块/行内排版正确"
+      ]
+    },
+    {
+      "id": "CA11",
+      "title": "跨块引用与异常恢复",
+      "ruleIds": [
+        "MR41",
+        "MR84"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "生成远距离引用定义和引用",
+        "插入未知 token/directive",
+        "触发正文 renderer 异常",
+        "重试并更新内容 key"
+      ],
+      "expected": [
+        "引用仍可解析",
+        "未知内容有 raw 回退",
+        "错误局限正文，不丢过程与产物",
+        "重试可恢复"
+      ]
+    },
+    {
+      "id": "CA12",
+      "title": "文件与外链",
+      "ruleIds": [
+        "MR51",
+        "MR52",
+        "MR53"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "渲染相对路径、绝对路径+行号、远端宿主路径、HTTPS、未知 scheme",
+        "点击并检查目标解析",
+        "打开失败"
+      ],
+      "expected": [
+        "上下文包含 cwd/host/源任务",
+        "仅受支持目标有动作",
+        "失败保留可读引用，不误操作当前任务文件"
+      ]
+    },
+    {
+      "id": "CA13",
+      "title": "媒体加载与失败",
+      "ruleIds": [
+        "MR53",
+        "MR54",
+        "MR55"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "图片/音频/视频分别来自本地和远端",
+        "加载延迟，切换 default/scrollable 模式",
+        "返回失败，再变更 src"
+      ],
+      "expected": [
+        "按媒体种类呈现",
+        "占位遵守模式",
+        "错误源有不可用反馈",
+        "旧 src 错误不污染新 src"
+      ]
+    },
+    {
+      "id": "CA14",
+      "title": "图片画廊",
+      "ruleIds": [
+        "MR30",
+        "MR56",
+        "MR57"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "同一批次先 pending=2，再逐张完成",
+        "打开第二张预览",
+        "方向键/下载/缩放/Tab/Escape",
+        "回到正文",
+        "第二张生成期间停止任务"
+      ],
+      "expected": [
+        "pending 与已完成图不重复",
+        "前后导航包含该批次图片",
+        "缩放在图片切换后重置",
+        "焦点恢复，编辑分享只在有能力时提供",
+        "第一张已完成图片仍保留"
+      ]
+    },
+    {
+      "id": "CA15",
+      "title": "附件空消息与来源",
+      "ruleIds": [
+        "MR22",
+        "MR58",
+        "MR59",
+        "MR60"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "发送无正文但带图片、文件、选区的消息",
+        "分别回放 heartbeat/委派/hook blocked/goal 标记",
+        "点击文件和来源"
+      ],
+      "expected": [
+        "有附件的消息保留",
+        "类型与来源可辨认",
+        "不由正文文字猜状态",
+        "点击带正确消息/任务身份"
+      ]
+    },
+    {
+      "id": "CA16",
+      "title": "原地编辑失败恢复",
+      "ruleIds": [
+        "MR23",
+        "MR61"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "编辑带附件的历史消息",
+        "修改草稿",
+        "离屏再返回",
+        "提交失败，然后重试成功"
+      ],
+      "expected": [
+        "草稿和附件按身份保持",
+        "失败不退出或清空",
+        "成功才结束编辑",
+        "没有原地编辑能力时明确是复用输入"
+      ]
+    },
+    {
+      "id": "CA17",
+      "title": "复制、分支和时间戳",
+      "ruleIds": [
+        "MR24",
+        "MR25",
+        "MR26",
+        "MR27",
+        "MR62",
+        "MR63",
+        "MR64"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "final 流式时与完成后分别检查动作",
+        "短时间连续点击复制/分支",
+        "隐藏操作但启用时间戳",
+        "键盘 focus 到 footer"
+      ],
+      "expected": [
+        "资格和 busy 防重复",
+        "复制仅正文，失败无成功反馈",
+        "无内容时不留空栏",
+        "时间戳和工作用时不混用"
+      ]
+    },
+    {
+      "id": "CA18",
+      "title": "后台命令及异常退出",
+      "ruleIds": [
+        "MR28",
+        "MR65",
+        "MR66",
+        "MR67"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "进程仍运行但轮次已结束",
+        "后台进程完成",
+        "分别回放 exitCode=0/1/未知/interrupted"
+      ],
+      "expected": [
+        "轮次完成不等同进程完成",
+        "命令时长与整轮时长分开",
+        "状态文案与退出码一致，完整输出可查看"
+      ]
+    },
+    {
+      "id": "CA19",
+      "title": "patch 状态与多文件",
+      "ruleIds": [
+        "MR19",
+        "MR29",
+        "MR68",
+        "MR69",
+        "MR70"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "add/update/delete 分别经历 pending/applied/rejected/stopped",
+        "同一轮两个 cwd 和重命名/二进制文件",
+        "展开和收起 diff",
+        "尝试受支持的回滚并模拟失败"
+      ],
+      "expected": [
+        "状态不统一报成功",
+        "有效文件动作不会只因 +0/-0 丢掉",
+        "点击标题保持视口位置",
+        "回滚按源 batch 执行且失败可见"
+      ]
+    },
+    {
+      "id": "CA20",
+      "title": "MCP 六类内容与去重",
+      "ruleIds": [
+        "MR21",
+        "MR71",
+        "MR72"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "依次注入 text/image/audio/resource_link/embedded_resource/unknown",
+        "structuredContent 与 text 相同/不同各回放",
+        "打开/关闭超大 raw 结果",
+        "相同工具连续调用但来源/失败状态/评审信息不同"
+      ],
+      "expected": [
+        "保留类型与 annotations",
+        "相同结构化结果不重复",
+        "资源链接保持元信息，不虚构下载能力",
+        "raw 按需格式化且保留完整源结果",
+        "合并摘要不吞失败、来源、资源或评审信息"
+      ]
+    },
+    {
+      "id": "CA21",
+      "title": "MCP App 资源恢复",
+      "ruleIds": [
+        "MR74",
+        "MR75",
+        "MR89"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "App 资源 loading→ready",
+        "资源读取失败→retry",
+        "相同调用的新快照暂时缺资源数据",
+        "superseded=true",
+        "关闭 remote logos"
+      ],
+      "expected": [
+        "loading/error/fallback 分明",
+        "重试指向原 call/resource",
+        "不会无意丢失上次可用交互",
+        "被替代卡遵守隐藏策略",
+        "图标有本地回退"
+      ]
+    },
+    {
+      "id": "CA22",
+      "title": "提问与回答记录",
+      "ruleIds": [
+        "MR07",
+        "MR31",
+        "MR76",
+        "MR77"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "8 类 elicitation 分别 pending",
+        "分别 answered/skipped/cancelled",
+        "普通 permission approved 后查看历史",
+        "另一次任务结束时仍有未完成步骤"
+      ],
+      "expected": [
+        "每类走正确入口",
+        "完成记录不能再次提交",
+        "Marloues 保留审批历史的差异被明确验收",
+        "问题状态不会覆盖无关 turn",
+        "未完成步骤不因轮次结束被自动打勾"
+      ]
+    },
+    {
+      "id": "CA23",
+      "title": "计划进度与协作",
+      "ruleIds": [
+        "MR20",
+        "MR78",
+        "MR79"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "空计划→三步计划→第二步运行→全部完成",
+        "两个代理并行并各有消息",
+        "阅读旧步骤时 current step 更新",
+        "点击代理来源"
+      ],
+      "expected": [
+        "进度、当前步骤正确",
+        "读者滚动意图保留",
+        "摘要不丢代理身份",
+        "打开对应源任务而非当前活动任务"
+      ]
+    },
+    {
+      "id": "CA24",
+      "title": "错误与重连",
+      "ruleIds": [
+        "MR06",
+        "MR80"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "已有正文后断流",
+        "reconnect 1/5→2/5",
+        "系统错误与 additionalDetails",
+        "切换任务后旧重试返回"
+      ],
+      "expected": [
+        "已有正文和产物仍在",
+        "重连信息明确",
+        "详情可查看",
+        "旧回调不改变新任务"
+      ]
+    },
+    {
+      "id": "CA25",
+      "title": "五类资源与展开",
+      "ruleIds": [
+        "MR32",
+        "MR81",
+        "MR82",
+        "MR83"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "混合生成五类资源，含相同路径但不同宿主",
+        "初始显示前三项后展开",
+        "逐类点击打开/复制链接",
+        "宿主能力缺失和失败各回放"
+      ],
+      "expected": [
+        "不把资源都伪装成浏览器摘要",
+        "资源键稳定且不跨宿主串用",
+        "每类动作/回退明确",
+        "没有能力不显示空按钮"
+      ]
+    },
+    {
+      "id": "CA26",
+      "title": "正文指令和播报",
+      "ruleIds": [
+        "MR84",
+        "MR85",
+        "MR88"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "文件引用/details/后续问题/可视化指令",
+        "未知指令",
+        "频繁流式快照到最终答复",
+        "structured heartbeat content/notification/DONT_NOTIFY/全空"
+      ],
+      "expected": [
+        "已知指令按注册项渲染",
+        "未知内容原样可读",
+        "不在每次快照朗读全文",
+        "heartbeat 按其专用回退分支呈现"
+      ]
+    },
+    {
+      "id": "CA27",
+      "title": "分页与切任务",
+      "ruleIds": [
+        "MR32",
+        "MR33",
+        "MR34",
+        "MR35",
+        "MR36",
+        "MR86"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "滚动旧历史并加载上一页",
+        "加载未返回时切到另一任务",
+        "返回旧结果",
+        "输入框按 ArrowUp、触摸但未拖动"
+      ],
+      "expected": [
+        "分页补偿有 session token",
+        "不拉动新任务",
+        "输入行为不误解除/触发吸底",
+        "连续多页门闩正确释放"
+      ]
+    },
+    {
+      "id": "CA28",
+      "title": "折叠、离屏和消息导航",
+      "ruleIds": [
+        "MR01",
+        "MR04",
+        "MR15",
+        "MR16",
+        "MR18",
+        "MR19",
+        "MR38",
+        "MR39",
+        "MR86"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "正式时间线和子任务轮次使用同一 TurnPresentationModel 投影",
+        "正文选区保持时收起过程",
+        "MCP 表单有未提交状态",
+        "虚拟列表滚动离屏再回来",
+        "hover 消息导航后确认跳转"
+      ],
+      "expected": [
+        "正文不切换成摘要重建",
+        "交互状态保留",
+        "隐藏控件不可聚焦",
+        "hover 不移动页面，确认定位离屏消息",
+        "同一事实在不同入口的正文/过程/结果选择一致"
+      ]
+    },
+    {
+      "id": "CA29",
+      "title": "显式事件与未知项",
+      "ruleIds": [
+        "MR06",
+        "MR87",
+        "MR89"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "model-changed/model-rerouted/personality/fork/worktree-init",
+        "setup 失败但 worktree 创建完成",
+        "未知 native item"
+      ],
+      "expected": [
+        "事件按真实类型和来源显示",
+        "两阶段结果不混为整体成功",
+        "未知 raw 可查看，不伪造事件时间"
+      ]
+    },
+    {
+      "id": "CA30",
+      "title": "模式、主题和降动效",
+      "ruleIds": [
+        "MR08",
+        "MR40",
+        "MR44",
+        "MR49",
+        "MR54",
+        "MR63",
+        "MR89"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "窄/宽正文、亮/暗主题、reduced-motion",
+        "普通/compact 展示模式",
+        "hover 与键盘焦点"
+      ],
+      "expected": [
+        "功能资格不依赖 hover",
+        "宽块不破坏主体布局",
+        "降动效不丢完成状态",
+        "模式开关只改变已定义分支"
+      ]
+    },
+    {
+      "id": "CA31",
+      "title": "覆盖验收口径",
+      "ruleIds": [
+        "MR90"
+      ],
+      "executionStatus": "not-run",
+      "steps": [
+        "执行 verify.mjs",
+        "逐批实施并执行关联 UI 场景",
+        "记录截图/事件回放/失败与修复"
+      ],
+      "expected": [
+        "静态证据校验与 UI 测试结果分开",
+        "组件或函数数量不冒充对齐百分比",
+        "未执行场景仍为 not-run"
+      ]
+    }
+  ]
+}

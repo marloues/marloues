@@ -1,0 +1,50 @@
+{
+  "version": "26.901.41600",
+  "archive": "/Applications/ChatGPT.app/Contents/Resources/app.asar",
+  "recordedAt": "2026-09-05T19:12:56.143Z",
+  "rangeConvention": "UTF-16 code units, zero based, end exclusive",
+  "locations": [
+    {
+      "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+      "symbol": "YT",
+      "startUtf16": 302079,
+      "endUtf16": 323957,
+      "sha256": "0647fab6ca3e41a699b2ffc3f060dbd127bf3b55ffbb42c9d9c03fe2670b23f2"
+    },
+    {
+      "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+      "symbol": "Xx",
+      "startUtf16": 188864,
+      "endUtf16": 191152,
+      "sha256": "a88a1539c1f36b6156f82a88f894264e8f29ecc8a2680a4760fb98b721cb79e4"
+    },
+    {
+      "asset": "webview/assets/subagent-activity-chip-group-aa63c0e54657.js",
+      "symbol": "QT",
+      "startUtf16": 324347,
+      "endUtf16": 324415,
+      "sha256": "bc0e3fcd175aab06c8d0569ac80cd30117fa9da6ec64790e1f2f93dfeed55ac3"
+    },
+    {
+      "asset": "webview/assets/app-initial-86767c3d23e5.js",
+      "symbol": "t7r",
+      "startUtf16": 4911122,
+      "endUtf16": 4916647,
+      "sha256": "79e3d6e8714c0dbca919dc3e95e34a624f247b4dbdb32546e93c9d63e377b3f7"
+    },
+    {
+      "asset": "webview/assets/app-initial-86767c3d23e5.js",
+      "symbol": "U0n",
+      "startUtf16": 3707047,
+      "endUtf16": 3707112,
+      "sha256": "afbbbefb045cebaa0290ba6e7c3ab7e0bd291b4dcccb6ad5026ff9dec61c7fbb"
+    },
+    {
+      "asset": "webview/assets/app-initial-86767c3d23e5.js",
+      "symbol": "q0n",
+      "startUtf16": 3707765,
+      "endUtf16": 3707917,
+      "sha256": "98a729e02c59c0b20ff9e0f49e8d67f917d88ca013fbf5619dda30be0bb71b2f"
+    }
+  ]
+}

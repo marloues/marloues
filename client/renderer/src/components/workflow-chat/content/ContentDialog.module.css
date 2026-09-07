@@ -1,0 +1,121 @@
+.dialog {
+  padding: 0;
+  margin: auto;
+  width: min(1080px, calc(100vw - 2 * var(--space-6)));
+  max-width: none;
+  max-height: calc(100dvh - 2 * var(--space-6));
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius);
+  background: var(--surface-popover);
+  color: var(--text-1);
+  box-shadow: var(--shadow-lg);
+  font: var(--text-base)/1.5 var(--font-ui);
+}
+.dialog::backdrop {
+  background: var(--overlay);
+}
+.panel {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 2 * var(--space-6) - 2px);
+  min-height: 100px;
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+.close {
+  flex: none;
+}
+.close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.body {
+  min-height: 0;
+  overflow: auto;
+  padding: var(--space-4);
+  overscroll-behavior: contain;
+}
+.lightbox {
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.lightbox::backdrop {
+  background: rgb(0 0 0 / 85%);
+}
+.lightbox[open] {
+  display: grid;
+  place-items: center;
+}
+.lightbox .panel {
+  width: min(900px, calc(100vw - 64px));
+  max-height: calc(100dvh - 128px);
+  border-radius: var(--radius-xl, 20px);
+  background: var(--surface-popover);
+}
+.lightbox .header {
+  padding: 0;
+  border: 0;
+}
+.lightbox .title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.lightbox .close {
+  position: fixed;
+  top: var(--space-4);
+  right: var(--space-4);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface-popover);
+  color: var(--text-1);
+}
+.lightbox .body {
+  padding: var(--space-6) var(--space-6) var(--space-8);
+}
+@media (max-width: 600px) {
+  .dialog {
+    width: calc(100vw - 2 * var(--space-2));
+    max-height: calc(100dvh - 2 * var(--space-2));
+  }
+  .panel {
+    max-height: calc(100dvh - 2 * var(--space-2) - 2px);
+  }
+  .body {
+    padding: var(--space-3);
+  }
+  .lightbox {
+    width: 100vw;
+    max-height: none;
+  }
+  .lightbox .panel {
+    width: calc(100vw - 32px);
+  }
+  .lightbox .body {
+    padding: var(--space-4);
+  }
+}

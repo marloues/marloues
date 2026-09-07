@@ -1,3 +1,4 @@
+import { workflowToolResult } from "../workflow-tool-result";
 /**
  * Converts a legacy MessageItem (Claude SDK normalized shape) into the
  * canonical WorkflowTurnItem contract (schema v2). Used at the legacy
@@ -7,6 +8,7 @@
 
 import type { MessageItem } from "../workflow-types";
 import type { WorkflowTurnItem } from "../workflow-read-thread-contract";
+import { textOutputFromUnknown } from "./runtime-event-to-turn-item";
 
 function textOutput(
   value: unknown,
@@ -22,7 +24,21 @@ export function messageItemToWorkflowTurnItem(
     item.status === "completed" ||
     item.status === "error" ||
     item.status === "failed" ||
-    item.status === "denied";
+    item.status === "denied" ||
+    item.status === "cancelled" ||
+    item.status === "timed_out";
+
+  const raw =
+    item.rawItem && typeof item.rawItem === "object"
+      ? (item.rawItem as Record<string, unknown>)
+      : undefined;
+  const phase = raw?.phase;
+  const messagePhase =
+    phase === "commentary" || phase === "final_answer"
+      ? phase
+      : phase === "final"
+        ? "final_answer"
+        : undefined;
 
   switch (item.type) {
     case "agent_message":
@@ -30,7 +46,9 @@ export function messageItemToWorkflowTurnItem(
         type: "agentMessage",
         id: item.id,
         text: item.text ?? "",
-        phase: item.phase ?? "updated",
+        // Legacy phase is an event lifecycle. Only the message's semantic
+        // phase belongs in the host conversation contract.
+        ...(messagePhase ? { phase: messagePhase } : {}),
         settled,
       };
     case "reasoning":
@@ -51,7 +69,8 @@ export function messageItemToWorkflowTurnItem(
         server: item.server,
         arguments: item.args ?? item.arguments,
         status: workflowStatus(item.status),
-        ...(textOutput(item.result) ? { output: textOutput(item.result) } : {}),
+        output: textOutputFromUnknown(item.result),
+        result: workflowToolResult(item.result),
         settled,
       };
     case "web_search":
@@ -85,6 +104,20 @@ export function messageItemToWorkflowTurnItem(
         })),
         settled,
       };
+    case "todo_list":
+      return {
+        type: "plan",
+        id: item.id,
+        text:
+          typeof raw?.text === "string"
+            ? raw.text
+            : (item.items ?? [])
+                .map(
+                  (entry) => `- [${entry.completed ? "x" : " "}] ${entry.text}`,
+                )
+                .join("\n"),
+        settled,
+      };
     case "permission_request":
       return {
         type: "permissionRequest",
@@ -110,5 +143,5 @@ export function messageItemToWorkflowTurnItem(
 
 function workflowStatus(status: MessageItem["status"] | undefined): string {
   const value = status ?? "running";
-  return value === "in_progress" || value === "pending" ? "running" : value;
+  return value === "in_progress" ? "running" : value;
 }

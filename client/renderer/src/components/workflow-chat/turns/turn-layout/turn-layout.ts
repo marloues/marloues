@@ -43,13 +43,21 @@ export function workflowTurnLayout(
     finalAgentIndexes,
     options,
   );
-  const flowEntries = flow.map((entry) => entry.entry);
+  const lastFinalIndex = finalAgentIndexes.size
+    ? Math.max(...finalAgentIndexes)
+    : Infinity;
+  const leadingFlow = flow
+    .filter(({ index }) => index <= lastFinalIndex)
+    .map(({ entry }) => entry);
+  const trailingFlow = flow
+    .filter(({ index }) => index > lastFinalIndex)
+    .map(({ entry }) => entry);
 
   return {
-    leadingFlow: flowEntries,
-    trailingFlow: [],
-    leadingActivityItems: flowActivityItems(flowEntries),
-    trailingActivityItems: [],
+    leadingFlow,
+    trailingFlow,
+    leadingActivityItems: flowActivityItems(leadingFlow),
+    trailingActivityItems: flowActivityItems(trailingFlow),
     resultItems: processItems.filter(workflowIsResultCardSourceItem),
     finalText: finalAssistantTextFromIndexes(
       presentationItems,

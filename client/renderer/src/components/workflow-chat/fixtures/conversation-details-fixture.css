@@ -1,0 +1,64 @@
+.conversation-details-fixture {
+  height: 100dvh;
+  overflow: auto;
+  color: var(--text-1);
+  background: var(--surface-workspace);
+}
+.conversation-details-fixture > header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-workspace);
+}
+.conversation-details-fixture nav,
+.fixture-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.conversation-details-fixture nav button,
+.fixture-controls button,
+.fixture-scroll button {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+.conversation-details-fixture button[aria-pressed="true"] {
+  color: var(--accent);
+  background: var(--raised-1);
+}
+.fixture-controls {
+  padding: 14px 32px;
+  font-size: 12px;
+  background: var(--raised-1);
+}
+.conversation-details-fixture > main {
+  max-width: 820px;
+  margin: 36px auto;
+  padding: 0 24px 80px;
+}
+.fixture-scroll {
+  height: calc(100dvh - 160px);
+  overflow: auto;
+  max-width: 820px;
+  margin: auto;
+  border: 1px solid var(--border);
+}
+.fixture-scroll section {
+  min-height: 90px;
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.fixture-scroll input {
+  padding: 12px;
+}
+
+.fixture-scroll {
+  overflow-anchor: none;
+}

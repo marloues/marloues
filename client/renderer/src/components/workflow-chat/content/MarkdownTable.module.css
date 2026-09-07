@@ -1,0 +1,42 @@
+.root {
+  position: relative;
+  min-width: 0;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  padding-bottom: var(--space-1);
+}
+.actions button:focus-visible,
+.scroll:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.scroll {
+  overflow: auto;
+  max-width: 100%;
+  border-radius: var(--radius-md);
+}
+.scroll table {
+  display: table;
+  width: max-content;
+  min-width: min(100%, 240px);
+  max-width: none;
+}
+.preview table {
+  display: table;
+  width: 100%;
+  max-width: 100%;
+}
+.preview :is(th, td) {
+  overflow-wrap: anywhere;
+  vertical-align: top;
+}
+.preview :is(th, td):not(:last-child) {
+  white-space: nowrap;
+}
+.scroll :is(th, td) {
+  max-width: 42rem;
+  min-width: 5rem;
+}

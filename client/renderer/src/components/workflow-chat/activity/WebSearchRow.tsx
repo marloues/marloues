@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useItemDisclosure } from "../content/conversation-ui-state";
 import { Search } from "lucide-react";
 import type { WorkflowTurnItem } from "../../../../../shared/adapters/workflow-messages-to-read-thread";
 import { itemInputText, itemOutputText, workflowStatusIsRunning } from "../";
@@ -16,7 +16,7 @@ import {
 type WebSearchItem = Extract<WorkflowTurnItem, { type: "webSearch" }>;
 
 export function WorkflowWebSearchRow({ item }: { item: WebSearchItem }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useItemDisclosure(item.id);
   const input = itemInputText(item);
   const output = itemOutputText(item);
   const hasDetail = Boolean(input || output);

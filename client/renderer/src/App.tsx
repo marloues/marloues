@@ -4,6 +4,8 @@ import { AuthGate } from "@/components/auth";
 import { OnboardingView } from "@/components/onboarding";
 import { SettingsPage } from "@/components/settings";
 import { WorkbenchRoot } from "@/components/workbench/WorkbenchRoot";
+import { ConversationDetailsFixturePage } from "@/components/workflow-chat/fixtures/ConversationDetailsFixturePage";
+import { ConversationComparisonPage } from "@/components/workflow-chat/fixtures/ConversationComparisonPage";
 import type { Page } from "@/components/workbench/types";
 import {
   WorkflowChatShellFixturePage,
@@ -31,9 +33,10 @@ import type {
   WorkspaceSettings,
 } from "@shared/types";
 import type { UIEvent } from "@shared/ui-protocol";
-import type { WorkflowTurnItem } from "@shared/workflow-read-thread-contract";
-import type { MessageItem } from "@shared/workflow-types";
-import { messageItemToWorkflowTurnItem } from "@shared/adapters/message-item-to-workflow-turn-item";
+import {
+  decodeWorkflowItemEvent,
+  type WorkflowItemWireEvent,
+} from "@shared/adapters/workflow-item-event";
 
 let initialConfigLogged = false;
 const runtimeInitLogKeys = new Set<string>();
@@ -42,6 +45,14 @@ export default function App() {
   const workflowFixture = new URLSearchParams(window.location.search).get(
     "workflowFixture",
   );
+  if (import.meta.env.DEV && workflowFixture === "details") {
+    applyCodexFixtureTheme();
+    return <ConversationDetailsFixturePage />;
+  }
+  if (import.meta.env.DEV && workflowFixture === "comparison") {
+    applyCodexFixtureTheme();
+    return <ConversationComparisonPage />;
+  }
   if (import.meta.env.DEV && workflowFixture === "chatShell") {
     applyCodexFixtureTheme();
     return <WorkflowChatShellFixturePage />;
@@ -143,40 +154,9 @@ function AuthenticatedApp() {
     });
     const unsubscribeItemEvent = window.marloues.chat.onItemEvent(
       (rawEvent) => {
-        const event = rawEvent as {
-          type: string;
-          sessionId: string;
-          turnId: string;
-          item?: MessageItem;
-          items?: MessageItem[];
-          startedAt?: number;
-          completedAt?: number;
-          final?: boolean;
-          result?: string;
-          error?: string;
-        };
-        const item = event.item
-          ? messageItemToWorkflowTurnItem(event.item)
-          : undefined;
-        const items = event.items
-          ? event.items
-              .map(messageItemToWorkflowTurnItem)
-              .filter((candidate): candidate is WorkflowTurnItem =>
-                Boolean(candidate),
-              )
-          : undefined;
-        itemEventBatcher.handle({
-          type: event.type,
-          sessionId: event.sessionId,
-          turnId: event.turnId,
-          startedAt: event.startedAt,
-          completedAt: event.completedAt,
-          final: event.final,
-          result: event.result,
-          error: event.error,
-          item,
-          items,
-        });
+        itemEventBatcher.handle(
+          decodeWorkflowItemEvent(rawEvent as WorkflowItemWireEvent),
+        );
       },
     );
     const unsubscribeReadThread = window.marloues.chat.onReadThread(

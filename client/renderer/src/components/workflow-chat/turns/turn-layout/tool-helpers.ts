@@ -94,51 +94,11 @@ export function commandLines(
   return commands.length ? commands : [""];
 }
 
-export function commandSummaryKind(
-  command: string,
-): "command" | "folder" | "list" | "read" | "search" | "web" {
-  const firstLine = command.trim().split(/\r?\n/)[0] ?? "";
-  if (/^(Get-Content|gc|cat)\b/i.test(firstLine)) return "read";
-  if (
-    /^(New-Item|mkdir|md)\b/i.test(firstLine) &&
-    /(\s-ItemType\s+Directory\b|\smkdir\b|\smd\b|^mkdir\b|^md\b)/i.test(
-      firstLine,
-    )
-  )
-    return "folder";
-  if (
-    /^(Get-ChildItem|ls|dir)\b/i.test(firstLine) ||
-    firstLine.startsWith("rg --files")
-  )
-    return "list";
-  if (/^(Select-String)\b/i.test(firstLine) || /^rg\s+/i.test(firstLine))
-    return "search";
-  if (/^(Invoke-WebRequest|Invoke-RestMethod|curl|wget)\b/i.test(firstLine))
-    return "web";
-  return "command";
-}
-
-export function isReadToolName(name: string): boolean {
-  return (
-    name === "read" ||
-    name.endsWith(".read") ||
-    name === "read_file" ||
-    name === "read_files" ||
-    name.endsWith(".read_file") ||
-    name.endsWith(".read_files")
-  );
-}
-
-export function isListToolName(name: string): boolean {
-  return (
-    name === "list" ||
-    name === "ls" ||
-    name.endsWith(".ls") ||
-    name === "list_files" ||
-    name === "get_directory_tree" ||
-    name.endsWith(".list_files")
-  );
-}
+export { commandSummaryKind } from "../../activity/command-display";
+export {
+  isReadToolName,
+  isListToolName,
+} from "../../activity/ToolCallRowDetails/helpers";
 
 export function isSearchToolName(name: string): boolean {
   return name.includes("search") || name === "grep" || name.endsWith(".grep");
@@ -163,6 +123,7 @@ export function toolTargetCount(input: string): number {
         const entry = record[key];
         if (Array.isArray(entry)) return entry.length;
       }
+      return 1;
     }
   } catch {
     // Plain text inputs are common for tool arguments.

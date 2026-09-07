@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useItemDisclosure } from "../content/conversation-ui-state";
 import {
   Brain,
   CircleHelp,
@@ -12,20 +12,14 @@ import {
   WorkflowActivityDetailStack,
 } from "./ActivityDetail";
 import { WorkflowActivityRow } from "./ActivityRow";
+import { WorkflowImageViewGroup } from "./ImageViewGroup";
 
 export function WorkflowImageViewRow({
   item,
 }: {
   item: Extract<WorkflowTurnItem, { type: "imageView" }>;
 }) {
-  return (
-    <MarkerRow
-      icon="image"
-      label="已查看图片"
-      detail={basename(item.path)}
-      activityKind="imageView"
-    />
-  );
+  return <WorkflowImageViewGroup items={[item]} />;
 }
 
 export function WorkflowReviewModeMarker({
@@ -38,6 +32,7 @@ export function WorkflowReviewModeMarker({
 }) {
   return (
     <ExpandableMarkerRow
+      itemId={item.id}
       icon="approval"
       label={
         item.type === "enteredReviewMode" ? "已进入审查模式" : "已退出审查模式"
@@ -56,6 +51,7 @@ export function WorkflowHookPromptBlock({
 }) {
   return (
     <ExpandableMarkerRow
+      itemId={item.id}
       icon="question"
       label="正在提问"
       activityKind="hookPrompt"
@@ -81,13 +77,25 @@ export function WorkflowUnknownRawJson({
 }: {
   item: Extract<WorkflowTurnItem, { type: "unknown" }>;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useItemDisclosure(item.id);
+  const eventLabels: Record<string, string> = {
+    "model-changed": "模型已切换",
+    modelChanged: "模型已切换",
+    "model-rerouted": "模型路由已调整",
+    modelRerouted: "模型路由已调整",
+    "personality-changed": "表达风格已切换",
+    "thread-forked": "已创建分支任务",
+    threadForked: "已创建分支任务",
+    "worktree-created": "工作树已创建",
+    "worktree-setup-failed": "工作树初始化失败",
+    "runtime-status": "运行状态",
+  };
 
   return (
     <WorkflowActivityRow
       activityKind="unknown"
       icon={<Wrench />}
-      label={<>未知项目</>}
+      label={<>{eventLabels[item.rawType ?? ""] ?? "未知项目"}</>}
       meta={item.rawType}
       detail={
         <WorkflowActivityDetailStack>
@@ -125,6 +133,7 @@ function MarkerRow({
 }
 
 function ExpandableMarkerRow({
+  itemId,
   icon,
   label,
   summary,
@@ -138,8 +147,9 @@ function ExpandableMarkerRow({
   detailLabel: string;
   payload?: unknown;
   activityKind: string;
+  itemId: string;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useItemDisclosure(itemId);
   const value = formatOptionalDetail(payload);
   const hasDetail = Boolean(value);
 
@@ -183,8 +193,4 @@ function formatUnknownValue(value: unknown): string {
 function formatOptionalDetail(value: unknown): string {
   if (value === undefined || value === null || value === "") return "";
   return formatUnknownValue(value);
-}
-
-function basename(filePath: string): string {
-  return filePath.split(/[\\/]/).pop() || filePath;
 }

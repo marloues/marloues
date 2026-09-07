@@ -1,3 +1,5 @@
+import type { ConversationTiming } from "@shared/conversation-timing";
+import type { WorkflowToolResult } from "./workflow-tool-result";
 import type { ContextUsageRecord } from "./types";
 import type { TokenUsage } from "./types";
 
@@ -13,6 +15,13 @@ export type WorkflowReadThreadSchemaVersion =
   typeof WORKFLOW_READ_THREAD_SCHEMA_VERSION;
 
 export interface WorkflowReadThreadResponse {
+  /** A recorded checkpoint uses its own clock and cannot execute history. */
+  replay?: {
+    sourceThreadId: string;
+    sourceSha256: string;
+    throughLine: number;
+    clockAt: number;
+  };
   schemaVersion: WorkflowReadThreadSchemaVersion;
   thread: WorkflowThreadInfo;
   page: WorkflowThreadPage;
@@ -76,6 +85,7 @@ export interface TurnPlacement {
 }
 
 export interface WorkflowTurn {
+  timing?: ConversationTiming;
   id: string;
   zone: AppZone;
   ordinal?: number;
@@ -128,6 +138,8 @@ export type WorkflowUserMessageContent =
       type: "text";
       text: string;
       text_elements?: unknown[];
+      /** Native rich-text serialization, decoded only for display. */
+      displayFormat?: "markdown";
       workflowDelegation?: WorkflowDelegation;
     }
   | { type: "image"; url: string; detail?: string }
@@ -226,6 +238,7 @@ export interface WorkflowUserMessageItem extends WorkflowTurnItemBase {
 export interface WorkflowAgentMessageItem extends WorkflowTurnItemBase {
   type: "agentMessage";
   text: string;
+  /** Message role (commentary/final_answer); never an item event lifecycle. */
   phase?: string;
 }
 
@@ -271,6 +284,7 @@ export interface WorkflowMcpToolCallItem extends WorkflowTurnItemBase {
   status: WorkflowItemStatus;
   durationMs?: number | null;
   output?: WorkflowTextOutput;
+  result?: WorkflowToolResult;
   modelOutput?: WorkflowTextOutput;
   contextEconomy?: WorkflowContextEconomyMeta;
 }
@@ -283,6 +297,7 @@ export interface WorkflowDynamicToolCallItem extends WorkflowTurnItemBase {
   success?: boolean;
   durationMs?: number | null;
   output?: WorkflowTextOutput;
+  result?: WorkflowToolResult;
   modelOutput?: WorkflowTextOutput;
   contextEconomy?: WorkflowContextEconomyMeta;
 }
@@ -334,6 +349,7 @@ export interface WorkflowHookPromptItem extends WorkflowTurnItemBase {
 
 export interface WorkflowPermissionRequestItem extends WorkflowTurnItemBase {
   type: "permissionRequest";
+  question?: import("./conversation-input").ConversationInputRequest;
   toolName: string;
   reason: string;
   status: WorkflowItemStatus;

@@ -10,7 +10,15 @@ import {
 } from "./transport/types";
 import { normalizeCodexItem, type NormalizedThreadItem } from "./normalize";
 
+export interface CodexInputRequest {
+  method: string;
+  params: Record<string, unknown>;
+  signal: AbortSignal;
+  respond: (value: unknown) => void;
+}
+
 export type SessionEvent =
+  | { type: "input_requested"; inputRequest: CodexInputRequest }
   | { type: "connected" }
   | { type: "disconnected" }
   | { type: "initialized" }
@@ -89,6 +97,7 @@ export class CodexAppServerSession {
   private notificationQueue: RawNotification[] = [];
   private notificationWaiters: Array<() => void> = [];
   private started = false;
+  private pendingInputs = new Map<string, AbortController>();
   private pendingApprovals = new Map<string, PendingCodexApproval>();
 
   constructor(
@@ -183,6 +192,8 @@ export class CodexAppServerSession {
   }
 
   async close(): Promise<void> {
+    for (const controller of this.pendingInputs.values()) controller.abort();
+    this.pendingInputs.clear();
     await this.transport.stop();
     this.emit({ type: "disconnected" });
   }
@@ -453,6 +464,11 @@ export class CodexAppServerSession {
   }
 
   private handleNotification(method: string, params: unknown): void {
+    if (method === "serverRequest/resolved") {
+      const id = String(asRecord(params).requestId);
+      this.pendingInputs.get(id)?.abort();
+      this.pendingInputs.delete(id);
+    }
     log(
       "[session] notification received method=",
       method,
@@ -473,6 +489,27 @@ export class CodexAppServerSession {
     value: unknown,
   ): void {
     const params = asRecord(value);
+    if (
+      method === "item/tool/requestUserInput" ||
+      method === "mcpServer/elicitation/request"
+    ) {
+      const controller = new AbortController();
+      this.pendingInputs.set(String(requestId), controller);
+      this.emit({
+        type: "input_requested",
+        inputRequest: {
+          method,
+          params,
+          signal: controller.signal,
+          respond: (response) => {
+            if (!controller.signal.aborted)
+              this.rpc.respond(requestId, response);
+            this.pendingInputs.delete(String(requestId));
+          },
+        },
+      });
+      return;
+    }
     if (
       method !== "item/commandExecution/requestApproval" &&
       method !== "item/fileChange/requestApproval" &&

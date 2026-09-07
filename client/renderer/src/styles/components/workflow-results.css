@@ -276,16 +276,6 @@
   transform: rotate(180deg);
 }
 
-.workflow-result-card-icon {
-  width: 40px;
-  height: 40px;
-}
-
-.workflow-result-card-icon svg {
-  width: 24px;
-  height: 24px;
-}
-
 .workflow-result-review-default {
   display: inline-flex;
   gap: 6px;

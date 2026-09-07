@@ -19,12 +19,19 @@ import type {
 } from "./workflow-thread-data-source";
 import type {
   WorkflowReadThreadResponse,
+  WorkflowTurnItem,
   WorkflowUserMessageContent,
 } from "./workflow-read-thread-contract";
 
 // Runtime event stream exposed to the UI layer.
 export type RuntimeEvent =
   | { kind: "turn-start"; payload: { turnId: string; timestamp: number } }
+  | {
+      /** Adapter-produced full item snapshot; upsert by id, never append as a delta. */
+      kind: "item-updated";
+      payload: { turnId: string; item: WorkflowTurnItem };
+    }
+  // Incremental text only. Full snapshots must use item-updated.
   | { kind: "text-chunk"; payload: { turnId: string; content: string } }
   | { kind: "thinking-chunk"; payload: { turnId: string; content: string } }
   | {
@@ -34,6 +41,8 @@ export type RuntimeEvent =
         toolId: string;
         toolName: string;
         input: unknown;
+        /** False while the runtime is still streaming tool arguments. */
+        isReady?: boolean;
       };
     }
   | {
@@ -54,6 +63,7 @@ export type RuntimeEvent =
         toolId: string;
         output: unknown;
         isError: boolean;
+        status?: "completed" | "error" | "cancelled";
       };
     }
   | {

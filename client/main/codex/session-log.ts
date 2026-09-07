@@ -2,6 +2,14 @@ import { existsSync, readdirSync, readFileSync, statSync } from "fs";
 import { join, basename, resolve, sep } from "path";
 import { homedir } from "os";
 import {
+  parseCodexRecordedSession,
+  type JsonlReplayAudit,
+} from "./jsonl-session";
+import {
+  workflowReadThreadToWorkflowMessages,
+  type WorkflowMessageBlock,
+} from "../../shared/adapters/workflow-messages-to-read-thread";
+import {
   WORKFLOW_READ_THREAD_SCHEMA_VERSION,
   type WorkflowReadThreadResponse,
   type WorkflowTextOutput,
@@ -13,19 +21,10 @@ import type { WorkflowTurnItem } from "../../shared/adapters/workflow-messages-t
 type TextOutput = WorkflowTextOutput;
 type WorkflowStreamItem = WorkflowTurnItem;
 
-export interface WorkflowMessageBlock {
-  id: string;
-  user: string;
-  userContent: WorkflowUserMessageContent[];
-  status: "running" | "completed" | "failed";
-  activity: "thinking" | "running" | "responding" | "done" | "failed";
-  startedAt?: number;
-  completedAt?: number;
-  durationMs: number | null;
-  items: WorkflowStreamItem[];
-}
+export type { WorkflowMessageBlock };
 
 export interface SessionLogSnapshot {
+  audit?: JsonlReplayAudit;
   source: string;
   generatedAt: string;
   sessionId: string;
@@ -110,9 +109,25 @@ function sessionFileForTarget(target: SessionLogTarget): string | null {
   );
 }
 
-export function parseSessionLog(source: string): SessionLogSnapshot {
-  const events = readFileSync(source, "utf8")
+export function parseSessionLog(
+  source: string,
+  options: { throughLine?: number } = {},
+): SessionLogSnapshot {
+  const text = readFileSync(source, "utf8");
+  const recorded = parseCodexRecordedSession(text, { source, ...options });
+  if (recorded)
+    return {
+      source,
+      generatedAt: new Date().toISOString(),
+      sessionId: recorded.readThread.thread.id,
+      cwd: recorded.readThread.thread.cwd || "",
+      readThread: recorded.readThread,
+      messages: workflowReadThreadToWorkflowMessages(recorded.readThread),
+      audit: recorded.audit,
+    };
+  const events = text
     .split(/\r?\n/)
+    .slice(0, options.throughLine)
     .filter(Boolean)
     .map((line) => {
       try {
@@ -245,6 +260,7 @@ export function parseSessionLog(source: string): SessionLogSnapshot {
           `assistant-message-${messages.length}-${ensureMessage().items.length}`,
           text,
           addItem,
+          stringValue(payload.phase) || undefined,
         );
       }
       continue;
@@ -819,6 +835,7 @@ export function parseSessionLog(source: string): SessionLogSnapshot {
           `assistant-final-${messages.length}`,
           lastMessage,
           addItem,
+          "final_answer",
         );
       }
     }
@@ -919,56 +936,7 @@ function sessionMessagesToReadThread(
 function workflowItemToReadThreadItem(
   item: WorkflowStreamItem,
 ): ReadThreadTurnItem {
-  if (item.type === "webSearch") {
-    return {
-      type: "webSearch",
-      id: item.id,
-      query: item.query,
-      action: item.action,
-    };
-  }
-
-  if (item.type === "hookPrompt") {
-    return {
-      type: "hookPrompt",
-      id: item.id,
-      fragmentCount: item.fragmentCount,
-    };
-  }
-
-  if (item.type === "mcpToolCall") {
-    return {
-      type: "mcpToolCall",
-      id: item.id,
-      server: item.server,
-      tool: item.tool,
-      arguments: item.arguments,
-      status: item.status,
-      durationMs: item.durationMs,
-    };
-  }
-
-  if (item.type === "dynamicToolCall") {
-    return {
-      type: "dynamicToolCall",
-      id: item.id,
-      tool: item.tool,
-      arguments: item.arguments,
-      status: item.status,
-      success: item.success,
-      durationMs: item.durationMs,
-    };
-  }
-
-  if (item.type === "reasoning") {
-    return {
-      type: "reasoning",
-      id: item.id,
-      summary: item.summary,
-      content: item.content,
-    };
-  }
-
+  // The canonical contract supports outputs/results; preserve them on replay.
   return item;
 }
 
@@ -994,16 +962,19 @@ function addAssistantItems(
   id: string,
   text: string,
   addItem: (item: WorkflowStreamItem) => WorkflowStreamItem,
+  phase?: string,
 ): void {
-  const blocks = assistantItems(id, text);
+  const blocks = assistantItems(id, text, phase);
   for (const item of blocks) addItem(item);
 }
 
-function assistantItems(id: string, text: string): WorkflowStreamItem[] {
+function assistantItems(
+  id: string,
+  text: string,
+  phase?: string,
+): WorkflowStreamItem[] {
   const visible = assistantVisibleText(text);
-  return visible
-    ? [{ id, type: "agentMessage", text: visible, phase: "completed" }]
-    : [];
+  return visible ? [{ id, type: "agentMessage", text: visible, phase }] : [];
 }
 
 function textUserContent(text: string): WorkflowUserMessageContent[] {

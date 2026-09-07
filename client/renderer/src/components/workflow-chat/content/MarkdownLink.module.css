@@ -1,0 +1,62 @@
+.link {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  text-align: inherit;
+  font: inherit;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  cursor: var(--cursor-link);
+}
+.link:hover,
+.link:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+.preview {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--raised-1);
+  overflow: hidden;
+}
+.path {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.code {
+  overflow: auto;
+  max-height: 65vh;
+  margin: 0;
+  font: var(--text-sm)/1.55 var(--font-mono);
+  color: var(--text-2);
+  padding: var(--space-3) 0;
+}
+.line {
+  display: block;
+  min-height: 1.55em;
+  white-space: pre;
+}
+.target {
+  background: var(--accent-soft);
+}
+.lineNumber {
+  display: inline-block;
+  width: 4em;
+  padding-right: 1em;
+  color: var(--text-3);
+  text-align: right;
+  user-select: none;
+}
+.error {
+  color: var(--danger);
+  overflow-wrap: anywhere;
+}

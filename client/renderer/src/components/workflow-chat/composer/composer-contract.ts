@@ -16,6 +16,7 @@ export function composerSuggestionQuery(
   value: string,
   caret: number,
 ): ComposerSuggestionQuery | null {
+  if (caret < 0) return null;
   const before = value.slice(0, caret);
   const match = before.match(/(?:^|\s)([$@/])([\p{L}\p{N}\p{M}.:_/\\-]*)$/u);
   if (!match || match.index == null) return null;

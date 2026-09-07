@@ -1,5 +1,6 @@
-import { useState } from "react";
 import { Check, Copy } from "lucide-react";
+import { copyConversationContent } from "../content/clipboard";
+import { useCopyFeedback } from "../content/use-copy-feedback";
 
 export function WorkflowDetailCopyButton({
   value,
@@ -8,17 +9,11 @@ export function WorkflowDetailCopyButton({
   value: string;
   label: string;
 }) {
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyFeedback(value);
 
   const copyValue = async () => {
     if (!value) return;
-    try {
-      await copyToClipboard(value);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1200);
-    } catch {
-      setCopied(false);
-    }
+    await copy(() => copyConversationContent({ text: value }));
   };
 
   return (
@@ -35,25 +30,4 @@ export function WorkflowDetailCopyButton({
       {copied ? <Check /> : <Copy />}
     </button>
   );
-}
-
-async function copyToClipboard(text: string): Promise<void> {
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(text);
-    return;
-  }
-
-  const textarea = document.createElement("textarea");
-  textarea.value = text;
-  textarea.setAttribute("readonly", "");
-  textarea.style.position = "fixed";
-  textarea.style.opacity = "0";
-  textarea.style.pointerEvents = "none";
-  document.body.appendChild(textarea);
-  textarea.select();
-  try {
-    document.execCommand("copy");
-  } finally {
-    document.body.removeChild(textarea);
-  }
 }

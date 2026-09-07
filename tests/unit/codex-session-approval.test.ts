@@ -117,3 +117,54 @@ describe("Codex app-server approvals", () => {
     });
   });
 });
+
+describe("Codex conversation questions", () => {
+  it("keeps the original RPC request id when responding to a question", async () => {
+    const harness = createHarness();
+    let question:
+      import("../../client/main/codex/session").CodexInputRequest | undefined;
+    harness.session.onEvent((event) => {
+      if (event.type === "input_requested") question = event.inputRequest;
+    });
+    await harness.session.start();
+    harness.request(71, "item/tool/requestUserInput", {
+      threadId: "source-thread",
+      turnId: "source-turn",
+      questions: [{ id: "choice", question: "选择方式" }],
+    });
+    expect(question?.params).toMatchObject({
+      threadId: "source-thread",
+      turnId: "source-turn",
+    });
+    question?.respond({ answers: { choice: { answers: ["A"] } } });
+    expect(harness.written.at(-1)).toEqual({
+      jsonrpc: "2.0",
+      id: 71,
+      result: { answers: { choice: { answers: ["A"] } } },
+    });
+  });
+  it("preserves elicitation schemas and cancels pending input when its transport closes", async () => {
+    const harness = createHarness();
+    let question:
+      import("../../client/main/codex/session").CodexInputRequest | undefined;
+    harness.session.onEvent((event) => {
+      if (event.type === "input_requested") question = event.inputRequest;
+    });
+    await harness.session.start();
+    const schema = {
+      type: "object",
+      properties: { accepted: { type: "boolean" } },
+    };
+    harness.request("form-1", "mcpServer/elicitation/request", {
+      serverName: "tools",
+      requestedSchema: schema,
+      mode: "form",
+    });
+    expect(question?.params.requestedSchema).toEqual(schema);
+    await harness.session.close();
+    expect(question?.signal.aborted).toBe(true);
+    const count = harness.written.length;
+    question?.respond({ action: "accept", content: { accepted: true } });
+    expect(harness.written).toHaveLength(count);
+  });
+});

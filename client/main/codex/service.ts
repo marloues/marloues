@@ -26,7 +26,10 @@ import {
 } from "../services/config-service";
 import { getRuntimeConfigDir } from "../app-paths";
 import { resolveModelProvider } from "../core/config/model-provider";
-import { resolveRuntimeProviderRoutes } from "../core/config/provider-routing";
+import {
+  resolveRuntimeProviderRoutes,
+  runtimeProviderRouteError,
+} from "../core/config/provider-routing";
 import {
   codexWorkspaceFilesystemConfig,
   codexSandboxProfileFromSettings,
@@ -118,6 +121,7 @@ export interface ThreadEvent {
     | "item.updated"
     | "item.completed"
     | "context_compacted"
+    | "input_requested"
     | "approval_requested"
     | "turn_step_failed"
     | "error";
@@ -128,6 +132,7 @@ export interface ThreadEvent {
   usage?: Usage;
   error?: ThreadError;
   message?: string;
+  inputRequest?: import("./session").CodexInputRequest;
   approval?: {
     id: string;
     tool: string;
@@ -282,7 +287,7 @@ export class CodexService {
     });
     if (!routePlan.routes.length) {
       svcLog("[svc] No compatible provider route configured");
-      throw new Error("当前供应商没有可用于 Binary 运行时的模型端点");
+      throw new Error(runtimeProviderRouteError(routePlan, "Binary"));
     }
     const directRoute = routePlan.directRoute;
     const connection = directRoute
@@ -469,6 +474,12 @@ export class CodexService {
               originalTokens: event.originalTokens,
               compactedTokens: event.compactedTokens,
             },
+          });
+          break;
+        case "input_requested":
+          this.eventEmitter.emit("event", sessionId, {
+            type: "input_requested",
+            inputRequest: event.inputRequest,
           });
           break;
         case "approval_requested":

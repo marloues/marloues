@@ -1,3 +1,4 @@
+import type { ConversationTiming } from "@shared/conversation-timing";
 import {
   WORKFLOW_READ_THREAD_SCHEMA_VERSION,
   type WorkflowReadThreadResponse,
@@ -15,6 +16,7 @@ export interface WorkflowThreadStoreItem {
 }
 
 export interface WorkflowThreadStoreTurn {
+  timing?: ConversationTiming;
   id: string;
   status: WorkflowTurnStatus;
   error: WorkflowTurnError | null;
@@ -92,6 +94,7 @@ function serializeTurn(turn: WorkflowThreadStoreTurn): WorkflowTurn {
     startedAt: turn.startedAt ?? null,
     completedAt: turn.completedAt ?? null,
     durationMs: turn.durationMs ?? null,
+    timing: turn.timing,
     modelId: turn.modelId ?? null,
     modelName: turn.modelName ?? null,
     usage: turn.usage,

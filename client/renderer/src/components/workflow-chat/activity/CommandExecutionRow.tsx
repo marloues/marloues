@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useItemDisclosure } from "../content/conversation-ui-state";
 import {
   Check,
   FileText,
@@ -6,11 +6,7 @@ import {
   Search,
   SquareTerminal,
 } from "lucide-react";
-import {
-  WorkflowActivityRow,
-  WorkflowActivityStatusBadge,
-  WorkflowInlineDots,
-} from "./ActivityRow";
+import { WorkflowActivityRow, WorkflowInlineDots } from "./ActivityRow";
 import { WorkflowCommandDetail } from "./CommandDetailCard";
 import {
   commandPresentation,
@@ -23,12 +19,13 @@ interface Props {
 }
 
 export function WorkflowCommandExecutionRow({ item }: Props) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useItemDisclosure(item.id);
   const presentation = commandPresentation(item);
 
   return (
     <WorkflowActivityRow
       activityKind="commandExecution"
+      iconTone="muted"
       icon={
         <CommandIcon
           kind={presentation.kind}
@@ -37,11 +34,13 @@ export function WorkflowCommandExecutionRow({ item }: Props) {
       }
       label={
         <>
-          {presentation.label}
+          <span
+            className="workflow-activity-row-text"
+            title={presentation.label}
+          >
+            {presentation.label}
+          </span>
           {presentation.running ? <WorkflowInlineDots /> : null}
-          {presentation.running || presentation.failed ? (
-            <WorkflowActivityStatusBadge failed={presentation.failed} />
-          ) : null}
         </>
       }
       meta={presentation.meta}

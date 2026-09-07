@@ -42,20 +42,27 @@ export function buildTurnPresentationModel(
     ...layout.leadingActivityItems,
     ...layout.trailingActivityItems,
   ];
-  const hasActivityItems = activityItems.length > 0;
+  const hasActivityItems =
+    activityItems.length > 0 ||
+    withoutFinalDocument([...layout.leadingFlow, ...layout.trailingFlow])
+      .length > 0;
   const running = turnIsRunning(renderedMessage, isLastStreaming);
-  const startedAt = finiteNumber(renderedMessage.startedAt);
-  const completedAt = finiteNumber(renderedMessage.completedAt);
+  const timing = message.timing;
+  const startedAt = finiteNumber(timing?.workStartedAt);
+  const finalStartedAt = finiteNumber(timing?.finalAnswerStartedAt);
+  const completedAt = finalStartedAt ?? finiteNumber(message.completedAt);
   const durationMs =
-    finiteNumber(renderedMessage.durationMs) ??
-    (startedAt != null && completedAt != null
+    startedAt != null && completedAt != null
       ? Math.max(0, completedAt - startedAt)
-      : null);
+      : !timing
+        ? finiteNumber(message.durationMs)
+        : null;
+  const finalStarted = finalStartedAt != null;
   const finalEntries = finalDocumentEntries([
     ...layout.leadingFlow,
     ...layout.trailingFlow,
   ]);
-  const showFileChanges = !running && renderedMessage.activity === "done";
+  const showFileChanges = !running;
   const resultItems = resultItemsForPresentation(
     layout.resultItems,
     showFileChanges,
@@ -74,7 +81,10 @@ export function buildTurnPresentationModel(
       itemIds: finalEntries.map((entry) => entry.item.id),
       text: layout.finalText,
       tone:
-        renderedMessage.activity === "failed" && !isLastStreaming
+        renderedMessage.activity === "failed" &&
+        !isLastStreaming &&
+        (!renderedMessage.error?.message ||
+          renderedMessage.error.message === layout.finalText)
           ? "error"
           : "normal",
       streaming: running && isLastStreaming,
@@ -85,6 +95,18 @@ export function buildTurnPresentationModel(
     "trailing",
     withoutFinalDocument(layout.trailingFlow),
   );
+  const errorText = renderedMessage.error?.message?.trim();
+  if (errorText && errorText !== layout.finalText.trim()) {
+    blocks.push({
+      kind: "document",
+      id: `${renderedMessage.id}:error`,
+      itemIds: [],
+      text: errorText,
+      tone: "error",
+      additionalDetails: renderedMessage.error?.additionalDetails,
+      streaming: false,
+    });
+  }
   if (resultItems.length > 0) {
     blocks.push({
       kind: "results",
@@ -111,7 +133,14 @@ export function buildTurnPresentationModel(
       continuesPreviousTurn: Boolean(renderedMessage.continuesPreviousTurn),
       showDuration:
         !renderedMessage.continuesPreviousTurn &&
-        (running || !(isLastStreaming && !hasActivityItems)),
+        (startedAt != null || durationMs != null),
+      clockRunning: running && !finalStarted,
+      timingPlacement:
+        startedAt == null
+          ? "hidden"
+          : finalStarted
+            ? "before-answer"
+            : "before-process",
       startedAt,
       completedAt,
       durationMs,
@@ -122,14 +151,37 @@ export function buildTurnPresentationModel(
         layout,
         isLastStreaming,
       ),
-      label: workflowTurnStatusLabel(renderedMessage, {
-        hasActivityItems,
-        isLastStreaming,
-      }),
+      label:
+        durationMs != null &&
+        durationMs < 1000 &&
+        renderedMessage.status === "completed"
+          ? "已完成"
+          : finalStarted
+            ? "处理用时"
+            : workflowTurnStatusLabel(renderedMessage, {
+                hasActivityItems,
+                isLastStreaming,
+              }),
       tone: workflowTurnStatusTone(renderedMessage),
     },
     process: {
       hasActivityItems,
+      canCollapse:
+        (!running || finalStarted) &&
+        renderedMessage.status !== "cancelled" &&
+        (renderedMessage.activity === "done" || finalStarted) &&
+        !renderedMessage.error &&
+        Boolean(
+          layout.finalText.trim() || renderedMessage.continuationFragment,
+        ) &&
+        !renderedMessage.items.some(
+          (item) =>
+            item.type === "permissionRequest" &&
+            (!item.settled ||
+              ["failed", "error", "denied", "timed_out"].includes(
+                String(item.status),
+              )),
+        ),
       stepCount: renderedMessage.items
         .filter(isProcessItem)
         .filter(workflowShouldShowProcessItem).length,

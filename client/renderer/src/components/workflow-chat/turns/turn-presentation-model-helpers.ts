@@ -42,9 +42,16 @@ export function presentationMessage(
   isLastStreaming: boolean,
   liveItemWindow: number,
 ): WorkflowMessageBlock {
+  const windowStart = Math.max(
+    0,
+    message.items.length - Math.max(1, liveItemWindow),
+  );
   const items =
-    isLastStreaming && message.items.length > liveItemWindow
-      ? message.items.slice(-liveItemWindow)
+    isLastStreaming && windowStart > 0
+      ? message.items.filter(
+          (item, index) =>
+            index >= windowStart || retainOutsideLiveWindow(item),
+        )
       : message.items;
   if (turnIsRunning(message, isLastStreaming))
     return items === message.items ? message : { ...message, items };
@@ -109,4 +116,23 @@ export function resultItemsForPresentation(
 
 export function finiteNumber(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+// Ordinary trace rows are windowed; decisions, results and final documents
+// must survive a long running turn.
+function retainOutsideLiveWindow(item: WorkflowTurnItem): boolean {
+  if (item.type === "agentMessage")
+    return item.phase === "final_answer" || item.phase === "final";
+  if (
+    item.type === "permissionRequest" ||
+    item.type === "imageView" ||
+    item.type === "imageGeneration" ||
+    item.type === "fileChange" ||
+    item.type === "plan"
+  )
+    return true;
+  return (
+    "status" in item &&
+    ["failed", "error", "denied", "timed_out"].includes(String(item.status))
+  );
 }

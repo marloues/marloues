@@ -1,0 +1,4756 @@
+{
+  "schemaVersion": 2,
+  "recordedAt": "2026-09-05T19:18:11.452Z",
+  "scope": "当前 Marloues 对话区组件及列明交互；不声称 Codex 私有状态全量等价",
+  "worktree": "/Users/xuzong/workspace/marloues-architecture-review-20260905",
+  "branch": "codex/architecture-review-20260905",
+  "unit": {
+    "files": 131,
+    "tests": 740
+  },
+  "staticChecks": {
+    "typecheck": {
+      "status": "passed",
+      "path": "client/test-results/conversation-complete/typecheck.log",
+      "sha256": "fa1fa7d98db8573b8f41b48d9def32358fcdde04c67aeab63a209b164ae84827"
+    },
+    "lintClient": {
+      "errors": 0,
+      "warnings": 1,
+      "path": "client/test-results/conversation-complete/lint-client.log",
+      "sha256": "31d231e4dd45ef7ed35f473bb1823afb54027c718e2caaa2f36da4f2b17dd6e2",
+      "note": "现有 fix-node-pty-permissions.mjs 中 fileURLToPath 未使用警告。"
+    }
+  },
+  "styleAlignment": {
+    "themes": [
+      "light",
+      "dark",
+      "warm"
+    ],
+    "moduleCount": 13,
+    "files": [
+      {
+        "path": "client/renderer/src/components/workflow-chat/activity/McpApp.module.css",
+        "sha256": "b91c569daf06679e86fdabd59ef47ccb2b1bf0368f88be4c1754a86c5725dd85"
+      },
+      {
+        "path": "client/renderer/src/components/workflow-chat/activity/McpResult.module.css",
+        "sha256": "ec92bbecaa6cdf13925255e0361dd68da64c2e3ac475248e749cd49b3a793f92"
+      },
+      {
+        "path": "client/renderer/src/components/workflow-chat/activity/QuestionCard.module.css",
+        "sha256": "a0880bf01274e403592b7bd8d7a0d3fe1e954aadf466a2a2bcde01701fbeb10f"
+      },
+      {
+        "path": "client/renderer/src/components/workflow-chat/content/CodeBlock.module.css",
+        "sha256": "8401af3778fada9e2ab5e6987ca82e0b69792dfa4857002d3cd8c6e6d8291ea4"
+      },
+      {
+        "path": "client/renderer/src/components/workflow-chat/content/ContentDialog.module.css",
+        "sha256": "819764064f7d196f09321322db4d44ed57be929e307faccd86cb310c0eef8a56"
+      },
+      {
+        "path": "client/renderer/src/components/workflow-chat/content/InlineCode.module.css",
+        "sha256": "4d59f06173d33fea0168d28bbe838bf901c679c2c4aee944f26942de5aeab973"
+      },
+      {
+        "path": "client/renderer/src/components/workflow-chat/content/MarkdownErrorBoundary.module.css",
+        "sha256": "bbba9302c37980cd3ff8b4dc62b67536ddfd8dd80300fd51cf0ecd3ae7d720a0"
+      },
+      {
+        "path": "client/renderer/src/components/workflow-chat/content/MarkdownLink.module.css",
+        "sha256": "01291e8123b6fe821474741ae70c71cc359d169c872f9ae46d81b2d76a6fbba3"
+      },
+      {
+        "path": "client/renderer/src/components/workflow-chat/content/MarkdownMedia.module.css",
+        "sha256": "1b9da485c74fc0d1fd78f950bc8976b19e37200ae0e88c4de70a7941d8081d39"
+      },
+      {
+        "path": "client/renderer/src/components/workflow-chat/content/MarkdownTable.module.css",
+        "sha256": "7f064ed69402c3881e67fbb33e47da957165c599e3cd17696862b9172ee6ec1d"
+      },
+      {
+        "path": "client/renderer/src/components/workflow-chat/content/MermaidBlock.module.css",
+        "sha256": "eb9dbd1e0a8700ee7935642c2fe5e234983a994488d951dd7671d6307b93b800"
+      },
+      {
+        "path": "client/renderer/src/components/workflow-chat/turns/ReadThreadTurnList.module.css",
+        "sha256": "f9f4d03e068c37df5e46c498e046cb6b3a347ccc2a402b8d3b597ccbc5676022"
+      },
+      {
+        "path": "client/renderer/src/components/workflow-chat/turns/UserMessage.module.css",
+        "sha256": "7852b4d26283c062d5afff976f529d5b4d8115a575663389d893d44ffbb53dce"
+      },
+      {
+        "path": "client/renderer/src/components/workflow-chat/content/conversation-theme.ts",
+        "sha256": "ce43b1257192e9e41c22851376d457f1583cb89412e632914596fa7af0a3b0f7"
+      },
+      {
+        "path": "client/renderer/src/styles/tokens.css",
+        "sha256": "e17713da029fbccb5377ebbf172945f4eaaf6cdbc95b035b5ddd00dcb007f3f0"
+      },
+      {
+        "path": "client/renderer/src/styles/README.md",
+        "sha256": "cfed010ddf37d2d49601bad40b6f22345c680e3034263a648c9c345ae9231601"
+      }
+    ],
+    "checks": [
+      "style-components-light",
+      "style-dialog-and-navigation-light",
+      "style-components-dark",
+      "style-dialog-and-navigation-dark",
+      "style-components-warm",
+      "style-dialog-and-navigation-warm",
+      "style-custom-accent-updates-current-diagram-and-focus"
+    ],
+    "screenshots": [
+      {
+        "check": "style-components-light",
+        "file": "style-question-light.png",
+        "path": "client/test-results/conversation-complete/style-question-light.png",
+        "sha256": "e249c81f07b593f10d451757fd0fb15c1a582c821df2ba4b669c85b24681e5b0"
+      },
+      {
+        "check": "style-components-light",
+        "file": "style-mermaid-light.png",
+        "path": "client/test-results/conversation-complete/style-mermaid-light.png",
+        "sha256": "090d932832b105796f0f2d249aee324191d6a11d18ead786c90e2d277d8b1ab5"
+      },
+      {
+        "check": "style-components-light",
+        "file": "style-mcp-result-light.png",
+        "path": "client/test-results/conversation-complete/style-mcp-result-light.png",
+        "sha256": "3d4b4bfef6b2a48f6f833216d105cbde657aff856ded17daca8013bf922f342f"
+      },
+      {
+        "check": "style-components-light",
+        "file": "style-media-light.png",
+        "path": "client/test-results/conversation-complete/style-media-light.png",
+        "sha256": "5fc6db08a20211c282c36572ed5153dad9cb5442b6f7ddea9a8c0380a9416d65"
+      },
+      {
+        "check": "style-dialog-and-navigation-light",
+        "file": "style-dialog-light.png",
+        "path": "client/test-results/conversation-complete/style-dialog-light.png",
+        "sha256": "5f06c7fcd763da2c1d891bf97141d10e242982f51d1ab2c82f096d8c0a1dc2e2"
+      },
+      {
+        "check": "style-dialog-and-navigation-light",
+        "file": "style-file-preview-light.png",
+        "path": "client/test-results/conversation-complete/style-file-preview-light.png",
+        "sha256": "96d8133681ec325651ab49aefae722073c3718e0472c3b0eb626e8fabefd7769"
+      },
+      {
+        "check": "style-dialog-and-navigation-light",
+        "file": "style-navigation-light.png",
+        "path": "client/test-results/conversation-complete/style-navigation-light.png",
+        "sha256": "1fa5ea16cf60e6d4aea03c8cd594a867384f8bef7fd3b243007534cae52e2022"
+      },
+      {
+        "check": "style-components-dark",
+        "file": "style-question-dark.png",
+        "path": "client/test-results/conversation-complete/style-question-dark.png",
+        "sha256": "70e70eb8fd2c1eb8a8333fb1593f35728cc1ba185210672ce0bd070bc0e85029"
+      },
+      {
+        "check": "style-components-dark",
+        "file": "style-mermaid-dark.png",
+        "path": "client/test-results/conversation-complete/style-mermaid-dark.png",
+        "sha256": "eb74c50fde64ffb4de06dfb37fdaacf82ba4ae856b430b91629714a19fff2564"
+      },
+      {
+        "check": "style-components-dark",
+        "file": "style-mcp-result-dark.png",
+        "path": "client/test-results/conversation-complete/style-mcp-result-dark.png",
+        "sha256": "81bdd40c26ff608aed496c60877de5820d9817e6d41c5c1d46f7c24f715a3577"
+      },
+      {
+        "check": "style-components-dark",
+        "file": "style-media-dark.png",
+        "path": "client/test-results/conversation-complete/style-media-dark.png",
+        "sha256": "427a8513ed8a6536ab9a4bc125cc9c53171f740eb9af96661ae233743890b03e"
+      },
+      {
+        "check": "style-dialog-and-navigation-dark",
+        "file": "style-dialog-dark.png",
+        "path": "client/test-results/conversation-complete/style-dialog-dark.png",
+        "sha256": "e8596c3800b097e6412a415a5a295e2f93e8d68df2c23fa94b79aabbcd99e4e0"
+      },
+      {
+        "check": "style-dialog-and-navigation-dark",
+        "file": "style-file-preview-dark.png",
+        "path": "client/test-results/conversation-complete/style-file-preview-dark.png",
+        "sha256": "3c752bb5752fbd6561a8081b8fd88753b48ba323040b3c2a0f51a12e2e33294b"
+      },
+      {
+        "check": "style-dialog-and-navigation-dark",
+        "file": "style-navigation-dark.png",
+        "path": "client/test-results/conversation-complete/style-navigation-dark.png",
+        "sha256": "ad7e9dc5fbe8e2f33a0e2443b503c15a99ecf5c5aa662ac692fd1ef140ed0b7b"
+      },
+      {
+        "check": "style-components-warm",
+        "file": "style-question-warm.png",
+        "path": "client/test-results/conversation-complete/style-question-warm.png",
+        "sha256": "c91de9484edc31ba169fe36c2bb4bdaec546e6def3bc4a216a24ff204b80dda4"
+      },
+      {
+        "check": "style-components-warm",
+        "file": "style-mermaid-warm.png",
+        "path": "client/test-results/conversation-complete/style-mermaid-warm.png",
+        "sha256": "a0e515b31d92c9750fb658abb1d246051cc0c2422cf6e203406104d9a9cbe289"
+      },
+      {
+        "check": "style-components-warm",
+        "file": "style-mcp-result-warm.png",
+        "path": "client/test-results/conversation-complete/style-mcp-result-warm.png",
+        "sha256": "4c67a708d6f6cc868abec1d7a436706d98b096407ee1ff3884e68778a00933ac"
+      },
+      {
+        "check": "style-components-warm",
+        "file": "style-media-warm.png",
+        "path": "client/test-results/conversation-complete/style-media-warm.png",
+        "sha256": "9670264cc4f1a02a3503a530bc749eb1510e7c5ba61b854cce950e78abf34688"
+      },
+      {
+        "check": "style-dialog-and-navigation-warm",
+        "file": "style-dialog-warm.png",
+        "path": "client/test-results/conversation-complete/style-dialog-warm.png",
+        "sha256": "2a70adcce832ddd5432a68c8a72ad200fb14794232549767c00ac58d467d3d64"
+      },
+      {
+        "check": "style-dialog-and-navigation-warm",
+        "file": "style-file-preview-warm.png",
+        "path": "client/test-results/conversation-complete/style-file-preview-warm.png",
+        "sha256": "ac7b8bdadd20d92eb23d1f5fc29a94fbb1a546d2bc9e550d450f5446bc4f8dad"
+      },
+      {
+        "check": "style-dialog-and-navigation-warm",
+        "file": "style-navigation-warm.png",
+        "path": "client/test-results/conversation-complete/style-navigation-warm.png",
+        "sha256": "b20cfee9a9ed4fc7dc15d63fcebfcf1e588e6617c4362195dbc17dc85274ea2b"
+      },
+      {
+        "check": "style-custom-accent-updates-current-diagram-and-focus",
+        "file": "style-custom-accent-mermaid.png",
+        "path": "client/test-results/conversation-complete/style-custom-accent-mermaid.png",
+        "sha256": "2dbea3e4e41b51693fa3a222d0261475d72b1a565645591228f25d5912592cf5"
+      },
+      {
+        "path": "client/test-results/conversation-app/mcp-theme-light.png",
+        "sha256": "34e7bd212307fabb196baabc061e0cb6369e318a91a7eea03b9323a36bc32352"
+      },
+      {
+        "path": "client/test-results/conversation-details/error-boundary-light.png",
+        "sha256": "a172eb25fb981dcba877fea7c07d97fb605e2a1c7482b40f16e39b0cfec4ffd0"
+      },
+      {
+        "path": "client/test-results/conversation-app/mcp-theme-dark.png",
+        "sha256": "6842ada75ff17f9d07a56d82f0e814408e22994e8a2683c60f88f96e208685cb"
+      },
+      {
+        "path": "client/test-results/conversation-details/error-boundary-dark.png",
+        "sha256": "8f091ad20add0cd61269799c0ba23c371f10d8a95ec82635c39991989ae37f20"
+      },
+      {
+        "path": "client/test-results/conversation-app/mcp-theme-warm.png",
+        "sha256": "c1de59673e6534c47f3365dca24ce8a67e577a31989f7a3bd0de5f95a0e082a1"
+      },
+      {
+        "path": "client/test-results/conversation-details/error-boundary-warm.png",
+        "sha256": "00ec62b049f4f19b06d152abd80710eeec19f4e912e9b8ba6b45f31c63ef3fb4"
+      }
+    ]
+  },
+  "screenshots": [
+    {
+      "check": "render-qa-markdown",
+      "file": "qa-markdown.png",
+      "path": "client/test-results/conversation-complete/qa-markdown.png",
+      "sha256": "44267a80c3b54893e2d0170636fa782b43d28e6551e33121d13ca61b1f577c9b"
+    },
+    {
+      "check": "render-qa-media",
+      "file": "qa-media.png",
+      "path": "client/test-results/conversation-complete/qa-media.png",
+      "sha256": "1cb295a44232bb87dd2acc2d35ad7ed9165f1cbc0ae50ede646ada62cd142d38"
+    },
+    {
+      "check": "render-qa-attachments",
+      "file": "qa-attachments.png",
+      "path": "client/test-results/conversation-complete/qa-attachments.png",
+      "sha256": "4b325d99f7be0fc9d54d2b12e3c9c1ca0c53c288734e3a46ee319a37a8f49326"
+    },
+    {
+      "check": "render-qa-attachment-layout",
+      "file": "qa-attachment-layout.png",
+      "path": "client/test-results/conversation-complete/qa-attachment-layout.png",
+      "sha256": "f3ff6562c5f9020bd69a251452cc17b62afcd40900a85e83ba5aef96e89ae93c"
+    },
+    {
+      "check": "render-qa-long-user",
+      "file": "qa-long-user.png",
+      "path": "client/test-results/conversation-complete/qa-long-user.png",
+      "sha256": "008b153e1eca84f1aadaed929be6407abd49b4bff6130ea2e26f1b3ec8017cd2"
+    },
+    {
+      "check": "render-qa-command-running",
+      "file": "qa-command-running-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-command-running-detail-0.png",
+      "sha256": "b41ba71c0fabba9bb9be30f824839f1447b7adfc431ea58a7a49cd7d94003be1"
+    },
+    {
+      "check": "render-qa-command-running",
+      "file": "qa-command-running.png",
+      "path": "client/test-results/conversation-complete/qa-command-running.png",
+      "sha256": "1dd3df5017d56a72f77d22a76f4fdfe36f56701ed45e879309d6f76101d5a3e4"
+    },
+    {
+      "check": "render-qa-command-completed",
+      "file": "qa-command-completed-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-command-completed-detail-0.png",
+      "sha256": "24924db4b436317d83d5bebf0dbba7008f3bd36644438091f760cd437de4d59f"
+    },
+    {
+      "check": "render-qa-command-completed",
+      "file": "qa-command-completed.png",
+      "path": "client/test-results/conversation-complete/qa-command-completed.png",
+      "sha256": "190fa9f8b2583e5c512366a8927933ebb4af8a47ff7c8e1d9ac09b5c3fdbf132"
+    },
+    {
+      "check": "render-qa-command-failed",
+      "file": "qa-command-failed-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-command-failed-detail-0.png",
+      "sha256": "021fc67157360c4c167f78187e44b6870a0f5fecea143e36262110706bc45338"
+    },
+    {
+      "check": "render-qa-command-failed",
+      "file": "qa-command-failed.png",
+      "path": "client/test-results/conversation-complete/qa-command-failed.png",
+      "sha256": "08e83a5f24d59e8328cbad808c9edc0f06d663cd51d7f2454d5b9fb0e4d643d1"
+    },
+    {
+      "check": "render-qa-command-cancelled",
+      "file": "qa-command-cancelled-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-command-cancelled-detail-0.png",
+      "sha256": "dd5b5f57fad658364d26445220678978ce5cc42e90a2aaddd1e3b1d5913134f8"
+    },
+    {
+      "check": "render-qa-command-cancelled",
+      "file": "qa-command-cancelled.png",
+      "path": "client/test-results/conversation-complete/qa-command-cancelled.png",
+      "sha256": "5ff0c5f4d4b15a5824ebf595e40a4d70e70a9356abcc7038748c2445c5541540"
+    },
+    {
+      "check": "render-qa-patch-completed",
+      "file": "qa-patch-completed.png",
+      "path": "client/test-results/conversation-complete/qa-patch-completed.png",
+      "sha256": "7b66e20996008f73bab2e3e9134871ce881d8b504d865c55b30d9c2ea8a90d97"
+    },
+    {
+      "check": "render-qa-patch-pending",
+      "file": "qa-patch-pending-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-patch-pending-detail-0.png",
+      "sha256": "09eef9d8b10fd34191862a13d88cc791aa84eadd541bdd8a2c6fe8872602ef57"
+    },
+    {
+      "check": "render-qa-patch-pending",
+      "file": "qa-patch-pending.png",
+      "path": "client/test-results/conversation-complete/qa-patch-pending.png",
+      "sha256": "21657e395f2d1f6eb5418dcd276c084e623d0d5ced3cd350917c4e90dbc6e0c6"
+    },
+    {
+      "check": "render-qa-patch-failed",
+      "file": "qa-patch-failed-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-patch-failed-detail-0.png",
+      "sha256": "9135ef35cb087fc5075d984a75c018f306092c7db62a2a7a9cee5483c4af3cec"
+    },
+    {
+      "check": "render-qa-patch-failed",
+      "file": "qa-patch-failed.png",
+      "path": "client/test-results/conversation-complete/qa-patch-failed.png",
+      "sha256": "0ca3e704ed0e6b016063fe53d0e4bed6f0cf46295cc854468831702ca124e224"
+    },
+    {
+      "check": "render-qa-patch-rejected",
+      "file": "qa-patch-rejected-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-patch-rejected-detail-0.png",
+      "sha256": "867bea4d1b3c1a9161b37324faf647c4f97df16b0255eea047df0b442408395a"
+    },
+    {
+      "check": "render-qa-patch-rejected",
+      "file": "qa-patch-rejected.png",
+      "path": "client/test-results/conversation-complete/qa-patch-rejected.png",
+      "sha256": "87aa15c5a0cb2de49d867e5594f94df3c708783a6e6068702f03704378d47eb9"
+    },
+    {
+      "check": "render-qa-patch-cancelled",
+      "file": "qa-patch-cancelled-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-patch-cancelled-detail-0.png",
+      "sha256": "d42419e17294929a827262a37ed0ddbda53b6ee1a8a75f50cc755cede45b43df"
+    },
+    {
+      "check": "render-qa-patch-cancelled",
+      "file": "qa-patch-cancelled.png",
+      "path": "client/test-results/conversation-complete/qa-patch-cancelled.png",
+      "sha256": "69d902b9f5690c5e72e95ca0b5a9dbaa273d5d8fb76c8de73b345b2921704fc8"
+    },
+    {
+      "check": "render-qa-many-files",
+      "file": "qa-many-files.png",
+      "path": "client/test-results/conversation-complete/qa-many-files.png",
+      "sha256": "430c0450eb4fe8f535eed235f5f0375d3337cb956eb3e3e57e5c4d98ecd02004"
+    },
+    {
+      "check": "render-qa-mcp",
+      "file": "qa-mcp-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-mcp-detail-0.png",
+      "sha256": "5293621a1404e3b5ee1e54194978e59adb48d77eacbedd78e880dbd57b7a7d06"
+    },
+    {
+      "check": "render-qa-mcp",
+      "file": "qa-mcp.png",
+      "path": "client/test-results/conversation-complete/qa-mcp.png",
+      "sha256": "dba261ca6e55fa6bac832233f3f0e4e7a82209669ea6b9f1f9cb00fd47fa82ad"
+    },
+    {
+      "check": "render-qa-dynamic-running",
+      "file": "qa-dynamic-running-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-dynamic-running-detail-0.png",
+      "sha256": "7d472adbb540c9476e04c7ae6ad117be0c25ea817a5ef02958c4cad34caee844"
+    },
+    {
+      "check": "render-qa-dynamic-running",
+      "file": "qa-dynamic-running.png",
+      "path": "client/test-results/conversation-complete/qa-dynamic-running.png",
+      "sha256": "1e8e47bdc9f2b6027eeb5ac280659b79db57b3224094208af18a77cd80218492"
+    },
+    {
+      "check": "render-qa-dynamic-failed",
+      "file": "qa-dynamic-failed-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-dynamic-failed-detail-0.png",
+      "sha256": "6e6f762e30a869aa141f3a09ace91e5ff89b47a75041e0fd971e9e47be94ecc9"
+    },
+    {
+      "check": "render-qa-dynamic-failed",
+      "file": "qa-dynamic-failed.png",
+      "path": "client/test-results/conversation-complete/qa-dynamic-failed.png",
+      "sha256": "1e3cd4ec7d6c47cf9bb5d052f09cc909de5236fac1ae4b8784e0d11a04652656"
+    },
+    {
+      "check": "render-qa-dynamic-cancelled",
+      "file": "qa-dynamic-cancelled-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-dynamic-cancelled-detail-0.png",
+      "sha256": "299485d6e3274de6e7b9cf80e7a2ecd2c0e993fb195efd52951cf71aaf59d3c3"
+    },
+    {
+      "check": "render-qa-dynamic-cancelled",
+      "file": "qa-dynamic-cancelled.png",
+      "path": "client/test-results/conversation-complete/qa-dynamic-cancelled.png",
+      "sha256": "1ce45d2feb433e328eb6af1746f743d9db46e22387b5bf9d8f05e718bde8590c"
+    },
+    {
+      "check": "render-qa-dynamic-completed",
+      "file": "qa-dynamic-completed-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-dynamic-completed-detail-0.png",
+      "sha256": "efc14589a7b6038d6e11c7a87cbce4d889d2e09afb21f87aa5686222e3c763c0"
+    },
+    {
+      "check": "render-qa-dynamic-completed",
+      "file": "qa-dynamic-completed.png",
+      "path": "client/test-results/conversation-complete/qa-dynamic-completed.png",
+      "sha256": "4b5e3f71a9ff717d0f3478a4127488c5a44c5e787e026c4e1470180c39068a88"
+    },
+    {
+      "check": "render-qa-question-kinds",
+      "file": "qa-question-kinds.png",
+      "path": "client/test-results/conversation-complete/qa-question-kinds.png",
+      "sha256": "75649be568983636308b5deb56b22f0a0452430320a48a4417b9ff185d20b8e1"
+    },
+    {
+      "check": "render-qa-mcp-failed",
+      "file": "qa-mcp-failed-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-mcp-failed-detail-0.png",
+      "sha256": "62f55cfaae40e66e3edb9db4270a3bfc34ef8274e36bcf66c921e81a0414ea18"
+    },
+    {
+      "check": "render-qa-mcp-failed",
+      "file": "qa-mcp-failed.png",
+      "path": "client/test-results/conversation-complete/qa-mcp-failed.png",
+      "sha256": "446526e329aa46ce3d34a8f348a984a39b1cb59c02be21949d6097cc93ac4e8a"
+    },
+    {
+      "check": "render-qa-tool-details",
+      "file": "qa-tool-details-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-tool-details-detail-0.png",
+      "sha256": "322830dc6ceb1626ff635c5c2ad00364233e862d3cec3dc2821364ca4dc4b79a"
+    },
+    {
+      "check": "render-qa-tool-details",
+      "file": "qa-tool-details-detail-1.png",
+      "path": "client/test-results/conversation-complete/qa-tool-details-detail-1.png",
+      "sha256": "a21b88ba12be5ee1adf9bfa94a9d4e6f48085cdf5e775c3330e1a7807fb52144"
+    },
+    {
+      "check": "render-qa-tool-details",
+      "file": "qa-tool-details-detail-2.png",
+      "path": "client/test-results/conversation-complete/qa-tool-details-detail-2.png",
+      "sha256": "13b3aa3c2178ec30d73c06469dd6e2689c9c649e43c72d1dc5845bdfb54f54b5"
+    },
+    {
+      "check": "render-qa-tool-details",
+      "file": "qa-tool-details-detail-3.png",
+      "path": "client/test-results/conversation-complete/qa-tool-details-detail-3.png",
+      "sha256": "2d20c5744be49cbeaca34c998432ce5e677e463bba03bae5d12a5be50d5da463"
+    },
+    {
+      "check": "render-qa-tool-details",
+      "file": "qa-tool-details-detail-4.png",
+      "path": "client/test-results/conversation-complete/qa-tool-details-detail-4.png",
+      "sha256": "81f72940e3c487194c50e4c1e71dd66e48bbdb97930840138e154a3a34952ca7"
+    },
+    {
+      "check": "render-qa-tool-details",
+      "file": "qa-tool-details-detail-5.png",
+      "path": "client/test-results/conversation-complete/qa-tool-details-detail-5.png",
+      "sha256": "b102f21d7c1c5664725ea019c5fb7d3f1a05e5b7cbfec4ac308de339767cc9b5"
+    },
+    {
+      "check": "render-qa-tool-details",
+      "file": "qa-tool-details.png",
+      "path": "client/test-results/conversation-complete/qa-tool-details.png",
+      "sha256": "ad84fa7ab19b714f5cc5199d57b4d8739c8990666783f27ffd89bac8ed2992f7"
+    },
+    {
+      "check": "render-qa-reasoning",
+      "file": "qa-reasoning-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-reasoning-detail-0.png",
+      "sha256": "ef3ab3b87cae716860bf9263c8306758c4fad460e3e33fe3c49dcccf8815e834"
+    },
+    {
+      "check": "render-qa-reasoning",
+      "file": "qa-reasoning.png",
+      "path": "client/test-results/conversation-complete/qa-reasoning.png",
+      "sha256": "dc36f97c69e32c06d5bf8f680219248f68a6f12979390b5f4c3e1b826cd73e32"
+    },
+    {
+      "check": "render-qa-markers",
+      "file": "qa-markers-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-markers-detail-0.png",
+      "sha256": "690e11c6e167a141469676e1285511f94c79f91ad432b979afbca3a3286e1b21"
+    },
+    {
+      "check": "render-qa-markers",
+      "file": "qa-markers-detail-1.png",
+      "path": "client/test-results/conversation-complete/qa-markers-detail-1.png",
+      "sha256": "a2b52f34fc51c00a3734804a44b6c83b89c1a465045d278afd1799ac04710f1b"
+    },
+    {
+      "check": "render-qa-markers",
+      "file": "qa-markers-detail-2.png",
+      "path": "client/test-results/conversation-complete/qa-markers-detail-2.png",
+      "sha256": "7000929e1df127e82d5525f197876ae6c087c8d3191e68056413386bae012cc2"
+    },
+    {
+      "check": "render-qa-markers",
+      "file": "qa-markers-detail-3.png",
+      "path": "client/test-results/conversation-complete/qa-markers-detail-3.png",
+      "sha256": "fda5a7d9edd80d7e4e7eae7547b0d84b94768b8a46199f90217f18a79c98c2ad"
+    },
+    {
+      "check": "render-qa-markers",
+      "file": "qa-markers-detail-4.png",
+      "path": "client/test-results/conversation-complete/qa-markers-detail-4.png",
+      "sha256": "f905f5a2dd709804c41da9d3d0556abdcde1d00e6a2f41ce69fb0c00e6145731"
+    },
+    {
+      "check": "render-qa-markers",
+      "file": "qa-markers-detail-5.png",
+      "path": "client/test-results/conversation-complete/qa-markers-detail-5.png",
+      "sha256": "d6f3983c336f9e4a33338298e1d91c1c98c49302c3265f969ae599dbb16f9516"
+    },
+    {
+      "check": "render-qa-markers",
+      "file": "qa-markers-detail-6.png",
+      "path": "client/test-results/conversation-complete/qa-markers-detail-6.png",
+      "sha256": "1176240f4182d08c6d0e70a1cb028f16a9ff0d299435832938707bfe428ebc4c"
+    },
+    {
+      "check": "render-qa-markers",
+      "file": "qa-markers-detail-7.png",
+      "path": "client/test-results/conversation-complete/qa-markers-detail-7.png",
+      "sha256": "0120e11f7bb007cec97ebf54958cda25d1d5c306cf4e0195ddbb92c4508dd1fd"
+    },
+    {
+      "check": "render-qa-markers",
+      "file": "qa-markers-detail-8.png",
+      "path": "client/test-results/conversation-complete/qa-markers-detail-8.png",
+      "sha256": "a4acda63f14cce216ac19bd48c798e468689d2236dae9d9b9d53a80b340877a9"
+    },
+    {
+      "check": "render-qa-markers",
+      "file": "qa-markers-detail-9.png",
+      "path": "client/test-results/conversation-complete/qa-markers-detail-9.png",
+      "sha256": "e40a325e04d976c0e3607cdfa04e502b26526533c28cce21c0768736850742f9"
+    },
+    {
+      "check": "render-qa-markers",
+      "file": "qa-markers.png",
+      "path": "client/test-results/conversation-complete/qa-markers.png",
+      "sha256": "8763830c6b66e6434f5a0223197263dd8019afcbf383a9b981f19ae8153eb9a5"
+    },
+    {
+      "check": "render-qa-collab-running",
+      "file": "qa-collab-running-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-collab-running-detail-0.png",
+      "sha256": "69d44de0eead30d9807333edcba502c7ea4217c97f36d6d161e90bc85ff396e1"
+    },
+    {
+      "check": "render-qa-collab-running",
+      "file": "qa-collab-running.png",
+      "path": "client/test-results/conversation-complete/qa-collab-running.png",
+      "sha256": "dfba3a4a980962d20c94455ba4d2695e0d722eaf7f2db24f9ee0e4a2a378ca43"
+    },
+    {
+      "check": "render-qa-collab-completed",
+      "file": "qa-collab-completed-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-collab-completed-detail-0.png",
+      "sha256": "a8497b252f3b413678b954a561ad44b499f9bb525932f3559cd68ce7dfa38414"
+    },
+    {
+      "check": "render-qa-collab-completed",
+      "file": "qa-collab-completed.png",
+      "path": "client/test-results/conversation-complete/qa-collab-completed.png",
+      "sha256": "20f78b4b4289135282178dbb38aa483c3a975fe253cd57488f2e8ba4c0f0e86f"
+    },
+    {
+      "check": "render-qa-collab-failed",
+      "file": "qa-collab-failed-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-collab-failed-detail-0.png",
+      "sha256": "248c08d7c6c739d5c1706e08e666baa406251edc39dd6ce72c1012e477079ce3"
+    },
+    {
+      "check": "render-qa-collab-failed",
+      "file": "qa-collab-failed.png",
+      "path": "client/test-results/conversation-complete/qa-collab-failed.png",
+      "sha256": "a0cae33bd22e06803c46aee4ac1aab11093a5147233d587f781733fde0a581c6"
+    },
+    {
+      "check": "render-qa-collab-cancelled",
+      "file": "qa-collab-cancelled-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-collab-cancelled-detail-0.png",
+      "sha256": "f1789165668fe1401bdc7e7cc9782158a48f34768d8e66e27ae3558c841e9f20"
+    },
+    {
+      "check": "render-qa-collab-cancelled",
+      "file": "qa-collab-cancelled.png",
+      "path": "client/test-results/conversation-complete/qa-collab-cancelled.png",
+      "sha256": "7ff69b2886c11d6b7996a6f4ad762015d82c5b197e57087fd7625d4f97f4aca0"
+    },
+    {
+      "check": "render-qa-child",
+      "file": "qa-child.png",
+      "path": "client/test-results/conversation-complete/qa-child.png",
+      "sha256": "8e8a0d1b4e96093c44b21c499942dac77e933f94035b7acd9ecbd4ffabc16c01"
+    },
+    {
+      "check": "render-qa-permissions",
+      "file": "qa-permissions-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-permissions-detail-0.png",
+      "sha256": "7d8a2b0629c1ea6bcf390244c7c6ce6b4d670ebdf2bcb12f87b96903ec98a13a"
+    },
+    {
+      "check": "render-qa-permissions",
+      "file": "qa-permissions-detail-1.png",
+      "path": "client/test-results/conversation-complete/qa-permissions-detail-1.png",
+      "sha256": "ef999293078208e3dcc3a69d484e9a036661481f2bfe8e8781790fbbc55c95aa"
+    },
+    {
+      "check": "render-qa-permissions",
+      "file": "qa-permissions-detail-2.png",
+      "path": "client/test-results/conversation-complete/qa-permissions-detail-2.png",
+      "sha256": "6f9321e636e58fc5659386ef35bbd0bb208035e8c5aedb5d706a4e697881df02"
+    },
+    {
+      "check": "render-qa-permissions",
+      "file": "qa-permissions-detail-3.png",
+      "path": "client/test-results/conversation-complete/qa-permissions-detail-3.png",
+      "sha256": "a87039f7eb25da03debec58c92b913527ad659bb500bc44cff3059d49b9760f7"
+    },
+    {
+      "check": "render-qa-permissions",
+      "file": "qa-permissions-detail-4.png",
+      "path": "client/test-results/conversation-complete/qa-permissions-detail-4.png",
+      "sha256": "bbbe5afa65e8c2b26895a7a9734677eb40028ebebbea8bd8669ea0583c5419bc"
+    },
+    {
+      "check": "render-qa-permissions",
+      "file": "qa-permissions.png",
+      "path": "client/test-results/conversation-complete/qa-permissions.png",
+      "sha256": "34aac7a29ddcd4dfa6e7945a6cd554c92158650b23b379d628c37f3003a6b234"
+    },
+    {
+      "check": "render-qa-questions",
+      "file": "qa-questions.png",
+      "path": "client/test-results/conversation-complete/qa-questions.png",
+      "sha256": "b07e99d1f34e25e1aac2c2c115ad507ffb875eca4706f3f4ad9ae8075b1e8212"
+    },
+    {
+      "check": "render-qa-image-running",
+      "file": "qa-image-running-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-image-running-detail-0.png",
+      "sha256": "5829c9523ab9af62faeb6404778ab55ea41bdfaa74c14118f8cac5f5cb4e91d5"
+    },
+    {
+      "check": "render-qa-image-running",
+      "file": "qa-image-running.png",
+      "path": "client/test-results/conversation-complete/qa-image-running.png",
+      "sha256": "7e0f085a710bda4603cf369df22303069cea34eeb2e1f837676a8c8df02a8c54"
+    },
+    {
+      "check": "render-qa-image-completed",
+      "file": "qa-image-completed.png",
+      "path": "client/test-results/conversation-complete/qa-image-completed.png",
+      "sha256": "4ec08e92020f35c03d73b22124f214f248b15b5652eb9f712536e6246aa6991b"
+    },
+    {
+      "check": "render-qa-image-failed",
+      "file": "qa-image-failed-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-image-failed-detail-0.png",
+      "sha256": "e5b518b7cc0fd04ee8f8ea30dcb7ad2b8924efdf80044226d6a3be0c1cba7c66"
+    },
+    {
+      "check": "render-qa-image-failed",
+      "file": "qa-image-failed.png",
+      "path": "client/test-results/conversation-complete/qa-image-failed.png",
+      "sha256": "c115200897c8123542763a6be1a963fc1fd3858ffd582eeb182ee39e236992d4"
+    },
+    {
+      "check": "render-qa-image-cancelled",
+      "file": "qa-image-cancelled-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-image-cancelled-detail-0.png",
+      "sha256": "1f09f3ab8d14986224bbb3ac1516768a8c84126884391ba5d9e5cf286809a4a9"
+    },
+    {
+      "check": "render-qa-image-cancelled",
+      "file": "qa-image-cancelled.png",
+      "path": "client/test-results/conversation-complete/qa-image-cancelled.png",
+      "sha256": "69e0e023059d3db80a027b2f00c07d722cf856fe7861f2355e57d565cccb3622"
+    },
+    {
+      "check": "render-qa-gallery",
+      "file": "qa-gallery.png",
+      "path": "client/test-results/conversation-complete/qa-gallery.png",
+      "sha256": "44197cbf81f4f5d966aca62f04dfa78242f0af1d08ab4cd6c6862c7ea75d843e"
+    },
+    {
+      "check": "render-qa-web",
+      "file": "qa-web-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-web-detail-0.png",
+      "sha256": "16ad2a7ecb5829bdc25d203f19b11943a01772f308a3bb968521d26732e09d17"
+    },
+    {
+      "check": "render-qa-web",
+      "file": "qa-web.png",
+      "path": "client/test-results/conversation-complete/qa-web.png",
+      "sha256": "b32b56ca4057d88469e7b0db5e7fd4d13b4d4228ee926d8221dda805822f751c"
+    },
+    {
+      "check": "render-qa-error",
+      "file": "qa-error.png",
+      "path": "client/test-results/conversation-complete/qa-error.png",
+      "sha256": "c61894411a81ecba331b1aa6d08ea8bb35a0ea3f22d2c0b10eac780f61ffa941"
+    },
+    {
+      "check": "render-qa-cancel",
+      "file": "qa-cancel-detail-0.png",
+      "path": "client/test-results/conversation-complete/qa-cancel-detail-0.png",
+      "sha256": "0e47594af13fb16f68806ed55a202e1b9fa3199a4c674e67f6f57d536f725c17"
+    },
+    {
+      "check": "render-qa-cancel",
+      "file": "qa-cancel.png",
+      "path": "client/test-results/conversation-complete/qa-cancel.png",
+      "sha256": "a613b47aa6123e396ee8583cee8adaa67a9e45bb10ddba3df4586f070181b387"
+    },
+    {
+      "check": "table-overflow-copy-preview-focus",
+      "file": "table-dialog.png",
+      "path": "client/test-results/conversation-complete/table-dialog.png",
+      "sha256": "363b07e53096791d77eff367d636f4630ccd1464e8aba1e702d2c956e7cf2cda"
+    },
+    {
+      "check": "mermaid-render-source-copy",
+      "file": "mermaid.png",
+      "path": "client/test-results/conversation-complete/mermaid.png",
+      "sha256": "f39cee14abef25643a0a9a99edf9b7125b67250ddbb1f534581e212bc9574447"
+    },
+    {
+      "check": "question-validation-all-fields-stale-submit",
+      "file": "question-form-draft.png",
+      "path": "client/test-results/conversation-complete/question-form-draft.png",
+      "sha256": "59dc006efe601490a1676ac2e4ff71044e497636fefdcd4c1ba076d172af9011"
+    },
+    {
+      "check": "patch-terminal-pending",
+      "file": "patch-pending-expanded.png",
+      "path": "client/test-results/conversation-complete/patch-pending-expanded.png",
+      "sha256": "7271982fac6f8098452e71dfe63e8c5c9832e7819a23affe569efe8aefd0cd94"
+    },
+    {
+      "check": "patch-terminal-failed",
+      "file": "patch-failed-expanded.png",
+      "path": "client/test-results/conversation-complete/patch-failed-expanded.png",
+      "sha256": "71b45777e1077e43085c345a0bbd4343ca04acf0d712b39997cee5017f35dcec"
+    },
+    {
+      "check": "patch-terminal-rejected",
+      "file": "patch-rejected-expanded.png",
+      "path": "client/test-results/conversation-complete/patch-rejected-expanded.png",
+      "sha256": "d9ef5316932e88b29dd2b55fd591c6db0050ed94895143c5e91201a0d3f6f073"
+    },
+    {
+      "check": "patch-terminal-cancelled",
+      "file": "patch-cancelled-expanded.png",
+      "path": "client/test-results/conversation-complete/patch-cancelled-expanded.png",
+      "sha256": "e4de3b555a4bec26e6b84dc1c9931e90697d5b33136c434a1a76af82fa871217"
+    },
+    {
+      "check": "file-results-expand-hover-review",
+      "file": "five-file-results.png",
+      "path": "client/test-results/conversation-complete/five-file-results.png",
+      "sha256": "41bc7785927cf9cd5d760064a5e84694fb8e899f53da96eae629b663c8ac0a46"
+    },
+    {
+      "check": "failed-turn-retains-body-and-applied-files",
+      "file": "failed-turn-with-artifact.png",
+      "path": "client/test-results/conversation-complete/failed-turn-with-artifact.png",
+      "sha256": "37781219e84a7ac1a8d55bc2a0bc2102cc0da2b1b896246c4566fd325bd2945b"
+    },
+    {
+      "check": "mcp-six-content-raw-copy",
+      "file": "mcp-raw-dialog.png",
+      "path": "client/test-results/conversation-complete/mcp-raw-dialog.png",
+      "sha256": "8df198a2f55335a8feebe6af914fc673b41e4c05c141f333da28a44998c01ddc"
+    },
+    {
+      "check": "tool-specialized-details-plan",
+      "file": "all-tool-details.png",
+      "path": "client/test-results/conversation-complete/all-tool-details.png",
+      "sha256": "caa31851fd8aa6329258f47c97614c31656693bba1de0862e01e7366c4d78274"
+    },
+    {
+      "check": "media-loaded-play-pause-error-preview",
+      "file": "media-players.png",
+      "path": "client/test-results/conversation-complete/media-players.png",
+      "sha256": "44169351a53f30be6e0856a2c7b2f5505563e37385a2c0a29e63dd8bdb0f5dda"
+    },
+    {
+      "check": "gallery-keyboard-zoom-download-focus",
+      "file": "image-lightbox.png",
+      "path": "client/test-results/conversation-complete/image-lightbox.png",
+      "sha256": "78fd4e8d37e4004032264b4826ec69971e7ff5a836df4047fdbdf3fa5b4a8638"
+    },
+    {
+      "check": "history-pagination-virtualization-navigation",
+      "file": "history-first-page.png",
+      "path": "client/test-results/conversation-complete/history-first-page.png",
+      "sha256": "e8d0c612ba659e2969c8d91bedadc327cce5527ee470ebd70170455b068ae305"
+    },
+    {
+      "check": "fork-selected-history-boundary-workspace-reload",
+      "file": "fork-selected-history.png",
+      "path": "client/test-results/conversation-complete/fork-selected-history.png",
+      "sha256": "d596f70dda9cd689b3a4b3a50b2c7d90ab515b781abaaac8a67d200f4add4d5a"
+    },
+    {
+      "check": "composer-menus-escape-file-attachment",
+      "file": "composer-file-suggestion.png",
+      "path": "client/test-results/conversation-complete/composer-file-suggestion.png",
+      "sha256": "8a43262f3b4cea67fd293af94e65491f283097771c94c332fe3b370a00e04802"
+    },
+    {
+      "check": "layout-light-960",
+      "file": "layout-light-960.png",
+      "path": "client/test-results/conversation-complete/layout-light-960.png",
+      "sha256": "f4999e93da1ee6c380a2423bd372830183cf62aa3bae52711cffcd19ffef37fd"
+    },
+    {
+      "check": "layout-light-960",
+      "file": "layout-diff-light-960.png",
+      "path": "client/test-results/conversation-complete/layout-diff-light-960.png",
+      "sha256": "8be5b28aa11ae953fb8d5ef543921b7915361d0126e0ab75313549e1d859aab1"
+    },
+    {
+      "check": "layout-light-1440",
+      "file": "layout-light-1440.png",
+      "path": "client/test-results/conversation-complete/layout-light-1440.png",
+      "sha256": "2bf67a1c4e2acefdeadbffc18d213c8c59f5d6380120db549ee960b44009b890"
+    },
+    {
+      "check": "layout-light-1440",
+      "file": "layout-diff-light-1440.png",
+      "path": "client/test-results/conversation-complete/layout-diff-light-1440.png",
+      "sha256": "2675fb6a1c743b4e6110f5144a339a38944783bb5af261b77104cf3965c01b96"
+    },
+    {
+      "check": "layout-dark-960",
+      "file": "layout-dark-960.png",
+      "path": "client/test-results/conversation-complete/layout-dark-960.png",
+      "sha256": "9462f009854e6a0aa15613d8cb807c9a85bd2e44dfc38c3b6cf10b2b368af0e7"
+    },
+    {
+      "check": "layout-dark-960",
+      "file": "layout-diff-dark-960.png",
+      "path": "client/test-results/conversation-complete/layout-diff-dark-960.png",
+      "sha256": "1ea42ebde85b62b6050ccf125e392bb6e07f983e11f66f930cf1c62996f90382"
+    },
+    {
+      "check": "layout-dark-1440",
+      "file": "layout-dark-1440.png",
+      "path": "client/test-results/conversation-complete/layout-dark-1440.png",
+      "sha256": "650893ca21c9715ab0e76052919af3b9d0982debfa9a5644ea381a8d5cbbb708"
+    },
+    {
+      "check": "layout-dark-1440",
+      "file": "layout-diff-dark-1440.png",
+      "path": "client/test-results/conversation-complete/layout-diff-dark-1440.png",
+      "sha256": "7d9c2fad39cd98db737a6946e9a6174f1ef346821cca35d7f6cd9eb7b6343c9f"
+    },
+    {
+      "check": "host-timing-hidden-freeze-five-seconds-and-placement",
+      "file": "timing-final-frozen-five-seconds.png",
+      "path": "client/test-results/conversation-complete/timing-final-frozen-five-seconds.png",
+      "sha256": "6bff2fcc9acb0ed9499c89d0b0dd12dabe77d47280df9b23197f86bc831501f5"
+    },
+    {
+      "check": "host-timing-legacy-missing-and-long-trace",
+      "file": "timing-300-trace-items.png",
+      "path": "client/test-results/conversation-complete/timing-300-trace-items.png",
+      "sha256": "001f9abf4fdfce8ce5736a5dda6e32246daceadaaa639d76b716feb907e8328a"
+    },
+    {
+      "check": "host-command-running-to-completed-keeps-collapse-and-focus",
+      "file": "command-lifecycle-closed-after-completion.png",
+      "path": "client/test-results/conversation-complete/command-lifecycle-closed-after-completion.png",
+      "sha256": "a4d7b248e3cb037384b9e86c193347a527075b844bea552a185b7c7011c091e6"
+    },
+    {
+      "check": "host-media-failed-source-to-valid-source-recovers",
+      "file": "media-recovered-after-source-change.png",
+      "path": "client/test-results/conversation-complete/media-recovered-after-source-change.png",
+      "sha256": "17a505b6f1fc20c9f65cd8f08c94449bf3d16d0865e36d60098ef8bdfb728bc6"
+    },
+    {
+      "check": "host-context-usage-levels-keyboard-tooltip",
+      "file": "context-ok.png",
+      "path": "client/test-results/conversation-complete/context-ok.png",
+      "sha256": "b0aa5e2fa4c702dfee5feda2c490cf7473c5653e6b1a08ab4ddf94b364b80961"
+    },
+    {
+      "check": "host-context-usage-levels-keyboard-tooltip",
+      "file": "context-warning.png",
+      "path": "client/test-results/conversation-complete/context-warning.png",
+      "sha256": "e3d59d108f086aaa82634df39b0003b31360f1c66640eeac0e3487c3aa67641a"
+    },
+    {
+      "check": "host-context-usage-levels-keyboard-tooltip",
+      "file": "context-critical.png",
+      "path": "client/test-results/conversation-complete/context-critical.png",
+      "sha256": "1c86d220d2670767bf9c979336bf451a6fc5ac6fc951dba1a84f2bc058269af7"
+    },
+    {
+      "check": "host-task-progress-active-failure-completion",
+      "file": "task-progress-failed-step.png",
+      "path": "client/test-results/conversation-complete/task-progress-failed-step.png",
+      "sha256": "6c573936f9c05bf2178a474e57aa98eb703475d7fcb279ad19dff348fbc007c8"
+    },
+    {
+      "check": "composer-slash-keyboard-and-mention-selection",
+      "file": "composer-after-reference-removal.png",
+      "path": "client/test-results/conversation-complete/composer-after-reference-removal.png",
+      "sha256": "1c86d220d2670767bf9c979336bf451a6fc5ac6fc951dba1a84f2bc058269af7"
+    },
+    {
+      "check": "composer-browser-comment-group-preview-single-remove",
+      "file": "browser-comment-single-remaining.png",
+      "path": "client/test-results/conversation-complete/browser-comment-single-remaining.png",
+      "sha256": "cce99856a9671e567a64b2f80c58a501e6c95616ecdf531d8776bf4da5bbc37b"
+    },
+    {
+      "check": "composer-model-select-persist-escape",
+      "file": "model-selector-persisted.png",
+      "path": "client/test-results/conversation-complete/model-selector-persisted.png",
+      "sha256": "06788a9793fc03756a65cda95ec52b89052c659242bd35667f3ba18b780107b5"
+    },
+    {
+      "check": "composer-full-access-confirm-focus-escape-persist",
+      "file": "permission-mode-restored.png",
+      "path": "client/test-results/conversation-complete/permission-mode-restored.png",
+      "sha256": "757a8387a780762719499f5fd1f31bd604524539775d78c38730c68edc9113d5"
+    },
+    {
+      "check": "generic-tool-cancel-unsupported-visible-retry",
+      "file": "tool-cancel-unsupported.png",
+      "path": "client/test-results/conversation-complete/tool-cancel-unsupported.png",
+      "sha256": "d22a68870dbbcaeb700f566fd5f2dc472f06de805bebb0c66a5dca759bd27486"
+    },
+    {
+      "check": "host-permission-panel-file-preview-three-responses",
+      "file": "permission-file-0.png",
+      "path": "client/test-results/conversation-complete/permission-file-0.png",
+      "sha256": "99cd36984c12c8f4e9c4018364711a27f431828adda693a3d318ac0cbd1f5784"
+    },
+    {
+      "check": "host-permission-panel-file-preview-three-responses",
+      "file": "permission-file-1.png",
+      "path": "client/test-results/conversation-complete/permission-file-1.png",
+      "sha256": "99cd36984c12c8f4e9c4018364711a27f431828adda693a3d318ac0cbd1f5784"
+    },
+    {
+      "check": "host-permission-panel-file-preview-three-responses",
+      "file": "permission-file-2.png",
+      "path": "client/test-results/conversation-complete/permission-file-2.png",
+      "sha256": "99cd36984c12c8f4e9c4018364711a27f431828adda693a3d318ac0cbd1f5784"
+    },
+    {
+      "check": "host-context-actions-real-model-fork-new-and-retry-error",
+      "file": "context-retry-failure.png",
+      "path": "client/test-results/conversation-complete/context-retry-failure.png",
+      "sha256": "f93dd4625005e74b583de55c57c8504f59ace68562aa6194cb9a1190118b069a"
+    },
+    {
+      "check": "composer-skill-url-attachments-and-keyboard-newlines",
+      "file": "composer-attachments-keyboard.png",
+      "path": "client/test-results/conversation-complete/composer-attachments-keyboard.png",
+      "sha256": "16e61193ecff9ff5e9f3df5788d5bed51646d745bdf0ef1b5589170363337af4"
+    },
+    {
+      "check": "host-plan-prompt-dismiss-revise-implement-and-fresh",
+      "file": "plan-submit-provider-failure.png",
+      "path": "client/test-results/conversation-complete/plan-submit-provider-failure.png",
+      "sha256": "f35e8afcbd211aa9772a268501c9a4d93fe10d46b7118c5ea5310e04cab38287"
+    },
+    {
+      "check": "style-components-light",
+      "file": "style-question-light.png",
+      "path": "client/test-results/conversation-complete/style-question-light.png",
+      "sha256": "e249c81f07b593f10d451757fd0fb15c1a582c821df2ba4b669c85b24681e5b0"
+    },
+    {
+      "check": "style-components-light",
+      "file": "style-mermaid-light.png",
+      "path": "client/test-results/conversation-complete/style-mermaid-light.png",
+      "sha256": "090d932832b105796f0f2d249aee324191d6a11d18ead786c90e2d277d8b1ab5"
+    },
+    {
+      "check": "style-components-light",
+      "file": "style-mcp-result-light.png",
+      "path": "client/test-results/conversation-complete/style-mcp-result-light.png",
+      "sha256": "3d4b4bfef6b2a48f6f833216d105cbde657aff856ded17daca8013bf922f342f"
+    },
+    {
+      "check": "style-components-light",
+      "file": "style-media-light.png",
+      "path": "client/test-results/conversation-complete/style-media-light.png",
+      "sha256": "5fc6db08a20211c282c36572ed5153dad9cb5442b6f7ddea9a8c0380a9416d65"
+    },
+    {
+      "check": "style-dialog-and-navigation-light",
+      "file": "style-dialog-light.png",
+      "path": "client/test-results/conversation-complete/style-dialog-light.png",
+      "sha256": "5f06c7fcd763da2c1d891bf97141d10e242982f51d1ab2c82f096d8c0a1dc2e2"
+    },
+    {
+      "check": "style-dialog-and-navigation-light",
+      "file": "style-file-preview-light.png",
+      "path": "client/test-results/conversation-complete/style-file-preview-light.png",
+      "sha256": "96d8133681ec325651ab49aefae722073c3718e0472c3b0eb626e8fabefd7769"
+    },
+    {
+      "check": "style-dialog-and-navigation-light",
+      "file": "style-navigation-light.png",
+      "path": "client/test-results/conversation-complete/style-navigation-light.png",
+      "sha256": "1fa5ea16cf60e6d4aea03c8cd594a867384f8bef7fd3b243007534cae52e2022"
+    },
+    {
+      "check": "style-components-dark",
+      "file": "style-question-dark.png",
+      "path": "client/test-results/conversation-complete/style-question-dark.png",
+      "sha256": "70e70eb8fd2c1eb8a8333fb1593f35728cc1ba185210672ce0bd070bc0e85029"
+    },
+    {
+      "check": "style-components-dark",
+      "file": "style-mermaid-dark.png",
+      "path": "client/test-results/conversation-complete/style-mermaid-dark.png",
+      "sha256": "eb74c50fde64ffb4de06dfb37fdaacf82ba4ae856b430b91629714a19fff2564"
+    },
+    {
+      "check": "style-components-dark",
+      "file": "style-mcp-result-dark.png",
+      "path": "client/test-results/conversation-complete/style-mcp-result-dark.png",
+      "sha256": "81bdd40c26ff608aed496c60877de5820d9817e6d41c5c1d46f7c24f715a3577"
+    },
+    {
+      "check": "style-components-dark",
+      "file": "style-media-dark.png",
+      "path": "client/test-results/conversation-complete/style-media-dark.png",
+      "sha256": "427a8513ed8a6536ab9a4bc125cc9c53171f740eb9af96661ae233743890b03e"
+    },
+    {
+      "check": "style-dialog-and-navigation-dark",
+      "file": "style-dialog-dark.png",
+      "path": "client/test-results/conversation-complete/style-dialog-dark.png",
+      "sha256": "e8596c3800b097e6412a415a5a295e2f93e8d68df2c23fa94b79aabbcd99e4e0"
+    },
+    {
+      "check": "style-dialog-and-navigation-dark",
+      "file": "style-file-preview-dark.png",
+      "path": "client/test-results/conversation-complete/style-file-preview-dark.png",
+      "sha256": "3c752bb5752fbd6561a8081b8fd88753b48ba323040b3c2a0f51a12e2e33294b"
+    },
+    {
+      "check": "style-dialog-and-navigation-dark",
+      "file": "style-navigation-dark.png",
+      "path": "client/test-results/conversation-complete/style-navigation-dark.png",
+      "sha256": "ad7e9dc5fbe8e2f33a0e2443b503c15a99ecf5c5aa662ac692fd1ef140ed0b7b"
+    },
+    {
+      "check": "style-components-warm",
+      "file": "style-question-warm.png",
+      "path": "client/test-results/conversation-complete/style-question-warm.png",
+      "sha256": "c91de9484edc31ba169fe36c2bb4bdaec546e6def3bc4a216a24ff204b80dda4"
+    },
+    {
+      "check": "style-components-warm",
+      "file": "style-mermaid-warm.png",
+      "path": "client/test-results/conversation-complete/style-mermaid-warm.png",
+      "sha256": "a0e515b31d92c9750fb658abb1d246051cc0c2422cf6e203406104d9a9cbe289"
+    },
+    {
+      "check": "style-components-warm",
+      "file": "style-mcp-result-warm.png",
+      "path": "client/test-results/conversation-complete/style-mcp-result-warm.png",
+      "sha256": "4c67a708d6f6cc868abec1d7a436706d98b096407ee1ff3884e68778a00933ac"
+    },
+    {
+      "check": "style-components-warm",
+      "file": "style-media-warm.png",
+      "path": "client/test-results/conversation-complete/style-media-warm.png",
+      "sha256": "9670264cc4f1a02a3503a530bc749eb1510e7c5ba61b854cce950e78abf34688"
+    },
+    {
+      "check": "style-dialog-and-navigation-warm",
+      "file": "style-dialog-warm.png",
+      "path": "client/test-results/conversation-complete/style-dialog-warm.png",
+      "sha256": "2a70adcce832ddd5432a68c8a72ad200fb14794232549767c00ac58d467d3d64"
+    },
+    {
+      "check": "style-dialog-and-navigation-warm",
+      "file": "style-file-preview-warm.png",
+      "path": "client/test-results/conversation-complete/style-file-preview-warm.png",
+      "sha256": "ac7b8bdadd20d92eb23d1f5fc29a94fbb1a546d2bc9e550d450f5446bc4f8dad"
+    },
+    {
+      "check": "style-dialog-and-navigation-warm",
+      "file": "style-navigation-warm.png",
+      "path": "client/test-results/conversation-complete/style-navigation-warm.png",
+      "sha256": "b20cfee9a9ed4fc7dc15d63fcebfcf1e588e6617c4362195dbc17dc85274ea2b"
+    },
+    {
+      "check": "style-custom-accent-updates-current-diagram-and-focus",
+      "file": "style-custom-accent-mermaid.png",
+      "path": "client/test-results/conversation-complete/style-custom-accent-mermaid.png",
+      "sha256": "2dbea3e4e41b51693fa3a222d0261475d72b1a565645591228f25d5912592cf5"
+    },
+    {
+      "check": "attachment-layout-light",
+      "file": "attachment-original-light-1440.png",
+      "path": "client/test-results/conversation-complete/attachment-original-light-1440.png",
+      "sha256": "df32c086b07ddbcaa7db3d961fe2be0ba03d2eba01064bed7b90a42217fe0e71"
+    },
+    {
+      "check": "attachment-layout-light",
+      "file": "attachment-overflow-light-1440.png",
+      "path": "client/test-results/conversation-complete/attachment-overflow-light-1440.png",
+      "sha256": "3e34a49f64c154872951ff449fbc22d99613c58ac8eee609a47131cc55a93c3a"
+    },
+    {
+      "check": "attachment-layout-light",
+      "file": "attachment-original-light-960.png",
+      "path": "client/test-results/conversation-complete/attachment-original-light-960.png",
+      "sha256": "1118a6a136d6abbebc7db778feac626b0061df780a70f8558c2ddb5b5ff1dd40"
+    },
+    {
+      "check": "attachment-layout-light",
+      "file": "attachment-overflow-light-960.png",
+      "path": "client/test-results/conversation-complete/attachment-overflow-light-960.png",
+      "sha256": "d0f9583b10915912b5dcdc1e3b85b590f34ed7a7901507a5a4f9cd269599c409"
+    },
+    {
+      "check": "attachment-layout-dark",
+      "file": "attachment-original-dark-1440.png",
+      "path": "client/test-results/conversation-complete/attachment-original-dark-1440.png",
+      "sha256": "5d0cfde6de5558fa5cef358fdba57904b60e1efa017082f60578bcd495d6f7d8"
+    },
+    {
+      "check": "attachment-layout-dark",
+      "file": "attachment-overflow-dark-1440.png",
+      "path": "client/test-results/conversation-complete/attachment-overflow-dark-1440.png",
+      "sha256": "a0252cce0969865889564f34fe8ce76bca2cd633f9731468570cad26a9f5047d"
+    },
+    {
+      "check": "attachment-layout-dark",
+      "file": "attachment-original-dark-960.png",
+      "path": "client/test-results/conversation-complete/attachment-original-dark-960.png",
+      "sha256": "117509fba31014712b65cd1e7767658e65609258e2a2fcdc16e14ceacaa8d10b"
+    },
+    {
+      "check": "attachment-layout-dark",
+      "file": "attachment-overflow-dark-960.png",
+      "path": "client/test-results/conversation-complete/attachment-overflow-dark-960.png",
+      "sha256": "6521d80ad34c513412598dcb32f083e80e62ac1e52012a1a72db19ebcef06738"
+    },
+    {
+      "check": "attachment-layout-warm",
+      "file": "attachment-original-warm-1440.png",
+      "path": "client/test-results/conversation-complete/attachment-original-warm-1440.png",
+      "sha256": "bad5462d3cebc810281c48895e286ad7ede7b5045d1006035581c1e6ef0f173e"
+    },
+    {
+      "check": "attachment-layout-warm",
+      "file": "attachment-overflow-warm-1440.png",
+      "path": "client/test-results/conversation-complete/attachment-overflow-warm-1440.png",
+      "sha256": "a0d67ca18ae8eb0e69b20a8dceb56ff0a65ba7632e4bc6b907ab2427d328d4f9"
+    },
+    {
+      "check": "attachment-layout-warm",
+      "file": "attachment-original-warm-960.png",
+      "path": "client/test-results/conversation-complete/attachment-original-warm-960.png",
+      "sha256": "69fd36c1a38079074ab1508f990e9324161994edbe01284e3ede8b31ff21fdec"
+    },
+    {
+      "check": "attachment-layout-warm",
+      "file": "attachment-overflow-warm-960.png",
+      "path": "client/test-results/conversation-complete/attachment-overflow-warm-960.png",
+      "sha256": "22f99b66f7e795e330e0ceb213e925461e6aee4f6bd3038778fdf7e2d726dc6b"
+    },
+    {
+      "check": "attachment-layout-keyboard-preview-and-scroll",
+      "file": "attachment-file-line-preview.png",
+      "path": "client/test-results/conversation-complete/attachment-file-line-preview.png",
+      "sha256": "bb51f85593e868d36d938b22c2141bb71aba03bed44772df87ea8e10a1e98edb"
+    },
+    {
+      "check": "attachment-layout-keyboard-preview-and-scroll",
+      "file": "attachment-keyboard-focus.png",
+      "path": "client/test-results/conversation-complete/attachment-keyboard-focus.png",
+      "sha256": "27cd49229cd0231e323a0110970d3207d565b50011496aa272d6b7390bc620ec"
+    }
+  ],
+  "build": {
+    "passed": [
+      "main",
+      "preload",
+      "renderer"
+    ],
+    "output": "/var/folders/12/vjlqhn9x2739vrkbs_z2s0m40000gn/T/marloues-conversation-build-pppPcE",
+    "emptyOutDir": false
+  },
+  "full": {
+    "startedAt": "2026-09-05T19:16:23.824Z",
+    "recordedAt": "2026-09-05T19:17:27.062Z",
+    "home": "/var/folders/12/vjlqhn9x2739vrkbs_z2s0m40000gn/T/marloues-full-conversation-stJpNr",
+    "build": "/var/folders/12/vjlqhn9x2739vrkbs_z2s0m40000gn/T/marloues-conversation-build-pppPcE",
+    "scenes": 41,
+    "results": [
+      {
+        "id": "isolated-store-boot",
+        "status": "passed",
+        "ms": 85,
+        "evidence": []
+      },
+      {
+        "id": "render-qa-markdown",
+        "status": "passed",
+        "ms": 393,
+        "evidence": [
+          "qa-markdown.png"
+        ]
+      },
+      {
+        "id": "render-qa-media",
+        "status": "passed",
+        "ms": 325,
+        "evidence": [
+          "qa-media.png"
+        ]
+      },
+      {
+        "id": "render-qa-attachments",
+        "status": "passed",
+        "ms": 319,
+        "evidence": [
+          "qa-attachments.png"
+        ]
+      },
+      {
+        "id": "render-qa-attachment-layout",
+        "status": "passed",
+        "ms": 323,
+        "evidence": [
+          "qa-attachment-layout.png"
+        ]
+      },
+      {
+        "id": "render-qa-long-user",
+        "status": "passed",
+        "ms": 337,
+        "evidence": [
+          "qa-long-user.png"
+        ]
+      },
+      {
+        "id": "render-qa-command-running",
+        "status": "passed",
+        "ms": 625,
+        "evidence": [
+          "qa-command-running-detail-0.png",
+          "qa-command-running.png"
+        ]
+      },
+      {
+        "id": "render-qa-command-completed",
+        "status": "passed",
+        "ms": 600,
+        "evidence": [
+          "qa-command-completed-detail-0.png",
+          "qa-command-completed.png"
+        ]
+      },
+      {
+        "id": "render-qa-command-failed",
+        "status": "passed",
+        "ms": 600,
+        "evidence": [
+          "qa-command-failed-detail-0.png",
+          "qa-command-failed.png"
+        ]
+      },
+      {
+        "id": "render-qa-command-cancelled",
+        "status": "passed",
+        "ms": 590,
+        "evidence": [
+          "qa-command-cancelled-detail-0.png",
+          "qa-command-cancelled.png"
+        ]
+      },
+      {
+        "id": "render-qa-patch-completed",
+        "status": "passed",
+        "ms": 310,
+        "evidence": [
+          "qa-patch-completed.png"
+        ]
+      },
+      {
+        "id": "render-qa-patch-pending",
+        "status": "passed",
+        "ms": 598,
+        "evidence": [
+          "qa-patch-pending-detail-0.png",
+          "qa-patch-pending.png"
+        ]
+      },
+      {
+        "id": "render-qa-patch-failed",
+        "status": "passed",
+        "ms": 610,
+        "evidence": [
+          "qa-patch-failed-detail-0.png",
+          "qa-patch-failed.png"
+        ]
+      },
+      {
+        "id": "render-qa-patch-rejected",
+        "status": "passed",
+        "ms": 632,
+        "evidence": [
+          "qa-patch-rejected-detail-0.png",
+          "qa-patch-rejected.png"
+        ]
+      },
+      {
+        "id": "render-qa-patch-cancelled",
+        "status": "passed",
+        "ms": 616,
+        "evidence": [
+          "qa-patch-cancelled-detail-0.png",
+          "qa-patch-cancelled.png"
+        ]
+      },
+      {
+        "id": "render-qa-many-files",
+        "status": "passed",
+        "ms": 315,
+        "evidence": [
+          "qa-many-files.png"
+        ]
+      },
+      {
+        "id": "render-qa-mcp",
+        "status": "passed",
+        "ms": 630,
+        "evidence": [
+          "qa-mcp-detail-0.png",
+          "qa-mcp.png"
+        ]
+      },
+      {
+        "id": "render-qa-dynamic-running",
+        "status": "passed",
+        "ms": 596,
+        "evidence": [
+          "qa-dynamic-running-detail-0.png",
+          "qa-dynamic-running.png"
+        ]
+      },
+      {
+        "id": "render-qa-dynamic-failed",
+        "status": "passed",
+        "ms": 610,
+        "evidence": [
+          "qa-dynamic-failed-detail-0.png",
+          "qa-dynamic-failed.png"
+        ]
+      },
+      {
+        "id": "render-qa-dynamic-cancelled",
+        "status": "passed",
+        "ms": 615,
+        "evidence": [
+          "qa-dynamic-cancelled-detail-0.png",
+          "qa-dynamic-cancelled.png"
+        ]
+      },
+      {
+        "id": "render-qa-dynamic-completed",
+        "status": "passed",
+        "ms": 609,
+        "evidence": [
+          "qa-dynamic-completed-detail-0.png",
+          "qa-dynamic-completed.png"
+        ]
+      },
+      {
+        "id": "render-qa-question-kinds",
+        "status": "passed",
+        "ms": 318,
+        "evidence": [
+          "qa-question-kinds.png"
+        ]
+      },
+      {
+        "id": "render-qa-mcp-failed",
+        "status": "passed",
+        "ms": 606,
+        "evidence": [
+          "qa-mcp-failed-detail-0.png",
+          "qa-mcp-failed.png"
+        ]
+      },
+      {
+        "id": "render-qa-tool-details",
+        "status": "passed",
+        "ms": 1041,
+        "evidence": [
+          "qa-tool-details-detail-0.png",
+          "qa-tool-details-detail-1.png",
+          "qa-tool-details-detail-2.png",
+          "qa-tool-details-detail-3.png",
+          "qa-tool-details-detail-4.png",
+          "qa-tool-details-detail-5.png",
+          "qa-tool-details.png"
+        ]
+      },
+      {
+        "id": "render-qa-reasoning",
+        "status": "passed",
+        "ms": 606,
+        "evidence": [
+          "qa-reasoning-detail-0.png",
+          "qa-reasoning.png"
+        ]
+      },
+      {
+        "id": "render-qa-markers",
+        "status": "passed",
+        "ms": 1377,
+        "evidence": [
+          "qa-markers-detail-0.png",
+          "qa-markers-detail-1.png",
+          "qa-markers-detail-2.png",
+          "qa-markers-detail-3.png",
+          "qa-markers-detail-4.png",
+          "qa-markers-detail-5.png",
+          "qa-markers-detail-6.png",
+          "qa-markers-detail-7.png",
+          "qa-markers-detail-8.png",
+          "qa-markers-detail-9.png",
+          "qa-markers.png"
+        ]
+      },
+      {
+        "id": "render-qa-collab-running",
+        "status": "passed",
+        "ms": 598,
+        "evidence": [
+          "qa-collab-running-detail-0.png",
+          "qa-collab-running.png"
+        ]
+      },
+      {
+        "id": "render-qa-collab-completed",
+        "status": "passed",
+        "ms": 642,
+        "evidence": [
+          "qa-collab-completed-detail-0.png",
+          "qa-collab-completed.png"
+        ]
+      },
+      {
+        "id": "render-qa-collab-failed",
+        "status": "passed",
+        "ms": 593,
+        "evidence": [
+          "qa-collab-failed-detail-0.png",
+          "qa-collab-failed.png"
+        ]
+      },
+      {
+        "id": "render-qa-collab-cancelled",
+        "status": "passed",
+        "ms": 625,
+        "evidence": [
+          "qa-collab-cancelled-detail-0.png",
+          "qa-collab-cancelled.png"
+        ]
+      },
+      {
+        "id": "render-qa-child",
+        "status": "passed",
+        "ms": 311,
+        "evidence": [
+          "qa-child.png"
+        ]
+      },
+      {
+        "id": "render-qa-permissions",
+        "status": "passed",
+        "ms": 881,
+        "evidence": [
+          "qa-permissions-detail-0.png",
+          "qa-permissions-detail-1.png",
+          "qa-permissions-detail-2.png",
+          "qa-permissions-detail-3.png",
+          "qa-permissions-detail-4.png",
+          "qa-permissions.png"
+        ]
+      },
+      {
+        "id": "render-qa-questions",
+        "status": "passed",
+        "ms": 318,
+        "evidence": [
+          "qa-questions.png"
+        ]
+      },
+      {
+        "id": "render-qa-image-running",
+        "status": "passed",
+        "ms": 595,
+        "evidence": [
+          "qa-image-running-detail-0.png",
+          "qa-image-running.png"
+        ]
+      },
+      {
+        "id": "render-qa-image-completed",
+        "status": "passed",
+        "ms": 318,
+        "evidence": [
+          "qa-image-completed.png"
+        ]
+      },
+      {
+        "id": "render-qa-image-failed",
+        "status": "passed",
+        "ms": 601,
+        "evidence": [
+          "qa-image-failed-detail-0.png",
+          "qa-image-failed.png"
+        ]
+      },
+      {
+        "id": "render-qa-image-cancelled",
+        "status": "passed",
+        "ms": 590,
+        "evidence": [
+          "qa-image-cancelled-detail-0.png",
+          "qa-image-cancelled.png"
+        ]
+      },
+      {
+        "id": "render-qa-gallery",
+        "status": "passed",
+        "ms": 526,
+        "evidence": [
+          "qa-gallery.png"
+        ]
+      },
+      {
+        "id": "render-qa-web",
+        "status": "passed",
+        "ms": 588,
+        "evidence": [
+          "qa-web-detail-0.png",
+          "qa-web.png"
+        ]
+      },
+      {
+        "id": "render-qa-error",
+        "status": "passed",
+        "ms": 315,
+        "evidence": [
+          "qa-error.png"
+        ]
+      },
+      {
+        "id": "render-qa-cancel",
+        "status": "passed",
+        "ms": 577,
+        "evidence": [
+          "qa-cancel-detail-0.png",
+          "qa-cancel.png"
+        ]
+      },
+      {
+        "id": "markdown-semantic-nodes",
+        "status": "passed",
+        "ms": 245,
+        "evidence": []
+      },
+      {
+        "id": "table-overflow-copy-preview-focus",
+        "status": "passed",
+        "ms": 379,
+        "evidence": [
+          "table-dialog.png"
+        ]
+      },
+      {
+        "id": "code-writing-inline-copy-wrap",
+        "status": "passed",
+        "ms": 498,
+        "evidence": []
+      },
+      {
+        "id": "file-preview-success-error-line-copy",
+        "status": "passed",
+        "ms": 551,
+        "evidence": []
+      },
+      {
+        "id": "mermaid-render-source-copy",
+        "status": "passed",
+        "ms": 314,
+        "evidence": [
+          "mermaid.png"
+        ]
+      },
+      {
+        "id": "question-validation-all-fields-stale-submit",
+        "status": "passed",
+        "ms": 611,
+        "evidence": [
+          "question-form-draft.png"
+        ]
+      },
+      {
+        "id": "command-state-running",
+        "status": "passed",
+        "ms": 623,
+        "evidence": []
+      },
+      {
+        "id": "command-state-completed",
+        "status": "passed",
+        "ms": 618,
+        "evidence": []
+      },
+      {
+        "id": "command-state-failed",
+        "status": "passed",
+        "ms": 614,
+        "evidence": []
+      },
+      {
+        "id": "command-state-cancelled",
+        "status": "passed",
+        "ms": 738,
+        "evidence": []
+      },
+      {
+        "id": "patch-terminal-pending",
+        "status": "passed",
+        "ms": 503,
+        "evidence": [
+          "patch-pending-expanded.png"
+        ]
+      },
+      {
+        "id": "patch-terminal-failed",
+        "status": "passed",
+        "ms": 505,
+        "evidence": [
+          "patch-failed-expanded.png"
+        ]
+      },
+      {
+        "id": "patch-terminal-rejected",
+        "status": "passed",
+        "ms": 487,
+        "evidence": [
+          "patch-rejected-expanded.png"
+        ]
+      },
+      {
+        "id": "patch-terminal-cancelled",
+        "status": "passed",
+        "ms": 491,
+        "evidence": [
+          "patch-cancelled-expanded.png"
+        ]
+      },
+      {
+        "id": "file-results-expand-hover-review",
+        "status": "passed",
+        "ms": 639,
+        "evidence": [
+          "five-file-results.png"
+        ]
+      },
+      {
+        "id": "failed-turn-retains-body-and-applied-files",
+        "status": "passed",
+        "ms": 766,
+        "evidence": [
+          "failed-turn-with-artifact.png"
+        ]
+      },
+      {
+        "id": "mcp-six-content-raw-copy",
+        "status": "passed",
+        "ms": 735,
+        "evidence": [
+          "mcp-raw-dialog.png"
+        ]
+      },
+      {
+        "id": "tool-specialized-details-plan",
+        "status": "passed",
+        "ms": 199,
+        "evidence": [
+          "all-tool-details.png"
+        ]
+      },
+      {
+        "id": "marker-raw-disclosure-survives-remount",
+        "status": "passed",
+        "ms": 265,
+        "evidence": []
+      },
+      {
+        "id": "collab-status-source-running",
+        "status": "passed",
+        "ms": 462,
+        "evidence": []
+      },
+      {
+        "id": "collab-status-source-completed",
+        "status": "passed",
+        "ms": 483,
+        "evidence": []
+      },
+      {
+        "id": "collab-status-source-failed",
+        "status": "passed",
+        "ms": 468,
+        "evidence": []
+      },
+      {
+        "id": "collab-status-source-cancelled",
+        "status": "passed",
+        "ms": 473,
+        "evidence": []
+      },
+      {
+        "id": "permission-history-all-statuses",
+        "status": "passed",
+        "ms": 144,
+        "evidence": []
+      },
+      {
+        "id": "settled-question-readonly-unsupported-url",
+        "status": "passed",
+        "ms": 151,
+        "evidence": []
+      },
+      {
+        "id": "media-loaded-play-pause-error-preview",
+        "status": "passed",
+        "ms": 983,
+        "evidence": [
+          "media-players.png"
+        ]
+      },
+      {
+        "id": "gallery-keyboard-zoom-download-focus",
+        "status": "passed",
+        "ms": 764,
+        "evidence": [
+          "image-lightbox.png"
+        ]
+      },
+      {
+        "id": "image-status-no-empty-success",
+        "status": "passed",
+        "ms": 508,
+        "evidence": []
+      },
+      {
+        "id": "user-attachments-preview-file-copy",
+        "status": "passed",
+        "ms": 498,
+        "evidence": []
+      },
+      {
+        "id": "user-expand-copy-reuse-doubleclick",
+        "status": "passed",
+        "ms": 716,
+        "evidence": []
+      },
+      {
+        "id": "selection-to-composer-and-session-draft",
+        "status": "passed",
+        "ms": 661,
+        "evidence": []
+      },
+      {
+        "id": "footer-real-copy-and-fork",
+        "status": "passed",
+        "ms": 369,
+        "evidence": []
+      },
+      {
+        "id": "history-pagination-virtualization-navigation",
+        "status": "passed",
+        "ms": 5790,
+        "evidence": [
+          "history-first-page.png"
+        ]
+      },
+      {
+        "id": "fork-selected-history-boundary-workspace-reload",
+        "status": "passed",
+        "ms": 563,
+        "evidence": [
+          "fork-selected-history.png"
+        ]
+      },
+      {
+        "id": "composer-menus-escape-file-attachment",
+        "status": "passed",
+        "ms": 380,
+        "evidence": [
+          "composer-file-suggestion.png"
+        ]
+      },
+      {
+        "id": "layout-light-960",
+        "status": "passed",
+        "ms": 597,
+        "evidence": [
+          "layout-light-960.png",
+          "layout-diff-light-960.png"
+        ]
+      },
+      {
+        "id": "layout-light-1440",
+        "status": "passed",
+        "ms": 302,
+        "evidence": [
+          "layout-light-1440.png",
+          "layout-diff-light-1440.png"
+        ]
+      },
+      {
+        "id": "layout-dark-960",
+        "status": "passed",
+        "ms": 320,
+        "evidence": [
+          "layout-dark-960.png",
+          "layout-diff-dark-960.png"
+        ]
+      },
+      {
+        "id": "layout-dark-1440",
+        "status": "passed",
+        "ms": 311,
+        "evidence": [
+          "layout-dark-1440.png",
+          "layout-diff-dark-1440.png"
+        ]
+      },
+      {
+        "id": "host-timing-hidden-freeze-five-seconds-and-placement",
+        "status": "passed",
+        "ms": 182,
+        "evidence": [
+          "timing-final-frozen-five-seconds.png"
+        ]
+      },
+      {
+        "id": "host-timing-legacy-missing-and-long-trace",
+        "status": "passed",
+        "ms": 233,
+        "evidence": [
+          "timing-300-trace-items.png"
+        ]
+      },
+      {
+        "id": "host-command-running-to-completed-keeps-collapse-and-focus",
+        "status": "passed",
+        "ms": 275,
+        "evidence": [
+          "command-lifecycle-closed-after-completion.png"
+        ]
+      },
+      {
+        "id": "host-media-failed-source-to-valid-source-recovers",
+        "status": "passed",
+        "ms": 150,
+        "evidence": [
+          "media-recovered-after-source-change.png"
+        ]
+      },
+      {
+        "id": "host-context-usage-levels-keyboard-tooltip",
+        "status": "passed",
+        "ms": 205,
+        "evidence": [
+          "context-ok.png",
+          "context-warning.png",
+          "context-critical.png"
+        ]
+      },
+      {
+        "id": "host-task-progress-active-failure-completion",
+        "status": "passed",
+        "ms": 101,
+        "evidence": [
+          "task-progress-failed-step.png"
+        ]
+      },
+      {
+        "id": "host-context-action-dismiss-source-isolation",
+        "status": "passed",
+        "ms": 209,
+        "evidence": []
+      },
+      {
+        "id": "composer-slash-keyboard-and-mention-selection",
+        "status": "passed",
+        "ms": 131,
+        "evidence": [
+          "composer-after-reference-removal.png"
+        ]
+      },
+      {
+        "id": "composer-browser-comment-group-preview-single-remove",
+        "status": "passed",
+        "ms": 176,
+        "evidence": [
+          "browser-comment-single-remaining.png"
+        ]
+      },
+      {
+        "id": "composer-model-select-persist-escape",
+        "status": "passed",
+        "ms": 339,
+        "evidence": [
+          "model-selector-persisted.png"
+        ]
+      },
+      {
+        "id": "composer-full-access-confirm-focus-escape-persist",
+        "status": "passed",
+        "ms": 568,
+        "evidence": [
+          "permission-mode-restored.png"
+        ]
+      },
+      {
+        "id": "generic-tool-cancel-unsupported-visible-retry",
+        "status": "passed",
+        "ms": 310,
+        "evidence": [
+          "tool-cancel-unsupported.png"
+        ]
+      },
+      {
+        "id": "host-permission-panel-file-preview-three-responses",
+        "status": "passed",
+        "ms": 454,
+        "evidence": [
+          "permission-file-0.png",
+          "permission-file-1.png",
+          "permission-file-2.png"
+        ]
+      },
+      {
+        "id": "host-context-actions-real-model-fork-new-and-retry-error",
+        "status": "passed",
+        "ms": 712,
+        "evidence": [
+          "context-retry-failure.png"
+        ]
+      },
+      {
+        "id": "composer-skill-url-attachments-and-keyboard-newlines",
+        "status": "passed",
+        "ms": 226,
+        "evidence": [
+          "composer-attachments-keyboard.png"
+        ]
+      },
+      {
+        "id": "host-plan-prompt-dismiss-revise-implement-and-fresh",
+        "status": "passed",
+        "ms": 703,
+        "evidence": [
+          "plan-submit-provider-failure.png"
+        ]
+      },
+      {
+        "id": "style-components-light",
+        "status": "passed",
+        "ms": 1350,
+        "evidence": [
+          "style-question-light.png",
+          "style-mermaid-light.png",
+          "style-mcp-result-light.png",
+          "style-media-light.png"
+        ]
+      },
+      {
+        "id": "style-dialog-and-navigation-light",
+        "status": "passed",
+        "ms": 1577,
+        "evidence": [
+          "style-dialog-light.png",
+          "style-file-preview-light.png",
+          "style-navigation-light.png"
+        ]
+      },
+      {
+        "id": "style-components-dark",
+        "status": "passed",
+        "ms": 1193,
+        "evidence": [
+          "style-question-dark.png",
+          "style-mermaid-dark.png",
+          "style-mcp-result-dark.png",
+          "style-media-dark.png"
+        ]
+      },
+      {
+        "id": "style-dialog-and-navigation-dark",
+        "status": "passed",
+        "ms": 630,
+        "evidence": [
+          "style-dialog-dark.png",
+          "style-file-preview-dark.png",
+          "style-navigation-dark.png"
+        ]
+      },
+      {
+        "id": "style-components-warm",
+        "status": "passed",
+        "ms": 1132,
+        "evidence": [
+          "style-question-warm.png",
+          "style-mermaid-warm.png",
+          "style-mcp-result-warm.png",
+          "style-media-warm.png"
+        ]
+      },
+      {
+        "id": "style-dialog-and-navigation-warm",
+        "status": "passed",
+        "ms": 592,
+        "evidence": [
+          "style-dialog-warm.png",
+          "style-file-preview-warm.png",
+          "style-navigation-warm.png"
+        ]
+      },
+      {
+        "id": "style-custom-accent-updates-current-diagram-and-focus",
+        "status": "passed",
+        "ms": 337,
+        "evidence": [
+          "style-custom-accent-mermaid.png"
+        ]
+      },
+      {
+        "id": "attachment-layout-light",
+        "status": "passed",
+        "ms": 823,
+        "evidence": [
+          "attachment-original-light-1440.png",
+          "attachment-overflow-light-1440.png",
+          "attachment-original-light-960.png",
+          "attachment-overflow-light-960.png"
+        ]
+      },
+      {
+        "id": "attachment-layout-dark",
+        "status": "passed",
+        "ms": 796,
+        "evidence": [
+          "attachment-original-dark-1440.png",
+          "attachment-overflow-dark-1440.png",
+          "attachment-original-dark-960.png",
+          "attachment-overflow-dark-960.png"
+        ]
+      },
+      {
+        "id": "attachment-layout-warm",
+        "status": "passed",
+        "ms": 814,
+        "evidence": [
+          "attachment-original-warm-1440.png",
+          "attachment-overflow-warm-1440.png",
+          "attachment-original-warm-960.png",
+          "attachment-overflow-warm-960.png"
+        ]
+      },
+      {
+        "id": "attachment-layout-keyboard-preview-and-scroll",
+        "status": "passed",
+        "ms": 556,
+        "evidence": [
+          "attachment-file-line-preview.png",
+          "attachment-keyboard-focus.png"
+        ]
+      },
+      {
+        "id": "no-uncaught-renderer-errors",
+        "status": "passed",
+        "ms": 0,
+        "evidence": []
+      }
+    ],
+    "errors": []
+  },
+  "browser": {
+    "passed": [
+      "formal turn → rich content, formula and Mermaid",
+      "table preview: focus trap, Escape, focus restoration",
+      "table copy contains Markdown and clean HTML",
+      "relative file link uses conversation cwd and highlights requested line",
+      "image lightbox opens and restores focus",
+      "streaming code keeps its DOM and wrap preference when the fence closes",
+      "copy and fork ignore repeated clicks; fork failures are visible and retryable",
+      "invalid Mermaid retains code and successful diagrams can be restored",
+      "MCP blocks render from the formal tool details",
+      "result gallery: navigation resets zoom and closing restores the original trigger",
+      "scroll: following output, reader detachment, per-session restore",
+      "scroll: stale history completion cannot move a newly selected session",
+      "scroll: editing keys and a touch tap do not detach the bottom lock",
+      "scroll: collapse preserves the control position while reading history",
+      "Markdown error boundary isolates failure, retries and resets on content key"
+    ],
+    "errors": [],
+    "expectedErrors": [
+      "QA_MARKDOWN_BOUNDARY_FAILURE",
+      "QA_MARKDOWN_BOUNDARY_FAILURE",
+      "The above error occurred in the <FixtureFault> component:\n\n    at FixtureFault (http://127.0.0.1:5191/src/components/workflow-chat/fixtures/ConversationDetailsFixturePage.tsx?t=1788635768289:433:27)\n    at MarkdownErrorBoundary (http://127.0.0.1:5191/src/components/workflow-chat/content/MarkdownErrorBoundary.tsx:7:8)\n    at main\n    at RecoveryFixture (http://127.0.0.1:5191/src/components/workflow-chat/fixtures/ConversationDetailsFixturePage.tsx?t=1788635768289:443:33)\n    at div\n    at ConversationDetailsFixturePage (http://127.0.0.1:5191/src/components/workflow-chat/fixtures/ConversationDetailsFixturePage.tsx?t=1788635768289:41:33)\n    at App\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, MarkdownErrorBoundary.",
+      "QA_MARKDOWN_BOUNDARY_FAILURE",
+      "QA_MARKDOWN_BOUNDARY_FAILURE",
+      "The above error occurred in the <FixtureFault> component:\n\n    at FixtureFault (http://127.0.0.1:5191/src/components/workflow-chat/fixtures/ConversationDetailsFixturePage.tsx?t=1788635768289:433:27)\n    at MarkdownErrorBoundary (http://127.0.0.1:5191/src/components/workflow-chat/content/MarkdownErrorBoundary.tsx:7:8)\n    at main\n    at RecoveryFixture (http://127.0.0.1:5191/src/components/workflow-chat/fixtures/ConversationDetailsFixturePage.tsx?t=1788635768289:443:33)\n    at div\n    at ConversationDetailsFixturePage (http://127.0.0.1:5191/src/components/workflow-chat/fixtures/ConversationDetailsFixturePage.tsx?t=1788635768289:41:33)\n    at App\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, MarkdownErrorBoundary."
+    ],
+    "success": true,
+    "evidence": "client/test-results/conversation-details/results.json"
+  },
+  "desktop": {
+    "passed": [
+      "production Electron main/preload/renderer boot",
+      "SDK question → host broker → real IPC answer → completed record",
+      "canonical readThread preserves tools, question and timing",
+      "table, formula fonts, writing block, real file IPC preview and Escape",
+      "real MCP resource read failure → visible source error → retry original resource → ready iframe",
+      "MCP App receives light/dark/warm semantic tokens and live accent updates without resetting its draft",
+      "MCP App tool permission: deny and Escape return rejection to original iframe",
+      "MCP resource discovery → sandbox iframe handshake → permission-gated real tool call",
+      "collapsing and remounting MCP details retains live iframe form state",
+      "real MCP elicitation form → IPC → accept result and durable history",
+      "real MCP elicitation form → IPC → decline result and durable history",
+      "real MCP elicitation form → IPC → cancel result and durable history",
+      "real running turn: queue two steers → drag reorder → menu Escape → edit → cancel one",
+      "stop pending question → cancelled record; message navigation hover does not scroll",
+      "real queue: interrupt keeps pending steer → paused banner → resume creates completed turn",
+      "real queued steer apply-now → interrupts pending SDK question → delivers new user input → completed answer",
+      "renderer reload recovers persisted canonical conversation",
+      "full process restart restores persisted timing, tools and answered question",
+      "missing credentials render the correct error and leave no running turn"
+    ],
+    "success": true,
+    "errors": [],
+    "build": "/var/folders/12/vjlqhn9x2739vrkbs_z2s0m40000gn/T/marloues-conversation-build-pppPcE",
+    "evidence": "client/test-results/conversation-app/results.json"
+  },
+  "live": {
+    "passed": [
+      "production Electron main/preload/renderer boot",
+      "live-model test uses the normal OS credential backend",
+      "configured live model → real Read tool → actual file content → final conversation UI"
+    ],
+    "success": true,
+    "liveModel": "deepseek-v4-flash",
+    "build": "/var/folders/12/vjlqhn9x2739vrkbs_z2s0m40000gn/T/marloues-conversation-build-pppPcE",
+    "evidence": "client/test-results/conversation-app-live/results.json"
+  },
+  "groups": [
+    {
+      "id": "route",
+      "title": "轮次与渲染入口",
+      "files": [
+        "TurnView",
+        "TurnShell",
+        "AssistantTurn",
+        "AssistantTurnHeader",
+        "TurnFlowSection",
+        "TurnPresentationBlocks",
+        "ThinkingPlaceholder",
+        "ActivityRenderer",
+        "ActivityGroup",
+        "ActivityRow",
+        "AgentFlowSection",
+        "TurnItemRenderer",
+        "TurnProcessDisclosure",
+        "conversation-icons"
+      ],
+      "patterns": [
+        "render-",
+        "host-timing",
+        "D:canonical readThread"
+      ],
+      "behavior": "同一规范化轮次展示正文、过程、结果、计时与状态。无起点隐藏；首个 final 冻结 5 秒，正文增长仍为 5 秒；折叠切换位置不重复；旧历史与 300 项过程。嵌套工具逐层展开并记录。",
+      "boundary": "场景回放验证展示规则；不能证明任意模型都会产生这些事件。",
+      "checks": [
+        {
+          "id": "render-qa-markdown",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-media",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-attachments",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-attachment-layout",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-long-user",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-command-running",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-command-completed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-command-failed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-command-cancelled",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-patch-completed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-patch-pending",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-patch-failed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-patch-rejected",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-patch-cancelled",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-many-files",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-mcp",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-dynamic-running",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-dynamic-failed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-dynamic-cancelled",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-dynamic-completed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-question-kinds",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-mcp-failed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-tool-details",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-reasoning",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-markers",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-collab-running",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-collab-completed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-collab-failed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-collab-cancelled",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-child",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-permissions",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-questions",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-image-running",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-image-completed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-image-failed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-image-cancelled",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-gallery",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-web",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-error",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-cancel",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "host-timing-hidden-freeze-five-seconds-and-placement",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "host-timing-legacy-missing-and-long-trace",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "D:canonical readThread preserves tools, question and timing",
+          "layer": "sdk-desktop",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "body",
+      "title": "Markdown 正文、引用和公式",
+      "files": [
+        "MarkdownContent",
+        "MarkdownContext",
+        "AssistantAnswer"
+      ],
+      "patterns": [
+        "markdown-semantic",
+        "selection-to-composer",
+        "B:formal turn"
+      ],
+      "behavior": "标题、段落、引用、列表起点、任务框、中文/RTL、GFM、脚注、引用定义、公式、完成后的选区进入输入框。",
+      "boundary": "",
+      "checks": [
+        {
+          "id": "markdown-semantic-nodes",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "selection-to-composer-and-session-draft",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "B:formal turn → rich content, formula and Mermaid",
+          "layer": "browser-fixture",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "table",
+      "title": "宽表格与预览",
+      "files": [
+        "MarkdownTable",
+        "ContentDialog"
+      ],
+      "patterns": [
+        "table-overflow",
+        "B:table"
+      ],
+      "behavior": "主体不被撑宽；预览横向滚动；复制 Markdown 和干净 HTML；Tab 约束、Escape、返回触发焦点。",
+      "boundary": "",
+      "checks": [
+        {
+          "id": "table-overflow-copy-preview-focus",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "B:table preview: focus trap, Escape, focus restoration",
+          "layer": "browser-fixture",
+          "status": "passed"
+        },
+        {
+          "id": "B:table copy contains Markdown and clean HTML",
+          "layer": "browser-fixture",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "code",
+      "title": "代码、写作块、行内代码",
+      "files": [
+        "CodeBlock",
+        "InlineCode"
+      ],
+      "patterns": [
+        "code-writing",
+        "B:streaming code"
+      ],
+      "behavior": "复制正文、换行偏好和回到页面后的恢复；开放围栏到闭合保留 DOM；写作与代码模式区分。",
+      "boundary": "",
+      "checks": [
+        {
+          "id": "code-writing-inline-copy-wrap",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "B:streaming code keeps its DOM and wrap preference when the fence closes",
+          "layer": "browser-fixture",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "mermaid",
+      "title": "Mermaid",
+      "files": [
+        "MermaidBlock"
+      ],
+      "patterns": [
+        "mermaid-render",
+        "B:invalid Mermaid"
+      ],
+      "behavior": "真实图表、源码切换、复制、预览；无效代码回退后恢复。",
+      "boundary": "语言前缀每一个长度及所有异步渲染竞态未穷举。",
+      "checks": [
+        {
+          "id": "mermaid-render-source-copy",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "B:invalid Mermaid retains code and successful diagrams can be restored",
+          "layer": "browser-fixture",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "links",
+      "title": "文件与链接",
+      "files": [
+        "MarkdownLink"
+      ],
+      "patterns": [
+        "file-preview",
+        "user-attachments",
+        "B:relative file"
+      ],
+      "behavior": "真实磁盘 IPC、相对路径、行号高亮、复制、缺失文件错误、未知协议回退。",
+      "boundary": "远端宿主、私有资源协议尚无真实服务验收。",
+      "checks": [
+        {
+          "id": "file-preview-success-error-line-copy",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "user-attachments-preview-file-copy",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "B:relative file link uses conversation cwd and highlights requested line",
+          "layer": "browser-fixture",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "media",
+      "title": "图片音视频和画廊",
+      "files": [
+        "MarkdownMedia",
+        "ImageLightbox",
+        "ImageGenerationRow"
+      ],
+      "patterns": [
+        "media-loaded",
+        "host-media",
+        "gallery-keyboard",
+        "image-status",
+        "B:result gallery"
+      ],
+      "behavior": "真实 SVG/WAV/WebM 解码、播放暂停、失败反馈和错误源换为有效源后恢复；多图方向键、缩放重置、Escape、焦点返回；Electron 下载完成后校验文件内容。",
+      "boundary": "网络媒体慢速/重定向/更换 src 的全部竞态未穷举。",
+      "checks": [
+        {
+          "id": "media-loaded-play-pause-error-preview",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "host-media-failed-source-to-valid-source-recovers",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "gallery-keyboard-zoom-download-focus",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "image-status-no-empty-success",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "B:result gallery: navigation resets zoom and closing restores the original trigger",
+          "layer": "browser-fixture",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "user",
+      "title": "用户消息与附件",
+      "files": [
+        "UserMessage"
+      ],
+      "patterns": [
+        "user-expand",
+        "user-attachments",
+        "attachment-layout-",
+        "selection-to-composer"
+      ],
+      "behavior": "长消息展开、复制、双击/按钮放回输入框；图片、文件、URL、技能、引用、批注；附件空消息保留。三主题/宽窄窗口下读取附件实际坐标，验证顺序、同排不重叠、长名截断和独立滚动；Tab 显露被裁切的标签，Enter 打开实际文件/行号，Escape 返回焦点。",
+      "boundary": "当前是文字复用，未实现带附件的历史原地编辑。PDF/Office 等专用预览及 Codex 条件文档卡片组尚未接入；普通 .ts 文件对应横向标签。",
+      "checks": [
+        {
+          "id": "user-expand-copy-reuse-doubleclick",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "user-attachments-preview-file-copy",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "attachment-layout-light",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "attachment-layout-dark",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "attachment-layout-warm",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "attachment-layout-keyboard-preview-and-scroll",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "selection-to-composer-and-session-draft",
+          "layer": "electron-replay",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "commands",
+      "title": "命令详情",
+      "files": [
+        "CommandExecutionRow",
+        "CommandDetailCard",
+        "DetailCopyButton"
+      ],
+      "patterns": [
+        "command-state-",
+        "host-command-running",
+        "render-qa-command"
+      ],
+      "behavior": "运行/成功/失败/停止、退出码、命令独立时长、输出截断提示；输入输出复制、键盘折叠和重新进入。连续运行→完成保持收起选择，隐藏详情不留下可聚焦控件。",
+      "boundary": "真正脱离轮次的后台系统进程完成通知未单独端到端验证。",
+      "checks": [
+        {
+          "id": "command-state-running",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "command-state-completed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "command-state-failed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "command-state-cancelled",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "host-command-running-to-completed-keeps-collapse-and-focus",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-command-running",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-command-completed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-command-failed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-command-cancelled",
+          "layer": "electron-replay",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "files",
+      "title": "文件变更与结果",
+      "files": [
+        "FileChangeRow",
+        "ResultCards"
+      ],
+      "patterns": [
+        "patch-terminal",
+        "file-results",
+        "failed-turn-retains",
+        "render-qa-patch",
+        "render-qa-many-files"
+      ],
+      "behavior": "pending/applied/failed/rejected/cancelled 不混为成功；多文件展开、diff 复制、hover 预览和 Review 入口；失败轮次保留已应用产物。",
+      "boundary": "没有批次回滚 UI/宿主能力；重命名、二进制、跨 cwd 的所有组合未穷举。",
+      "checks": [
+        {
+          "id": "patch-terminal-pending",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "patch-terminal-failed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "patch-terminal-rejected",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "patch-terminal-cancelled",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "file-results-expand-hover-review",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "failed-turn-retains-body-and-applied-files",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-patch-completed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-patch-pending",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-patch-failed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-patch-rejected",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-patch-cancelled",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-many-files",
+          "layer": "electron-replay",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "tools",
+      "title": "通用和专用工具",
+      "files": [
+        "ToolCallRow",
+        "ToolDetail",
+        "ToolDetailFrame",
+        "detail-sections",
+        "WebSearchRow"
+      ],
+      "patterns": [
+        "tool-specialized",
+        "generic-tool-cancel",
+        "render-qa-dynamic",
+        "render-qa-tool-details"
+      ],
+      "behavior": "Read/LS/Grep/计划/搜索/浏览器专用详情；通用工具四种状态；不支持单工具取消时显示原错误并允许重试。",
+      "boundary": "SDK 不支持单工具取消，真实成功取消路径只存在其他 runtime，本次未冒充成功。",
+      "checks": [
+        {
+          "id": "tool-specialized-details-plan",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "generic-tool-cancel-unsupported-visible-retry",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-dynamic-running",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-dynamic-failed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-dynamic-cancelled",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-dynamic-completed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-tool-details",
+          "layer": "electron-replay",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "mcp",
+      "title": "MCP 六类结果",
+      "files": [
+        "McpResult"
+      ],
+      "patterns": [
+        "mcp-six",
+        "render-qa-mcp",
+        "D:canonical readThread"
+      ],
+      "behavior": "text/image/audio/resource_link/embedded_resource/unknown；结构化同值去重、不同值保留、annotations/_meta/raw 复制。",
+      "boundary": "OAuth 自管远端 MCP 的原始信封保真未验收。",
+      "checks": [
+        {
+          "id": "mcp-six-content-raw-copy",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-mcp",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-mcp-failed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "D:canonical readThread preserves tools, question and timing",
+          "layer": "sdk-desktop",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "apps",
+      "title": "MCP 交互卡",
+      "files": [
+        "McpApp"
+      ],
+      "patterns": [
+        "D:real MCP resource read failure",
+        "D:MCP App tool permission",
+        "D:MCP resource discovery",
+        "D:collapsing and remounting MCP",
+        "D:MCP App receives light/dark/warm"
+      ],
+      "behavior": "真实 stdio 资源失败→重试→iframe；协议握手、输入/结果通知、拒绝/Escape/批准回传并真正执行工具；折叠后草稿保留。亮/暗/暖主题变量和强调色更新送入 iframe，切换不清空草稿。",
+      "boundary": "Codex 私有 App、superseded、不可折叠策略和 iframe 任意内部草稿的重启恢复未实现等价。",
+      "checks": [
+        {
+          "id": "D:real MCP resource read failure → visible source error → retry original resource → ready iframe",
+          "layer": "sdk-desktop",
+          "status": "passed"
+        },
+        {
+          "id": "D:MCP App tool permission: deny and Escape return rejection to original iframe",
+          "layer": "sdk-desktop",
+          "status": "passed"
+        },
+        {
+          "id": "D:MCP resource discovery → sandbox iframe handshake → permission-gated real tool call",
+          "layer": "sdk-desktop",
+          "status": "passed"
+        },
+        {
+          "id": "D:collapsing and remounting MCP details retains live iframe form state",
+          "layer": "sdk-desktop",
+          "status": "passed"
+        },
+        {
+          "id": "D:MCP App receives light/dark/warm semantic tokens and live accent updates without resetting its draft",
+          "layer": "sdk-desktop",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "questions",
+      "title": "提问与回答记录",
+      "files": [
+        "QuestionCard"
+      ],
+      "patterns": [
+        "question-validation",
+        "settled-question",
+        "render-qa-question",
+        "D:SDK question",
+        "D:real MCP elicitation"
+      ],
+      "behavior": "文字/整数/数值/布尔/单选/多选校验，过期提交报错和草稿恢复；真实 SDK 问答、MCP 表单 accept/decline/cancel，停止后取消，终态不可再答。",
+      "boundary": "通用 kind 回退已检查；不等同支持全部八类 Codex 私有授权协议。",
+      "checks": [
+        {
+          "id": "question-validation-all-fields-stale-submit",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "settled-question-readonly-unsupported-url",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-question-kinds",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-questions",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "D:SDK question → host broker → real IPC answer → completed record",
+          "layer": "sdk-desktop",
+          "status": "passed"
+        },
+        {
+          "id": "D:real MCP elicitation form → IPC → accept result and durable history",
+          "layer": "sdk-desktop",
+          "status": "passed"
+        },
+        {
+          "id": "D:real MCP elicitation form → IPC → decline result and durable history",
+          "layer": "sdk-desktop",
+          "status": "passed"
+        },
+        {
+          "id": "D:real MCP elicitation form → IPC → cancel result and durable history",
+          "layer": "sdk-desktop",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "permission",
+      "title": "权限历史与当前审批",
+      "files": [
+        "PermissionRequestRow",
+        "PermissionRequestPanel",
+        "PermissionFilePreview"
+      ],
+      "patterns": [
+        "permission-history",
+        "host-permission-panel"
+      ],
+      "behavior": "五种历史状态；实际文件 diff 预览与焦点；拒绝、允许一次、允许此任务经过真实 preload 回到主进程。",
+      "boundary": "三种全局审批按钮使用宿主通知回放；真实工具副作用批准闭环另由 MCP App 流程验证。",
+      "checks": [
+        {
+          "id": "permission-history-all-statuses",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "host-permission-panel-file-preview-three-responses",
+          "layer": "electron-replay",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "markers",
+      "title": "显式标记、未知项、协作",
+      "files": [
+        "MarkerRows",
+        "ActivityDetail",
+        "CollabAgentToolRow"
+      ],
+      "patterns": [
+        "marker-raw",
+        "collab-status",
+        "render-qa-markers"
+      ],
+      "behavior": "模型/工作区/压缩/评审/hook 等显式标记与 raw 展开；协作运行/完成/失败/停止，点击已知子任务进入对应会话。",
+      "boundary": "私有 heartbeat、特殊资源指令只有回退；辅助区内子代理标签管理不属于本次对话正文范围。",
+      "checks": [
+        {
+          "id": "marker-raw-disclosure-survives-remount",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "collab-status-source-running",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "collab-status-source-completed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "collab-status-source-failed",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "collab-status-source-cancelled",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "render-qa-markers",
+          "layer": "electron-replay",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "errors",
+      "title": "错误与恢复",
+      "files": [
+        "MessageErrorCard",
+        "TurnErrorCard",
+        "MarkdownErrorBoundary"
+      ],
+      "patterns": [
+        "failed-turn-retains",
+        "B:Markdown error boundary",
+        "D:missing credentials"
+      ],
+      "behavior": "断流已有正文和产物保留，错误详情复制和持久化；局部 renderer 异常不影响相邻内容，重试与 contentKey 更新恢复。",
+      "boundary": "重连 1/5→2/5 不是独立原生 UI，尚未对齐 Codex 重连展示。",
+      "checks": [
+        {
+          "id": "failed-turn-retains-body-and-applied-files",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "B:Markdown error boundary isolates failure, retries and resets on content key",
+          "layer": "browser-fixture",
+          "status": "passed"
+        },
+        {
+          "id": "D:missing credentials render the correct error and leave no running turn",
+          "layer": "sdk-desktop",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "history",
+      "title": "分页、虚拟化和导航",
+      "files": [
+        "ReadThreadTurnList",
+        "ScrollToBottomButton"
+      ],
+      "patterns": [
+        "history-pagination",
+        "fork-selected",
+        "B:scroll:"
+      ],
+      "behavior": "160 轮分页、虚拟化、点击离屏消息、hover 不滚动；切会话恢复阅读位置；旧分页不能改变新任务；右栏打开不遮挡导航。",
+      "boundary": "",
+      "checks": [
+        {
+          "id": "history-pagination-virtualization-navigation",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "fork-selected-history-boundary-workspace-reload",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "B:scroll: following output, reader detachment, per-session restore",
+          "layer": "browser-fixture",
+          "status": "passed"
+        },
+        {
+          "id": "B:scroll: stale history completion cannot move a newly selected session",
+          "layer": "browser-fixture",
+          "status": "passed"
+        },
+        {
+          "id": "B:scroll: editing keys and a touch tap do not detach the bottom lock",
+          "layer": "browser-fixture",
+          "status": "passed"
+        },
+        {
+          "id": "B:scroll: collapse preserves the control position while reading history",
+          "layer": "browser-fixture",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "footer",
+      "title": "操作栏",
+      "files": [
+        "TurnFooterView"
+      ],
+      "patterns": [
+        "footer-real",
+        "fork-selected",
+        "B:copy and fork"
+      ],
+      "behavior": "复制、连续点击锁、分支失败反馈；真实分支按指定轮次截断，保留工作区并刷新恢复；操作可键盘触达。",
+      "boundary": "",
+      "checks": [
+        {
+          "id": "footer-real-copy-and-fork",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "fork-selected-history-boundary-workspace-reload",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "B:copy and fork ignore repeated clicks; fork failures are visible and retryable",
+          "layer": "browser-fixture",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "queue",
+      "title": "排队消息",
+      "files": [
+        "QueuedSteersPanel"
+      ],
+      "patterns": [
+        "D:real running turn",
+        "D:real queue:",
+        "D:real queued steer apply-now",
+        "D:stop pending"
+      ],
+      "behavior": "实际 SDK 等待时排队、拖拽排序、菜单 Escape、编辑、单条取消；停止保留队列并显示暂停；继续生成已完成轮次；立即引导中断等待并将排队输入送入新的已完成答复。",
+      "boundary": "",
+      "checks": [
+        {
+          "id": "D:real running turn: queue two steers → drag reorder → menu Escape → edit → cancel one",
+          "layer": "sdk-desktop",
+          "status": "passed"
+        },
+        {
+          "id": "D:real queue: interrupt keeps pending steer → paused banner → resume creates completed turn",
+          "layer": "sdk-desktop",
+          "status": "passed"
+        },
+        {
+          "id": "D:real queued steer apply-now → interrupts pending SDK question → delivers new user input → completed answer",
+          "layer": "sdk-desktop",
+          "status": "passed"
+        },
+        {
+          "id": "D:stop pending question → cancelled record; message navigation hover does not scroll",
+          "layer": "sdk-desktop",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "composer",
+      "title": "输入框、附件与菜单",
+      "files": [
+        "ComposerShell",
+        "ComposerAttachmentChips",
+        "ComposerSuggestionPopover",
+        "SlashCommandPopover",
+        "SandboxInstallBanner"
+      ],
+      "patterns": [
+        "composer-menus",
+        "composer-slash",
+        "composer-browser",
+        "composer-skill",
+        "composer-full-access"
+      ],
+      "behavior": "文件选择和移除、技能/文件建议、URL 剪贴板、批注分组、菜单关闭、IME 与换行；完全访问确认的焦点环、取消/确认/持久化。",
+      "boundary": "移除全部批注的批量动作按用户限制未执行；只执行单条移除。",
+      "checks": [
+        {
+          "id": "composer-menus-escape-file-attachment",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "composer-slash-keyboard-and-mention-selection",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "composer-browser-comment-group-preview-single-remove",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "composer-skill-url-attachments-and-keyboard-newlines",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "composer-full-access-confirm-focus-escape-persist",
+          "layer": "electron-replay",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "progress",
+      "title": "步骤、上下文和计划入口",
+      "files": [
+        "ComposerTaskProgress",
+        "ContextUsageRing",
+        "WorkflowChatCards"
+      ],
+      "patterns": [
+        "host-context",
+        "host-task",
+        "host-plan"
+      ],
+      "behavior": "上下文三个阈值与键盘提示；步骤进度与失败保留；上下文操作实际回调；计划关闭/修改/执行/新上下文执行。",
+      "boundary": "计划/上下文事件使用真实 IPC 回放；执行入口用缺凭据错误验证收尾，不声称模型执行了计划。创建精简分支当前实际为普通分支，没有摘要压缩。",
+      "checks": [
+        {
+          "id": "host-context-usage-levels-keyboard-tooltip",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "host-context-action-dismiss-source-isolation",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "host-context-actions-real-model-fork-new-and-retry-error",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "host-task-progress-active-failure-completion",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "host-plan-prompt-dismiss-revise-implement-and-fresh",
+          "layer": "electron-replay",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "model",
+      "title": "模型选择",
+      "files": [
+        "WorkflowChatModelSelector"
+      ],
+      "patterns": [
+        "composer-model"
+      ],
+      "behavior": "禁用模型过滤、切换后持久化、Escape 返回焦点、刷新恢复。",
+      "boundary": "",
+      "checks": [
+        {
+          "id": "composer-model-select-persist-escape",
+          "layer": "electron-replay",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "id": "styles",
+      "title": "Marloues 样式规范与主题",
+      "files": [],
+      "patterns": [
+        "style-",
+        "D:MCP App receives light/dark/warm",
+        "B:Markdown error boundary"
+      ],
+      "behavior": "局部样式放入相邻 CSS Modules；复用现有 Input/Button、primary 和 icon-button。亮/暗/暖主题下检查实际背景、边框、字体、圆角、焦点、弹窗遮罩、文件行高亮；Mermaid 缩放及减少动态效果下的布局正确；自定义强调色即时更新。错误边界样式及恢复、MCP iframe 草稿连续性另由各自测试层覆盖。",
+      "boundary": "遵循 Marloues 现有规范；未制作 Codex 像素级对比。第三方 iframe 需主动消费宿主提供的标准变量。",
+      "checks": [
+        {
+          "id": "style-components-light",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "style-dialog-and-navigation-light",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "style-components-dark",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "style-dialog-and-navigation-dark",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "style-components-warm",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "style-dialog-and-navigation-warm",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "style-custom-accent-updates-current-diagram-and-focus",
+          "layer": "electron-replay",
+          "status": "passed"
+        },
+        {
+          "id": "D:MCP App receives light/dark/warm semantic tokens and live accent updates without resetting its draft",
+          "layer": "sdk-desktop",
+          "status": "passed"
+        },
+        {
+          "id": "B:Markdown error boundary isolates failure, retries and resets on content key",
+          "layer": "browser-fixture",
+          "status": "passed"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "path": "client/renderer/src/components/workflow-chat/ScrollToBottomButton.tsx",
+      "exports": [
+        "WorkflowScrollToBottomButton"
+      ],
+      "sha256": "e43cb4c23f8b52dcddc2c21756edb50c42b71d06643801c9320f247db3a07802",
+      "classification": "covered-by-listed-checks",
+      "group": "history",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/ViewportCulling.tsx",
+      "exports": [
+        "ViewportCulling"
+      ],
+      "sha256": "e05f4d01a4f8b7715d44340e34ba9178e348e2984e77f630e17edd13ef03d92f",
+      "classification": "compatibility-not-mounted",
+      "note": "仅遗留导出/fixture 引用，未作为当前主会话入口运行。"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ActivityDetail.tsx",
+      "exports": [
+        "WorkflowActivityDetailStack",
+        "WorkflowActivityDetailBlock"
+      ],
+      "sha256": "25a41c0aeb1d583c52a57e1b116ecfb7dfb333693e3eebd0710586984a8d34f2",
+      "classification": "covered-by-listed-checks",
+      "group": "markers",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ActivityGroup.tsx",
+      "exports": [
+        "WorkflowActivityGroup"
+      ],
+      "sha256": "a01ef857f171fd59db6768c6d9ba5eca6c9a3afda95a0afd10f5b7cc71d42be8",
+      "classification": "covered-by-listed-checks",
+      "group": "route",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ActivityRenderer.tsx",
+      "exports": [
+        "WorkflowActivityRenderer"
+      ],
+      "sha256": "50cc9afbaf95d75a29b679fc63f9f99313430a3899c070b7f90d7bae09e9ad6e",
+      "classification": "covered-by-listed-checks",
+      "group": "route",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ActivityRow.tsx",
+      "exports": [
+        "WorkflowActivityRow",
+        "WorkflowActivityRowContent",
+        "WorkflowActivityStatusBadge",
+        "WorkflowInlineDots"
+      ],
+      "sha256": "4e39f832055c462a77eb85385b903e88d8387f791f4458c5c7c528d42a34ed26",
+      "classification": "covered-by-listed-checks",
+      "group": "route",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/AgentFlowSection.tsx",
+      "exports": [
+        "WorkflowAgentFlowSection"
+      ],
+      "sha256": "d85d4959c719f02f3efddd8c41a0d2ae00d8ef51e26ce0cbe78494e974fe9fae",
+      "classification": "covered-by-listed-checks",
+      "group": "route",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/CollabAgentToolRow.tsx",
+      "exports": [
+        "WorkflowCollabAgentToolRow"
+      ],
+      "sha256": "9695fb6deea48fabe847559b703159e9d39eec94bf041d4bfbb4dcc222f17f16",
+      "classification": "covered-by-listed-checks",
+      "group": "markers",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/CommandDetailCard.tsx",
+      "exports": [
+        "WorkflowCommandDetail"
+      ],
+      "sha256": "26e27ad9a35372c45c80f536154400350e678cea3a01828338f5571ebfe6b0c2",
+      "classification": "covered-by-listed-checks",
+      "group": "commands",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/CommandExecutionRow.tsx",
+      "exports": [
+        "WorkflowCommandExecutionRow"
+      ],
+      "sha256": "cac31d64fa2dedf03c1a508e6af2e458b93f5b1fe81653130b5072d3a893ba1b",
+      "classification": "covered-by-listed-checks",
+      "group": "commands",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/DetailCopyButton.tsx",
+      "exports": [
+        "WorkflowDetailCopyButton"
+      ],
+      "sha256": "fdc247689c2d2445ab42f20eb1f06526d62e33cd98194c982e3d12f4c93b0b40",
+      "classification": "covered-by-listed-checks",
+      "group": "commands",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/FileChangeRow.tsx",
+      "exports": [
+        "WorkflowFileChangeRow"
+      ],
+      "sha256": "438ccff1fc1c69521e76d15400e252f58fb7eddf63f53a7dc63d8ed09254d5d5",
+      "classification": "covered-by-listed-checks",
+      "group": "files",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ImageGenerationRow.tsx",
+      "exports": [
+        "WorkflowImageGenerationRow",
+        "imageGenerationLabel"
+      ],
+      "sha256": "aaaa526ca6ea35102f9c6181d64a1adc040b0f31ac4e3fdb9c23d344754d8cd6",
+      "classification": "covered-by-listed-checks",
+      "group": "media",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ImageLightbox.tsx",
+      "exports": [
+        "WorkflowImageLightbox"
+      ],
+      "sha256": "73a48ab5f8d81c4480b2019114a6998520bfeb101eed97d2362b8310c47606be",
+      "classification": "covered-by-listed-checks",
+      "group": "media",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/MarkerRows.tsx",
+      "exports": [
+        "WorkflowImageViewRow",
+        "WorkflowReviewModeMarker",
+        "WorkflowHookPromptBlock",
+        "WorkflowContextCompactionMarker",
+        "WorkflowUnknownRawJson"
+      ],
+      "sha256": "272dadffe53f7b11b06b952d0daf5fcf3f5af3a2d7782cbb86a182e1e72ef1ab",
+      "classification": "covered-by-listed-checks",
+      "group": "markers",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/McpApp.tsx",
+      "exports": [
+        "WorkflowMcpApp"
+      ],
+      "sha256": "828c0d092946640a2edbd38ff649ff52f806dda44b13aba0adc74e5c84f1670f",
+      "classification": "covered-by-listed-checks",
+      "group": "apps",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/McpResult.tsx",
+      "exports": [
+        "WorkflowMcpResult"
+      ],
+      "sha256": "d8890ffd4cbdedd78ee80d9725b3364e59b106ed997f68d84717ca6b84db8221",
+      "classification": "covered-by-listed-checks",
+      "group": "mcp",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/PermissionRequestRow.tsx",
+      "exports": [
+        "WorkflowPermissionRequestRow"
+      ],
+      "sha256": "6cc62d43ef567065f20bd2dd6bfba0f2d37500310bc27973ded2731a37332559",
+      "classification": "covered-by-listed-checks",
+      "group": "permission",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/QuestionCard.tsx",
+      "exports": [
+        "WorkflowQuestionCard"
+      ],
+      "sha256": "20e1fde8fa672f53a1e951f7c4982cb9ff89e374ca2959827054f0d75417c1de",
+      "classification": "covered-by-listed-checks",
+      "group": "questions",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ReasoningRow.tsx",
+      "exports": [
+        "WorkflowReasoningRow"
+      ],
+      "sha256": "5f28c60591a222058668343d23e6a6540a9aac0435ff810897c748bb97968f57",
+      "classification": "hidden-by-contract",
+      "note": "正式过程按 Codex 活动规则过滤 reasoning；不能算作已显示的推理正文。"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ResultCards.tsx",
+      "exports": [
+        "WorkflowResultCards"
+      ],
+      "sha256": "0d6d014ddcdb6f6348e9b7baef99ea5e2ffefec91e4dda01a1af1f89c5978e11",
+      "classification": "covered-by-listed-checks",
+      "group": "files",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ToolCallRow.tsx",
+      "exports": [
+        "WorkflowToolCallRow"
+      ],
+      "sha256": "c3ded2c72e94939cca4935b0d02a5b0d5438891c42a286b3e432eace82f9d0a6",
+      "classification": "covered-by-listed-checks",
+      "group": "tools",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ToolCallRowDetails/ToolDetail.tsx",
+      "exports": [
+        "ToolDetail",
+        "ToolIcon"
+      ],
+      "sha256": "40297806209848681792c6831aac451aa0ff3de62d7b69e09d0e143898b17675",
+      "classification": "covered-by-listed-checks",
+      "group": "tools",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ToolCallRowDetails/ToolDetailFrame.tsx",
+      "exports": [
+        "ToolDetailFrame"
+      ],
+      "sha256": "153288f7e82def9e15c06a9bb0097eace2a0725340599a906172794f11cc04e3",
+      "classification": "covered-by-listed-checks",
+      "group": "tools",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/ToolCallRowDetails/detail-sections.tsx",
+      "exports": [
+        "ToolSearchDetail",
+        "WebSearchDetail",
+        "ImageGenerationDetail",
+        "PlanDetail",
+        "MarkdownDetail",
+        "UsageDetail",
+        "DetailBlock"
+      ],
+      "sha256": "cc1514b16e7bacad093d96a33ba046940a0e44f1d9c99fbb792d7d3c6cadbffa",
+      "classification": "covered-by-listed-checks",
+      "group": "tools",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/TurnItemRenderer.tsx",
+      "exports": [
+        "WorkflowTurnItemRenderer"
+      ],
+      "sha256": "d5e15797767a07270b5af5f5a5d988afa08159dd5774c0eb94dd2f08be255020",
+      "classification": "covered-by-listed-checks",
+      "group": "route",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/activity/WebSearchRow.tsx",
+      "exports": [
+        "WorkflowWebSearchRow"
+      ],
+      "sha256": "8ff8d4810ebac0eaedce811b0f10e0a3f59cf61dcbbaec7ef73799445749c00d",
+      "classification": "covered-by-listed-checks",
+      "group": "tools",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/composer/ComposerAttachmentChips.tsx",
+      "exports": [
+        "ComposerAttachmentChips"
+      ],
+      "sha256": "23e14e3bcc1a8d5e6135d7ce2701951f2cc38f6bc7aeea3763ffea94c57fb6c6",
+      "classification": "covered-by-listed-checks",
+      "group": "composer",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/composer/ComposerShell.tsx",
+      "exports": [
+        "WorkflowComposerShell"
+      ],
+      "sha256": "c1bbc464688be13fc91322233af2cb13948880088d4a883b59150f93f040da72",
+      "classification": "covered-by-listed-checks",
+      "group": "composer",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/composer/ComposerSuggestionPopover.tsx",
+      "exports": [
+        "ComposerSuggestionPopover"
+      ],
+      "sha256": "0744bc42f9401ed96e86eca4422b038ad7b5df370512972c44d53886aab6cd19",
+      "classification": "covered-by-listed-checks",
+      "group": "composer",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/composer/ComposerTaskProgress.tsx",
+      "exports": [
+        "ComposerTaskProgress"
+      ],
+      "sha256": "63a5514b17587f343be1834d22420ebd2b33e058c1df4eeef2d801fbaa1fd02b",
+      "classification": "covered-by-listed-checks",
+      "group": "progress",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/composer/ContextUsageRing.tsx",
+      "exports": [
+        "ContextUsageRing"
+      ],
+      "sha256": "88ec45b67b6586970f3f4317fafef06cb81f8efe5f44400b841537c4b4caedaf",
+      "classification": "covered-by-listed-checks",
+      "group": "progress",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/composer/SandboxInstallBanner.tsx",
+      "exports": [
+        "FullAccessConfirmDialog"
+      ],
+      "sha256": "78f855d62c28c25043ebb55f5dca2546fc3472676827bc5b04e751e29f426d24",
+      "classification": "covered-by-listed-checks",
+      "group": "composer",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/composer/SlashCommandPopover.tsx",
+      "exports": [
+        "SlashCommandPopover"
+      ],
+      "sha256": "28b9097658ecf111fad5c6714a6e2526c77028de9904d21dad48fb72c580f8d2",
+      "classification": "covered-by-listed-checks",
+      "group": "composer",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/content/CodeBlock.tsx",
+      "exports": [
+        "WorkflowCodeBlock"
+      ],
+      "sha256": "f0d38fe87036c331bab67c41f19e59e184b7ac0d1d991fe4f8af1fea9998eeec",
+      "classification": "covered-by-listed-checks",
+      "group": "code",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/content/ContentDialog.tsx",
+      "exports": [
+        "WorkflowContentDialog"
+      ],
+      "sha256": "c380393f5a886f0775d5d05170266c8d83fe1a74c30e958673722bb52a7bc487",
+      "classification": "covered-by-listed-checks",
+      "group": "table",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/content/InlineCode.tsx",
+      "exports": [
+        "WorkflowInlineCode"
+      ],
+      "sha256": "83ffbc93ea5b21a0b807d09a40513688608437bf2d216b4ebef334b05713b784",
+      "classification": "covered-by-listed-checks",
+      "group": "code",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/content/MarkdownContent.tsx",
+      "exports": [
+        "splitIncrementalMarkdown",
+        "parseProgressiveMarkdownBlocks",
+        "hasUnclosedCodeFence",
+        "WorkflowMarkdownContent"
+      ],
+      "sha256": "4339a80c4c059f16b5e306b99cd62f385237a2812e97a7d754798f2f9f788136",
+      "classification": "covered-by-listed-checks",
+      "group": "body",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/content/MarkdownContext.tsx",
+      "exports": [
+        "useMarkdownContext",
+        "WorkflowMarkdownProvider"
+      ],
+      "sha256": "9d4c5946217f9d42e43ffc1514e507c36968ae717abfa4f15cf7773bfb730bf9",
+      "classification": "covered-by-listed-checks",
+      "group": "body",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/content/MarkdownErrorBoundary.tsx",
+      "exports": [
+        "MarkdownErrorBoundary"
+      ],
+      "sha256": "1e7c0be39a178ea8081463608268ec7c0e32e827f9b85d1faef09531ad6fea7d",
+      "classification": "covered-by-listed-checks",
+      "group": "errors",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/content/MarkdownLink.tsx",
+      "exports": [
+        "WorkflowMarkdownLink"
+      ],
+      "sha256": "867c3066cad70ccac0ea30d636fb941d12876ba6181d4603e097d1e575342637",
+      "classification": "covered-by-listed-checks",
+      "group": "links",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/content/MarkdownMedia.tsx",
+      "exports": [
+        "WorkflowMarkdownMedia"
+      ],
+      "sha256": "d255090a31ce67e0bc86b979717ae9101a763e601b4f4d07f33eaca611cd47f8",
+      "classification": "covered-by-listed-checks",
+      "group": "media",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/content/MarkdownTable.tsx",
+      "exports": [
+        "WorkflowMarkdownTable"
+      ],
+      "sha256": "0bd8d9923fe9523011510638ab8cbdb88f3e590be50813eeb04ba226d0f1b2e8",
+      "classification": "covered-by-listed-checks",
+      "group": "table",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/content/MermaidBlock.tsx",
+      "exports": [
+        "WorkflowMermaidBlock"
+      ],
+      "sha256": "7103b653b5c884f9161e3bdee6e6db4e0c145bcb1fa9918a79732496eb940851",
+      "classification": "covered-by-listed-checks",
+      "group": "mermaid",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/conversation-icons.tsx",
+      "exports": [
+        "CONVERSATION_ICON_SIZE",
+        "ConversationChangesIcon",
+        "ConversationUndoIcon",
+        "ConversationRedoIcon",
+        "ConversationReviewArrowIcon",
+        "ConversationChevronDownIcon",
+        "ConversationCopyIcon",
+        "ConversationCheckIcon",
+        "ConversationEditIcon",
+        "ConversationFileIcon",
+        "ConversationSkillIcon",
+        "ConversationCommentIcon",
+        "ConversationSelectedTextIcon",
+        "ConversationWebIcon",
+        "ConversationImageIcon"
+      ],
+      "sha256": "28f7858280a72589ae6c20a540346a810ed0d1c688442290ede624f77c6351ab",
+      "classification": "covered-by-listed-checks",
+      "group": "route",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/fixtures/BeforeContractTurnView.tsx",
+      "exports": [
+        "BeforeContractTurnView"
+      ],
+      "sha256": "2a5e8045df307df552494581c8785b24553ff9067f22600c4886afb5e5f6d623",
+      "classification": "test-only",
+      "note": "验收或旧对比页，不计入正式对话组件覆盖。"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/fixtures/ConversationComparisonPage.tsx",
+      "exports": [
+        "retries",
+        "retries",
+        "ConversationComparisonPage"
+      ],
+      "sha256": "2c74f30cd344ac95869a360277c40d296527972883a1376c1a445b1c06dfd406",
+      "classification": "test-only",
+      "note": "验收或旧对比页，不计入正式对话组件覆盖。"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/fixtures/ConversationDetailsFixturePage.tsx",
+      "exports": [
+        "ConversationDetailsFixturePage"
+      ],
+      "sha256": "5ec52f0383d892d59b62dc0e7391892b9a4abcf3e8269f52155d92089c56aa13",
+      "classification": "test-only",
+      "note": "验收或旧对比页，不计入正式对话组件覆盖。"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/fixtures/TaskContextFixturePage.tsx",
+      "exports": [
+        "TaskContextFixturePage"
+      ],
+      "sha256": "70b16b43af1fcf759c9d9dad97f275c9027a9e8eae7b2bf5b0b8c2fdfdee0a5f",
+      "classification": "test-only",
+      "note": "验收或旧对比页，不计入正式对话组件覆盖。"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/fixtures/WorkflowCodexFixturePage.tsx",
+      "exports": [
+        "WorkflowCodexFixturePage",
+        "WorkflowChatShellFixturePage",
+        "workflowActivitySummaryLabel"
+      ],
+      "sha256": "fe27998e9ad127d1b0de40c7e9ac3741b5fc251b3b63a10d5ad6aac56974cddf",
+      "classification": "test-only",
+      "note": "验收或旧对比页，不计入正式对话组件覆盖。"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/message-view.tsx",
+      "exports": [
+        "formatDuration",
+        "formatClock",
+        "MessageStateDot",
+        "MessageUserRow",
+        "MessageThinkRow",
+        "MessageToolRow",
+        "MessageItemView",
+        "MessageTurnTail",
+        "MessageStatusRow"
+      ],
+      "sha256": "d77dad4af29022e0c7205333a667e2b9216796242ab6625d04ab7501f9d58426",
+      "classification": "compatibility-not-mounted",
+      "note": "仅遗留导出/fixture 引用，未作为当前主会话入口运行。"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/task-context/TaskContextPanel.tsx",
+      "exports": [
+        "TaskContextPanel"
+      ],
+      "sha256": "e2092b7fd706b162973afe98c2ee9067cda0fe198979e1d68ba83e5e3982ae8a",
+      "classification": "auxiliary-scope",
+      "note": "任务上下文/子代理辅助区壳不计入正文；其共享正文渲染器另有验证。"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/task-context/TaskContextSections.tsx",
+      "exports": [
+        "WorkspaceContextSection",
+        "TaskProgressSection",
+        "OutputContentSection",
+        "BackgroundProcessesSection",
+        "SourcesSection"
+      ],
+      "sha256": "01e57b3bc68aa5a98286c41b34f7944290e4b9fe30ba8d7bd84fa254ac726322",
+      "classification": "auxiliary-scope",
+      "note": "任务上下文/子代理辅助区壳不计入正文；其共享正文渲染器另有验证。"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/task-context/ThreadSummaryPrimitives.tsx",
+      "exports": [
+        "ThreadSummarySection",
+        "ThreadSummaryExpandableList"
+      ],
+      "sha256": "323e49adc2bcabe8f15efd1930f3731761c26edc2c72039fe5512732000bd342",
+      "classification": "auxiliary-scope",
+      "note": "任务上下文/子代理辅助区壳不计入正文；其共享正文渲染器另有验证。"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/AssistantAnswer.tsx",
+      "exports": [
+        "WorkflowAssistantAnswer"
+      ],
+      "sha256": "1d12195678c4af8dfa82db7a70ddc4b3565c431964d81fd1165d37958e3f0699",
+      "classification": "covered-by-listed-checks",
+      "group": "body",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/AssistantTurn.tsx",
+      "exports": [
+        "WorkflowAssistantTurn"
+      ],
+      "sha256": "95833f9c3ffef8844a0846f4fdfb2b86c28a8d57b6b9eba6fd0f426e603db2dc",
+      "classification": "covered-by-listed-checks",
+      "group": "route",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/AssistantTurnHeader.tsx",
+      "exports": [
+        "AssistantTurnHeader"
+      ],
+      "sha256": "17f72b4ac341b22ca1fbf1712c1f8dc764420ad99b715efad20fe9fef0fe3b9d",
+      "classification": "covered-by-listed-checks",
+      "group": "route",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/MessageErrorCard.tsx",
+      "exports": [
+        "MessageErrorCard"
+      ],
+      "sha256": "d8f4f0942a9a7cf6d52d89a43be1d9bea98c14da7cd3b3fe1acf181d468f484a",
+      "classification": "covered-by-listed-checks",
+      "group": "errors",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/QueuedSteersPanel.tsx",
+      "exports": [
+        "QueuedSteersPanel"
+      ],
+      "sha256": "97eb40da7c1634abed5818a1e568bae012e76a89dc02aa95f3b3652235396777",
+      "classification": "covered-by-listed-checks",
+      "group": "queue",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/ReadThreadTurnList.tsx",
+      "exports": [
+        "WorkflowReadThreadTurnList",
+        "normalizeReadThreadMessageForPresentation"
+      ],
+      "sha256": "c232bf15eaf90602937459042d65ef15fc0ae8d569a4e02932fd531982f05c98",
+      "classification": "covered-by-listed-checks",
+      "group": "history",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/SubagentWorkspace.tsx",
+      "exports": [
+        "WorkflowSubagentWorkspace"
+      ],
+      "sha256": "10df1f5fdb983e49a66e85a12367861e30ae80f85a51f7f98e9f03790b6aaee3",
+      "classification": "auxiliary-scope",
+      "note": "任务上下文/子代理辅助区壳不计入正文；其共享正文渲染器另有验证。"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/ThinkingPlaceholder.tsx",
+      "exports": [
+        "WorkflowThinkingPlaceholder"
+      ],
+      "sha256": "b135d079be4d95b5413332e04455d50e3574729c1a1982a6aff2399aace4536e",
+      "classification": "covered-by-listed-checks",
+      "group": "route",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/ThreadView.tsx",
+      "exports": [
+        "WorkflowThreadView"
+      ],
+      "sha256": "dbe288e5e54a85186e7244b304125e112d968cc3aa14b0dffefe072068dd7b52",
+      "classification": "compatibility-not-mounted",
+      "note": "仅遗留导出/fixture 引用，未作为当前主会话入口运行。"
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/TurnErrorCard.tsx",
+      "exports": [
+        "WorkflowTurnErrorCard"
+      ],
+      "sha256": "a064db2ae03552558a3808e82e89f686b453f5852ba4c81768bf91ae2eb58f06",
+      "classification": "covered-by-listed-checks",
+      "group": "errors",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/TurnFlowSection.tsx",
+      "exports": [
+        "WorkflowTurnFlowSection"
+      ],
+      "sha256": "1725016d86225b6071b2f94d57362b350e98581abf4bcfe415e707c8095c0f63",
+      "classification": "covered-by-listed-checks",
+      "group": "route",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/TurnFooterView.tsx",
+      "exports": [
+        "WorkflowTurnFooterView",
+        "formatAssistantMessageTime"
+      ],
+      "sha256": "988d229ef0ae45ab321f800b61dab69ea5f7f4b935670a7c2be71152bd3e2456",
+      "classification": "covered-by-listed-checks",
+      "group": "footer",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/TurnPresentationBlocks.tsx",
+      "exports": [
+        "TurnPresentationBlocks"
+      ],
+      "sha256": "c37423fee83daf76a2c9244bf7eb4b45e5c6df528f9027bd3b39ec102361e86a",
+      "classification": "covered-by-listed-checks",
+      "group": "route",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/TurnProcessDisclosure.tsx",
+      "exports": [
+        "WorkflowTurnProcessDisclosure"
+      ],
+      "sha256": "f6d9000cf6efee21b01726050fb1a3481da466a82f20e09dced7d79bb1d3e6b2",
+      "classification": "covered-by-listed-checks",
+      "group": "route",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/TurnShell.tsx",
+      "exports": [
+        "WorkflowTurnShell"
+      ],
+      "sha256": "65829c183d5c4af7f1014312dbb82d5ab1c765efde592125b88581211b2fbb02",
+      "classification": "covered-by-listed-checks",
+      "group": "route",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/TurnView.tsx",
+      "exports": [
+        "WorkflowTurnView"
+      ],
+      "sha256": "2a7347e59027ca88a7ef0050ca344894c15ad97fa025535dca0d3b9be33cbb92",
+      "classification": "covered-by-listed-checks",
+      "group": "route",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/UserMessage.tsx",
+      "exports": [
+        "WorkflowUserMessage",
+        "formatUserMessageTime",
+        "userMessageClipboardText"
+      ],
+      "sha256": "d681b74e9b31f71156cf7b1b1adb5a787251c8c25198debf9773b557ddb8afd1",
+      "classification": "covered-by-listed-checks",
+      "group": "user",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workflow-chat/turns/WorkflowTurnList.tsx",
+      "exports": [
+        "WorkflowTurnList"
+      ],
+      "sha256": "dc073939ce1859ef7f341eda44b2c0a3461362761a403908536412b9516ae685",
+      "classification": "compatibility-not-mounted",
+      "note": "仅遗留导出/fixture 引用，未作为当前主会话入口运行。"
+    },
+    {
+      "path": "client/renderer/src/pages/WorkflowChatCards.tsx",
+      "exports": [
+        "ModelChangeDivider",
+        "PlanImplementationPromptCard",
+        "ContextActionCard"
+      ],
+      "sha256": "f6986570abb4b8ce8eef41f5b9b023e48dbd390a637cfd255c45e3cf6e903c3d",
+      "classification": "covered-by-listed-checks",
+      "group": "progress",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/pages/WorkflowChatModelSelector.tsx",
+      "exports": [
+        "ModelSelector"
+      ],
+      "sha256": "3def6ebb87b531074d551c026e780fbaea3f44877a730785c9838ae757980277",
+      "classification": "covered-by-listed-checks",
+      "group": "model",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workbench/interaction/PermissionRequestPanel.tsx",
+      "exports": [
+        "PermissionRequestPanel"
+      ],
+      "sha256": "f5bed31f61c75f1fdfb92d4e51b68904fa69ac5a366ce615810cae44dcb03219",
+      "classification": "covered-by-listed-checks",
+      "group": "permission",
+      "note": ""
+    },
+    {
+      "path": "client/renderer/src/components/workbench/interaction/PermissionFilePreview.tsx",
+      "exports": [
+        "PermissionFilePreview"
+      ],
+      "sha256": "11335a04041d1142ccb753cb56f938813a8b03038bdedd060a7ac790c2d01b7c",
+      "classification": "covered-by-listed-checks",
+      "group": "permission",
+      "note": ""
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "CA01",
+      "title": "有效工作到最终答复",
+      "ruleIds": [
+        "MR09",
+        "MR10",
+        "MR11",
+        "MR12",
+        "MR14"
+      ],
+      "status": "passed",
+      "groups": [
+        "route"
+      ],
+      "remaining": "",
+      "note": ""
+    },
+    {
+      "id": "CA02",
+      "title": "历史缺时间、裁剪窗口",
+      "ruleIds": [
+        "MR03",
+        "MR09",
+        "MR11",
+        "MR37"
+      ],
+      "status": "passed",
+      "groups": [
+        "route"
+      ],
+      "remaining": "",
+      "note": ""
+    },
+    {
+      "id": "CA03",
+      "title": "命令展开生命周期",
+      "ruleIds": [
+        "MR15",
+        "MR17",
+        "MR18",
+        "MR65",
+        "MR66",
+        "MR67"
+      ],
+      "status": "passed",
+      "groups": [
+        "commands"
+      ],
+      "remaining": "",
+      "note": ""
+    },
+    {
+      "id": "CA04",
+      "title": "MCP 普通/交互卡",
+      "ruleIds": [
+        "MR17",
+        "MR73",
+        "MR74",
+        "MR86"
+      ],
+      "status": "partial",
+      "groups": [
+        "apps"
+      ],
+      "remaining": "未实现 Codex 不可折叠 App 策略。",
+      "note": ""
+    },
+    {
+      "id": "CA05",
+      "title": "取消与 steer",
+      "ruleIds": [
+        "MR02",
+        "MR05",
+        "MR13",
+        "MR14",
+        "MR57"
+      ],
+      "status": "passed",
+      "groups": [
+        "queue",
+        "media"
+      ],
+      "remaining": "",
+      "note": ""
+    },
+    {
+      "id": "CA06",
+      "title": "流式代码闭合",
+      "ruleIds": [
+        "MR42",
+        "MR43",
+        "MR44"
+      ],
+      "status": "passed",
+      "groups": [
+        "code"
+      ],
+      "remaining": "",
+      "note": ""
+    },
+    {
+      "id": "CA07",
+      "title": "代码与写作块",
+      "ruleIds": [
+        "MR45",
+        "MR51",
+        "MR62"
+      ],
+      "status": "partial",
+      "groups": [
+        "code",
+        "links"
+      ],
+      "remaining": "功能检查通过；流式选区所有边界尚未穷举。",
+      "note": ""
+    },
+    {
+      "id": "CA08",
+      "title": "Mermaid 未完成和错误",
+      "ruleIds": [
+        "MR46"
+      ],
+      "status": "partial",
+      "groups": [
+        "mermaid"
+      ],
+      "remaining": "未穷举语言前缀和所有异步覆盖竞态。",
+      "note": ""
+    },
+    {
+      "id": "CA09",
+      "title": "宽表与复制",
+      "ruleIds": [
+        "MR47",
+        "MR48",
+        "MR64"
+      ],
+      "status": "passed",
+      "groups": [
+        "table"
+      ],
+      "remaining": "",
+      "note": ""
+    },
+    {
+      "id": "CA10",
+      "title": "列表、方向与公式",
+      "ruleIds": [
+        "MR49",
+        "MR50"
+      ],
+      "status": "partial",
+      "groups": [
+        "body"
+      ],
+      "remaining": "真实字体/RTL/公式通过，延迟加载中间状态未逐个截取。",
+      "note": ""
+    },
+    {
+      "id": "CA11",
+      "title": "跨块引用与异常恢复",
+      "ruleIds": [
+        "MR41",
+        "MR84"
+      ],
+      "status": "passed",
+      "groups": [
+        "body",
+        "errors"
+      ],
+      "remaining": "",
+      "note": ""
+    },
+    {
+      "id": "CA12",
+      "title": "文件与外链",
+      "ruleIds": [
+        "MR51",
+        "MR52",
+        "MR53"
+      ],
+      "status": "partial",
+      "groups": [
+        "links"
+      ],
+      "remaining": "缺少远端宿主集成。",
+      "note": ""
+    },
+    {
+      "id": "CA13",
+      "title": "媒体加载与失败",
+      "ruleIds": [
+        "MR53",
+        "MR54",
+        "MR55"
+      ],
+      "status": "partial",
+      "groups": [
+        "media"
+      ],
+      "remaining": "真实文件媒体失败→换源恢复通过；远端慢速媒体与 default/scrollable 私有模式未穷举。",
+      "note": ""
+    },
+    {
+      "id": "CA14",
+      "title": "图片画廊",
+      "ruleIds": [
+        "MR30",
+        "MR56",
+        "MR57"
+      ],
+      "status": "partial",
+      "groups": [
+        "media"
+      ],
+      "remaining": "已完成画廊和停止回退通过，逐图到达时所有 pending 组合未穷举。",
+      "note": ""
+    },
+    {
+      "id": "CA15",
+      "title": "附件空消息与来源",
+      "ruleIds": [
+        "MR22",
+        "MR58",
+        "MR59",
+        "MR60"
+      ],
+      "status": "partial",
+      "groups": [
+        "user",
+        "markers"
+      ],
+      "remaining": "私有 heartbeat/委派来源缺少完整产品语义。",
+      "note": ""
+    },
+    {
+      "id": "CA16",
+      "title": "原地编辑失败恢复",
+      "ruleIds": [
+        "MR23",
+        "MR61"
+      ],
+      "status": "partial",
+      "groups": [
+        "user"
+      ],
+      "remaining": "按允许的降级明确为放回输入框；不具备附件历史原地编辑能力。普通文件横向标签已做真实布局/键盘检查，PDF/Office 等专用预览及条件文档卡片组尚未接入。",
+      "note": ""
+    },
+    {
+      "id": "CA17",
+      "title": "复制、分支和时间戳",
+      "ruleIds": [
+        "MR24",
+        "MR25",
+        "MR26",
+        "MR27",
+        "MR62",
+        "MR63",
+        "MR64"
+      ],
+      "status": "partial",
+      "groups": [
+        "footer"
+      ],
+      "remaining": "操作资格、锁、分支失败和真实截断通过；剪贴板系统拒绝权限分支未模拟。",
+      "note": ""
+    },
+    {
+      "id": "CA18",
+      "title": "后台命令及异常退出",
+      "ruleIds": [
+        "MR28",
+        "MR65",
+        "MR66",
+        "MR67"
+      ],
+      "status": "partial",
+      "groups": [
+        "commands"
+      ],
+      "remaining": "没有真实脱离轮次的后台进程完成验收。",
+      "note": ""
+    },
+    {
+      "id": "CA19",
+      "title": "patch 状态与多文件",
+      "ruleIds": [
+        "MR19",
+        "MR29",
+        "MR68",
+        "MR69",
+        "MR70"
+      ],
+      "status": "partial",
+      "groups": [
+        "files"
+      ],
+      "remaining": "无原批次回滚能力；二进制/重命名/跨 cwd 组合未穷举。",
+      "note": ""
+    },
+    {
+      "id": "CA20",
+      "title": "MCP 六类内容与去重",
+      "ruleIds": [
+        "MR21",
+        "MR71",
+        "MR72"
+      ],
+      "status": "partial",
+      "groups": [
+        "mcp"
+      ],
+      "remaining": "六内容和原始信封通过；超大 raw 性能及跨评审连续调用组合未穷举。",
+      "note": ""
+    },
+    {
+      "id": "CA21",
+      "title": "MCP App 资源恢复",
+      "ruleIds": [
+        "MR74",
+        "MR75",
+        "MR89"
+      ],
+      "status": "partial",
+      "groups": [
+        "apps"
+      ],
+      "remaining": "失败重试和折叠草稿通过；superseded/remote-logo 私有策略未实现。",
+      "note": ""
+    },
+    {
+      "id": "CA22",
+      "title": "提问与回答记录",
+      "ruleIds": [
+        "MR07",
+        "MR31",
+        "MR76",
+        "MR77"
+      ],
+      "status": "partial",
+      "groups": [
+        "questions",
+        "permission"
+      ],
+      "remaining": "通用 kind 回退通过，不能等同八类私有协议均已接入。",
+      "note": ""
+    },
+    {
+      "id": "CA23",
+      "title": "计划进度与协作",
+      "ruleIds": [
+        "MR20",
+        "MR78",
+        "MR79"
+      ],
+      "status": "partial",
+      "groups": [
+        "progress",
+        "markers"
+      ],
+      "remaining": "实际进度与已知子任务导航通过；多真实代理并行模型执行未在本套触发。",
+      "note": ""
+    },
+    {
+      "id": "CA24",
+      "title": "错误与重连",
+      "ruleIds": [
+        "MR06",
+        "MR80"
+      ],
+      "status": "partial",
+      "groups": [
+        "errors"
+      ],
+      "remaining": "缺独立重连次数 UI 与旧重试回调的整机回放。",
+      "note": ""
+    },
+    {
+      "id": "CA25",
+      "title": "五类资源与展开",
+      "ruleIds": [
+        "MR32",
+        "MR81",
+        "MR82",
+        "MR83"
+      ],
+      "status": "partial",
+      "groups": [
+        "files",
+        "links"
+      ],
+      "remaining": "无五种 Codex 私有资源宿主。",
+      "note": ""
+    },
+    {
+      "id": "CA26",
+      "title": "正文指令和播报",
+      "ruleIds": [
+        "MR84",
+        "MR85",
+        "MR88"
+      ],
+      "status": "partial",
+      "groups": [
+        "body",
+        "markers"
+      ],
+      "remaining": "无完整 Codex 私有正文指令/heartbeat 协议。",
+      "note": ""
+    },
+    {
+      "id": "CA27",
+      "title": "分页与切任务",
+      "ruleIds": [
+        "MR32",
+        "MR33",
+        "MR34",
+        "MR35",
+        "MR36",
+        "MR86"
+      ],
+      "status": "passed",
+      "groups": [
+        "history"
+      ],
+      "remaining": "",
+      "note": ""
+    },
+    {
+      "id": "CA28",
+      "title": "折叠、离屏和消息导航",
+      "ruleIds": [
+        "MR01",
+        "MR04",
+        "MR15",
+        "MR16",
+        "MR18",
+        "MR19",
+        "MR38",
+        "MR39",
+        "MR86"
+      ],
+      "status": "partial",
+      "groups": [
+        "history",
+        "apps"
+      ],
+      "remaining": "正文、折叠、iframe 和导航分别通过，未穷举它们的所有并发组合。",
+      "note": ""
+    },
+    {
+      "id": "CA29",
+      "title": "显式事件与未知项",
+      "ruleIds": [
+        "MR06",
+        "MR87",
+        "MR89"
+      ],
+      "status": "partial",
+      "groups": [
+        "markers"
+      ],
+      "remaining": "通用显式标记/raw 通过；worktree 两阶段私有事件未全量接入。",
+      "note": ""
+    },
+    {
+      "id": "CA30",
+      "title": "模式、主题和降动效",
+      "ruleIds": [
+        "MR08",
+        "MR40",
+        "MR44",
+        "MR49",
+        "MR54",
+        "MR63",
+        "MR89"
+      ],
+      "status": "partial",
+      "groups": [
+        "table",
+        "media"
+      ],
+      "remaining": "960/1440、亮暗暖主题、实际样式变量、键盘焦点及 reduced-motion 图表布局通过；全部 compact 配置和跨平台尚未穷举。",
+      "note": ""
+    },
+    {
+      "id": "CA31",
+      "title": "覆盖验收口径",
+      "ruleIds": [
+        "MR90"
+      ],
+      "status": "passed",
+      "groups": [],
+      "remaining": "",
+      "note": "静态参考校验与动态验收分开记录；不使用组件数量制造对齐百分比。"
+    }
+  ]
+}

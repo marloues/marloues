@@ -123,3 +123,11 @@
     animation: none;
   }
 }
+
+.workflow-command-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  color: var(--text-3);
+  font-size: var(--text-xs);
+}
