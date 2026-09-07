@@ -38,7 +38,7 @@ export function resolveModelProvider(
       providerId: provider?.id ?? selectedProviderId,
       modelId: model?.id ?? selectedModelId,
     },
-    model: model?.id ?? selectedModelId,
+    model: model?.providerModelId ?? model?.id ?? selectedModelId,
     apiKey: resolveProviderApiKey(provider),
   };
 }

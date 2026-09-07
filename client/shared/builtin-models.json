@@ -1,5 +1,95 @@
 {
-  "version": 1,
+  "version": 2,
+  "models": [
+    {
+      "id": "deepseek-v4-flash",
+      "label": "DeepSeek V4 Flash",
+      "contextWindowTokens": 1000000,
+      "maxOutputTokens": 384000,
+      "supportsThinking": true,
+      "supportsVision": false
+    },
+    {
+      "id": "deepseek-v4-pro",
+      "label": "DeepSeek V4 Pro",
+      "contextWindowTokens": 1000000,
+      "maxOutputTokens": 393216,
+      "supportsThinking": true,
+      "supportsVision": false
+    },
+    {
+      "id": "qwen3.8-max",
+      "label": "Qwen3.8 Max",
+      "contextWindowTokens": 1000000,
+      "maxOutputTokens": 131072,
+      "supportsThinking": true,
+      "supportsVision": true
+    },
+    {
+      "id": "qwen3.8-flash",
+      "label": "Qwen3.8 Flash",
+      "contextWindowTokens": 1000000,
+      "maxOutputTokens": 131072,
+      "supportsThinking": true,
+      "supportsVision": true
+    },
+    {
+      "id": "qwen3.8-2.4t-a95b",
+      "label": "Qwen3.8 2.4T A95B",
+      "contextWindowTokens": 1000000,
+      "maxOutputTokens": 131072,
+      "supportsThinking": true,
+      "supportsVision": true
+    },
+    {
+      "id": "glm-5.2",
+      "label": "GLM-5.2",
+      "contextWindowTokens": 1000000,
+      "maxOutputTokens": 131072,
+      "supportsThinking": true,
+      "supportsVision": false
+    },
+    {
+      "id": "glm-5.2-fast-preview",
+      "label": "GLM-5.2 Fast Preview",
+      "contextWindowTokens": 1000000,
+      "maxOutputTokens": 131072,
+      "supportsThinking": true,
+      "supportsVision": true
+    },
+    {
+      "id": "glm-5.3-flash",
+      "label": "GLM-5.3 Flash",
+      "contextWindowTokens": 1000000,
+      "maxOutputTokens": 131072,
+      "supportsThinking": true,
+      "supportsVision": true
+    },
+    {
+      "id": "kimi-k3",
+      "label": "Kimi K3",
+      "contextWindowTokens": 1000000,
+      "maxOutputTokens": 1048576,
+      "supportsThinking": true,
+      "supportsVision": true
+    },
+    {
+      "id": "MiniMax-M2.7-highspeed",
+      "label": "MiniMax M2.7 Highspeed",
+      "contextWindowTokens": 200000,
+      "maxOutputTokens": 48000,
+      "supportsThinking": true,
+      "supportsVision": true
+    },
+    {
+      "id": "MiniMax-M3",
+      "label": "MiniMax M3",
+      "contextWindowTokens": 512000,
+      "maxOutputTokens": 48000,
+      "supportsThinking": true,
+      "supportsVision": true
+    }
+  ],
   "providers": [
     {
       "id": "deepseek",
@@ -20,24 +110,7 @@
           "priority": 20
         }
       ],
-      "models": [
-        {
-          "id": "deepseek-v4-flash",
-          "label": "DeepSeek V4 Flash",
-          "contextWindowTokens": 1000000,
-          "maxOutputTokens": 384000,
-          "supportsThinking": true,
-          "supportsVision": false
-        },
-        {
-          "id": "deepseek-v4-pro",
-          "label": "DeepSeek V4 Pro",
-          "contextWindowTokens": 1000000,
-          "maxOutputTokens": 384000,
-          "supportsThinking": true,
-          "supportsVision": false
-        }
-      ]
+      "models": ["deepseek-v4-flash", "deepseek-v4-pro"]
     },
     {
       "id": "minimax",
@@ -58,22 +131,35 @@
           "priority": 20
         }
       ],
+      "models": ["MiniMax-M2.7-highspeed", "MiniMax-M3"]
+    },
+    {
+      "id": "zhipu",
+      "name": "智谱 GLM",
+      "endpoints": [
+        {
+          "id": "zhipu-openai",
+          "name": "OpenAI Chat",
+          "protocol": "openai-chat",
+          "baseUrl": "https://open.bigmodel.cn/api/coding/paas/v4",
+          "priority": 10
+        }
+      ],
       "models": [
         {
-          "id": "MiniMax-M2.7-highspeed",
-          "label": "MiniMax M2.7 Highspeed",
+          "id": "glm-5.2",
           "contextWindowTokens": 200000,
-          "maxOutputTokens": 48000,
-          "supportsThinking": true,
-          "supportsVision": true
+          "maxOutputTokens": 48000
         },
         {
-          "id": "MiniMax-M3",
-          "label": "MiniMax M3",
-          "contextWindowTokens": 512000,
-          "maxOutputTokens": 48000,
-          "supportsThinking": true,
-          "supportsVision": true
+          "id": "glm-5.2-fast-preview",
+          "contextWindowTokens": 200000,
+          "maxOutputTokens": 48000
+        },
+        {
+          "id": "glm-5.3-flash",
+          "contextWindowTokens": 200000,
+          "maxOutputTokens": 48000
         }
       ]
     },
@@ -98,75 +184,40 @@
       ],
       "models": [
         {
-          "id": "deepseek-v4-pro-0813-aliyun",
-          "label": "DeepSeek V4 Pro (Aliyun)",
+          "id": "deepseek-v4-pro",
+          "providerModelId": "deepseek-v4-pro-0813-aliyun",
           "contextWindowTokens": 128000,
-          "maxOutputTokens": 384000,
-          "supportsThinking": true,
-          "supportsVision": false
+          "maxOutputTokens": 384000
         },
-        {
-          "id": "glm-5.2-aliyun",
-          "label": "GLM-5.2 (Aliyun)",
-          "contextWindowTokens": 128000,
-          "maxOutputTokens": 48000,
-          "supportsThinking": true,
-          "supportsVision": true
-        },
-        {
-          "id": "glm-5.2-fast-preview-aliyun",
-          "label": "GLM-5.2 Fast Preview (Aliyun)",
-          "contextWindowTokens": 128000,
-          "maxOutputTokens": 48000,
-          "supportsThinking": true,
-          "supportsVision": true
-        },
-        {
-          "id": "glm-5.3-aliyun",
-          "label": "GLM-5.3 (Aliyun)",
-          "contextWindowTokens": 121600,
-          "maxOutputTokens": 48000,
-          "supportsThinking": true,
-          "supportsVision": true
-        },
-        {
-          "id": "kimi-k3-aliyun",
-          "label": "Kimi K3 (Aliyun)",
-          "contextWindowTokens": 256000,
-          "maxOutputTokens": 32000,
-          "supportsThinking": true,
-          "supportsVision": true
-        },
-        {
-          "id": "qwen3.8-max-aliyun",
-          "label": "Qwen3.8 Max (Aliyun)",
-          "contextWindowTokens": 256000,
-          "maxOutputTokens": 32000,
-          "supportsThinking": true,
-          "supportsVision": true
-        }
-      ]
-    },
-    {
-      "id": "zhipu",
-      "name": "智谱 GLM",
-      "endpoints": [
-        {
-          "id": "zhipu-openai",
-          "name": "OpenAI Chat",
-          "protocol": "openai-chat",
-          "baseUrl": "https://open.bigmodel.cn/api/coding/paas/v4",
-          "priority": 10
-        }
-      ],
-      "models": [
         {
           "id": "glm-5.2",
-          "label": "GLM-5.2",
-          "contextWindowTokens": 200000,
-          "maxOutputTokens": 48000,
-          "supportsThinking": true,
-          "supportsVision": true
+          "providerModelId": "glm-5.2-aliyun",
+          "contextWindowTokens": 128000,
+          "maxOutputTokens": 48000
+        },
+        {
+          "id": "glm-5.2-fast-preview",
+          "providerModelId": "glm-5.2-fast-preview-aliyun",
+          "contextWindowTokens": 128000,
+          "maxOutputTokens": 48000
+        },
+        {
+          "id": "glm-5.3-flash",
+          "providerModelId": "glm-5.3-aliyun",
+          "contextWindowTokens": 121600,
+          "maxOutputTokens": 48000
+        },
+        {
+          "id": "kimi-k3",
+          "providerModelId": "kimi-k3-aliyun",
+          "contextWindowTokens": 256000,
+          "maxOutputTokens": 32000
+        },
+        {
+          "id": "qwen3.8-max",
+          "providerModelId": "qwen3.8-max-aliyun",
+          "contextWindowTokens": 256000,
+          "maxOutputTokens": 32000
         }
       ]
     }

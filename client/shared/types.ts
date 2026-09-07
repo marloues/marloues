@@ -689,6 +689,8 @@ export interface ModelOption {
   maxOutputTokens?: number;
   supportsVision?: boolean;
   supportsThinking?: boolean;
+  /** Provider-specific model ID sent to the API; falls back to `id` when absent. */
+  providerModelId?: string;
 }
 
 export interface McpServerConfig {

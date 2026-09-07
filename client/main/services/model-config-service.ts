@@ -351,6 +351,7 @@ export function normalizeModelOption(model: Partial<ModelOption>): ModelOption {
     supportsVision: model.supportsVision ?? preset.supportsVision ?? false,
     supportsThinking:
       model.supportsThinking ?? preset.supportsThinking ?? false,
+    providerModelId: model.providerModelId ?? preset.providerModelId,
   };
 }
 
