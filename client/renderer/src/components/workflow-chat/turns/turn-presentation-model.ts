@@ -48,6 +48,7 @@ export function buildTurnPresentationModel(
       .length > 0;
   const running = turnIsRunning(renderedMessage, isLastStreaming);
   const timing = message.timing;
+  const recordedStartedAt = finiteNumber(message.startedAt);
   const startedAt = finiteNumber(timing?.workStartedAt);
   const finalStartedAt = finiteNumber(timing?.finalAnswerStartedAt);
   const completedAt = finalStartedAt ?? finiteNumber(message.completedAt);
@@ -55,7 +56,11 @@ export function buildTurnPresentationModel(
     startedAt != null && completedAt != null
       ? Math.max(0, completedAt - startedAt)
       : !timing
-        ? finiteNumber(message.durationMs)
+        ? (finiteNumber(message.durationMs) ??
+          // 旧记录可能只保存起止时间；用记录本身恢复耗时，不使用挂载时间。
+          (recordedStartedAt != null && completedAt != null
+            ? Math.max(0, completedAt - recordedStartedAt)
+            : null))
         : null;
   const finalStarted = finalStartedAt != null;
   const finalEntries = finalDocumentEntries([
@@ -152,8 +157,7 @@ export function buildTurnPresentationModel(
         isLastStreaming,
       ),
       label:
-        durationMs != null &&
-        durationMs < 1000 &&
+        (durationMs == null || durationMs < 1000) &&
         renderedMessage.status === "completed"
           ? "已完成"
           : finalStarted
@@ -177,6 +181,7 @@ export function buildTurnPresentationModel(
         !renderedMessage.items.some(
           (item) =>
             item.type === "permissionRequest" &&
+            workflowShouldShowProcessItem(item) &&
             (!item.settled ||
               ["failed", "error", "denied", "timed_out"].includes(
                 String(item.status),

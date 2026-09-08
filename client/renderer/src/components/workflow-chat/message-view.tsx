@@ -19,15 +19,26 @@ import type { TokenUsage } from "@shared/types";
 import { WorkflowMarkdownContent } from "./content/MarkdownContent";
 import { ToolDetail } from "./activity/ToolCallRowDetails";
 import { toolDisplayName } from "./activity/ToolCallRowDetails/labels";
-import { DisclosureRow, DisclosureStateDot } from "./disclosure/DisclosureRow";
+import {
+  Button,
+  DisclosureRow,
+  StateDot,
+  type DisclosureRowProps,
+} from "@/components/ui";
+import { WorkflowUserMessage } from "./turns/UserMessage";
+import { useMarkdownContext } from "./content/MarkdownContext";
+import { fileReadPresentation } from "./activity/file-read-presentation";
+import { WorkflowFileReadRow } from "./activity/FileReadRow";
+import { useItemDisclosure } from "./content/conversation-ui-state";
 import { IoCard } from "./disclosure/IoCard";
 import { toolIconFor } from "./disclosure/tool-icon";
 import { itemInputText, itemOutputText } from "./adapter/item-text";
+import styles from "./message-view.module.css";
 import "./message-view.css";
 
 // —— 状态点（共享原语别名，保持既有导出面） ——
 
-export { DisclosureStateDot as MessageStateDot };
+export { StateDot as MessageStateDot };
 
 // —— 工具函数 ——
 
@@ -56,65 +67,33 @@ export function MessageUserRow({
   startedAt?: number;
 }) {
   if (!text.trim()) return null;
-  return (
-    <div
-      className="flex flex-col items-end gap-1.5"
-      data-time-hover-root
-      data-kind="message-user-row"
-    >
-      <div
-        className="flex flex-col items-end gap-2"
-        style={{ maxWidth: "min(525px, 82%)" }}
-      >
-        <div
-          className="whitespace-pre-wrap break-words rounded-[22px] bg-muted px-4 py-2.5 text-[16px] leading-6 text-text-normal"
-          data-kind="message-user-bubble"
-        >
-          {text}
-        </div>
-      </div>
-      <div
-        className="flex h-7 items-center gap-2.5"
-        data-kind="message-user-actions"
-      >
-        {startedAt ? (
-          <span
-            data-time-hover-label
-            className="whitespace-nowrap pr-3 text-[14px] leading-6 text-text-subtle"
-          >
-            {formatClock(startedAt)}
-          </span>
-        ) : null}
-        <button
-          type="button"
-          className="grid h-7 w-7 place-items-center rounded-full text-text-subtle hover:bg-muted hover:text-text-normal"
-          aria-label="复制"
-        >
-          <Copy className="h-4 w-4" />
-        </button>
-      </div>
-    </div>
-  );
+  return <WorkflowUserMessage text={text} createdAt={startedAt} />;
 }
 
 // —— 思考行 ——
 
 /** 思考行（Think 折叠行）：Brain 图标 + 摘要，展开全文。内容有就显示，不依赖 settled。 */
-export function MessageThinkRow({ text }: { text: string }) {
+export function MessageThinkRow({
+  text,
+  ...disclosure
+}: { text: string } & Pick<
+  DisclosureRowProps,
+  "open" | "defaultOpen" | "onOpenChange"
+>) {
   if (!text.trim()) return null;
   const summary = text.replace(/\s+/g, " ").trim();
   const clipped =
     summary.length > 80 ? `${summary.slice(0, 79).trimEnd()}…` : summary;
   return (
     <DisclosureRow
-      icon={<Brain className="h-4 w-4" />}
+      {...disclosure}
+      icon={<Brain />}
       title="思考"
       summary={clipped}
+      hideSummaryWhenOpen
+      data-activity-kind="reasoning"
     >
-      <div
-        className="ml-2 whitespace-pre-wrap break-words border-l border-border py-1 pl-4 pr-2 text-[14px] leading-6 text-text-muted"
-        data-kind="message-think-body"
-      >
+      <div className={styles.thinkBody} data-kind="message-think-body">
         {text}
       </div>
     </DisclosureRow>
@@ -130,6 +109,8 @@ export function MessageToolRow({
   running,
   errorSummary,
   detail,
+  activityKind,
+  ...disclosure
 }: {
   name: string;
   summary: string;
@@ -138,16 +119,19 @@ export function MessageToolRow({
   errorSummary?: string;
   /** 展开内容：接入 mar loues 现有渲染（ToolDetail / IN-OUT 卡）。无内容则不可展开。 */
   detail?: React.ReactNode;
-}) {
+  activityKind?: string;
+} & Pick<DisclosureRowProps, "open" | "onOpenChange">) {
   const summaryText = failed && errorSummary ? errorSummary : summary;
   return (
     <DisclosureRow
-      icon={failed ? <DisclosureStateDot state="error" /> : toolIconFor(name)}
+      {...disclosure}
+      icon={failed ? <StateDot state="error" /> : toolIconFor(name)}
       title={toolDisplayName(name)}
       summary={summaryText || undefined}
       summaryTone={failed ? "danger" : "subtle"}
       state={failed ? "error" : running ? "running" : "ok"}
-      toolName={name}
+      data-tool={name}
+      data-activity-kind={activityKind}
       expandable={Boolean(detail)}
     >
       {detail}
@@ -211,15 +195,23 @@ export const MessageItemView = memo(function MessageItemView({
 }: {
   item: WorkflowTurnItem;
 }) {
+  const [open, setOpen] = useItemDisclosure(item.id);
+  const { cwd } = useMarkdownContext();
+  const fileRead = fileReadPresentation(item, cwd);
+  if (fileRead)
+    return (
+      <WorkflowFileReadRow
+        presentation={fileRead}
+        name={itemName(item)}
+        activityKind={item.type}
+      />
+    );
   if (item.type === "agentMessage") {
     // 不要用 item.text?.trim() 跳过空文本：流式早期 text 为空，若据此不渲染，
     // text 一旦非空会从其他分支切换回来，MarkdownContent 反复 remount（流式
     // 缓冲 timer 被 unmount 清理），文本不渐进显示。
     return (
-      <div
-        className="text-[16px] leading-[28px]"
-        data-kind="message-assistant-md"
-      >
+      <div className={styles.assistant} data-kind="message-assistant-md">
         <WorkflowMarkdownContent
           content={item.text}
           streaming={item.settled === false}
@@ -238,16 +230,16 @@ export const MessageItemView = memo(function MessageItemView({
     if (item.encrypted && !text.trim()) {
       // 加密且无内容：静态一行（dsh 风格）
       return (
-        <div
-          className="flex items-center gap-2 py-0.5 text-[14px] leading-6 text-text-subtle"
+        <DisclosureRow
+          icon={<Brain />}
+          title="思考内容已隐藏"
+          expandable={false}
           data-kind="message-think-hidden"
-        >
-          <Brain className="h-4 w-4 text-text-subtle" />
-          <span>思考内容已隐藏</span>
-        </div>
+          data-activity-kind="reasoning"
+        />
       );
     }
-    return <MessageThinkRow text={text} />;
+    return <MessageThinkRow text={text} open={open} onOpenChange={setOpen} />;
   }
   if (
     item.type === "dynamicToolCall" ||
@@ -257,8 +249,23 @@ export const MessageItemView = memo(function MessageItemView({
     const failed = itemFailed(item);
     const running = itemRunning(item);
     const detailItem = item as ToolDetailItem;
+    const detail = (
+      <ToolDetail
+        item={detailItem}
+        failed={failed}
+        cancellable={running}
+        isCancelling={false}
+        onCancel={() => {
+          if ("id" in detailItem)
+            void window.marloues.chat.cancelTool(detailItem.id);
+        }}
+      />
+    );
     return (
       <MessageToolRow
+        open={open}
+        onOpenChange={setOpen}
+        activityKind={item.type}
         name={itemName(item)}
         summary={itemInputText(detailItem)}
         failed={failed}
@@ -268,18 +275,7 @@ export const MessageItemView = memo(function MessageItemView({
             ? itemOutputText(detailItem).split("\n")[0] || "执行失败"
             : undefined
         }
-        detail={
-          <ToolDetail
-            item={detailItem}
-            failed={failed}
-            cancellable={running}
-            isCancelling={false}
-            onCancel={() => {
-              if ("id" in detailItem)
-                void window.marloues.chat.cancelTool(detailItem.id);
-            }}
-          />
-        }
+        detail={detail}
       />
     );
   }
@@ -289,6 +285,9 @@ export const MessageItemView = memo(function MessageItemView({
     const output = itemOutputText(item);
     return (
       <MessageToolRow
+        open={open}
+        onOpenChange={setOpen}
+        activityKind={item.type}
         name={itemName(item)}
         summary={input}
         failed={failed}
@@ -345,43 +344,42 @@ export function MessageTurnTail({
   }
   return (
     <div
-      className="flex h-7 items-center gap-2.5"
+      className={styles.actions}
       data-time-hover-root
       data-kind="message-tail"
     >
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="icon-sm"
         title="复制回复"
         aria-label="复制回复"
         onClick={onCopy}
-        className="grid h-7 w-7 place-items-center rounded-full text-text-subtle hover:bg-muted hover:text-text-normal"
       >
-        <Copy className="h-4 w-4" />
-      </button>
+        <Copy />
+      </Button>
       {onFork ? (
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon-sm"
           title="创建对话分支"
           aria-label="创建对话分支"
           onClick={onFork}
-          className="grid h-7 w-7 place-items-center rounded-full text-text-subtle hover:bg-muted hover:text-text-normal"
         >
-          <Check className="h-4 w-4" />
-        </button>
+          <Check />
+        </Button>
       ) : null}
       {readings.length > 0 ? (
-        <span
-          data-time-hover-label
-          className="flex items-center gap-2 whitespace-nowrap pl-3 text-[14px] leading-6 text-text-subtle"
-        >
+        <span data-time-hover-label className={styles.readings}>
           {readings.map((r, i) => (
-            <span key={i} className="flex items-center gap-2">
+            <span key={i} className={styles.reading}>
               {i > 0 ? <span aria-hidden>·</span> : null}
               {r}
             </span>
           ))}
           {model ? (
-            <span className="flex items-center gap-2">
+            <span className={styles.reading}>
               <span aria-hidden>·</span>
               {model}
             </span>
@@ -417,17 +415,17 @@ export function MessageStatusRow({
       : chineseDuration(Math.max(0, Date.now() - startedAt));
   return (
     <div
-      className="flex items-center gap-2 text-[13px] text-text-subtle"
+      className={styles.status}
       role="status"
       aria-live="polite"
       data-kind="message-status"
     >
-      <DisclosureStateDot state="running" />
-      <span className="message-status-shimmer font-medium">正在思考</span>
-      {elapsed ? (
-        <span className="whitespace-nowrap text-[12px]">{elapsed}</span>
-      ) : null}
-      {extra ? <span className="font-mono text-[12px]">{extra}</span> : null}
+      <StateDot state="running" />
+      <span className={`message-status-shimmer ${styles.statusLabel}`}>
+        正在思考
+      </span>
+      {elapsed ? <span className={styles.elapsed}>{elapsed}</span> : null}
+      {extra ? <span className={styles.statusExtra}>{extra}</span> : null}
     </div>
   );
 }

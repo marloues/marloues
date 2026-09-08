@@ -1,5 +1,7 @@
-import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
+import { DisclosureRow } from "@/components/ui";
+import styles from "./ActivityRow.module.css";
+import { cn } from "@/lib/utils";
 
 interface WorkflowActivityRowProps {
   activityKind: string;
@@ -10,7 +12,11 @@ interface WorkflowActivityRowProps {
   hasDetail?: boolean;
   open?: boolean;
   onToggle?: () => void;
-  iconTone?: "muted" | "danger";
+  iconTone?: "muted" | "danger" | "accent";
+  activityState?: string;
+  activitySource?: string;
+  className?: string;
+  detailVariant?: "default" | "plain";
 }
 
 export function WorkflowActivityRow({
@@ -23,67 +29,38 @@ export function WorkflowActivityRow({
   open = false,
   onToggle,
   iconTone = "muted",
+  activityState,
+  activitySource,
+  className,
+  detailVariant = "default",
 }: WorkflowActivityRowProps) {
-  const interactive = Boolean(hasDetail && onToggle);
-  const content = (
-    <>
-      <span className={`workflow-activity-row-icon is-${iconTone}`}>
-        {icon}
-      </span>
-      <WorkflowActivityRowContent
-        label={label}
-        meta={meta}
-        interactive={interactive}
-      />
-    </>
-  );
-
   return (
-    <div
-      className="workflow-activity-row"
+    <DisclosureRow
+      className={cn("workflow-activity-row", className)}
       data-kind="activity-row"
       data-activity-kind={activityKind}
-      data-open={open ? "true" : "false"}
+      data-activity-state={activityState}
+      data-activity-source={activitySource}
+      icon={icon}
+      iconTone={iconTone === "muted" ? "subtle" : iconTone}
+      title={label}
+      meta={meta}
+      expandable={hasDetail}
+      open={open}
+      onOpenChange={onToggle ? () => onToggle() : undefined}
+      classNames={{
+        trigger: "workflow-activity-row-button",
+        icon: `workflow-activity-row-icon is-${iconTone}`,
+        title: "workflow-activity-row-label",
+        meta: "workflow-activity-row-meta",
+        content: cn(
+          "workflow-activity-detail",
+          detailVariant === "default" && styles.detail,
+        ),
+      }}
     >
-      {interactive ? (
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={open}
-          className="workflow-activity-row-button"
-        >
-          {content}
-        </button>
-      ) : (
-        <div className="workflow-activity-row-button is-static">{content}</div>
-      )}
-      {open && hasDetail ? (
-        <div className="workflow-activity-detail">{detail}</div>
-      ) : null}
-    </div>
-  );
-}
-
-export function WorkflowActivityRowContent({
-  label,
-  meta,
-  interactive,
-}: {
-  label: ReactNode;
-  meta?: ReactNode;
-  interactive: boolean;
-}) {
-  return (
-    <span className="workflow-activity-row-content">
-      <span className="workflow-activity-row-label">{label}</span>
-      <span className="workflow-activity-row-meta">{meta}</span>
-      <span
-        className={`workflow-activity-row-chevron ${interactive ? "" : "is-hidden"}`}
-        aria-hidden="true"
-      >
-        <ChevronRight />
-      </span>
-    </span>
+      {detail}
+    </DisclosureRow>
   );
 }
 

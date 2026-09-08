@@ -211,6 +211,8 @@
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --motion-fast: 140ms;
   --motion-normal: 260ms;
+  --motion-progress: 2600ms;
+  --motion-pulse: 2000ms;
   --conversation-collapse-duration: 220ms;
   --conversation-user-max-width: 77%;
   --conversation-activity-max-height: 224px;

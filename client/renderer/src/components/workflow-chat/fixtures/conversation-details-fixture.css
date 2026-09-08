@@ -9,29 +9,27 @@
   top: 0;
   z-index: 2;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 32px;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-8);
   border-bottom: 1px solid var(--border);
   background: var(--surface-workspace);
 }
 .conversation-details-fixture nav,
+.fixture-theme-controls,
 .fixture-controls {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2);
 }
-.conversation-details-fixture nav button,
 .fixture-controls button,
 .fixture-scroll button {
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 6px 10px;
-}
-.conversation-details-fixture button[aria-pressed="true"] {
-  color: var(--accent);
-  background: var(--raised-1);
 }
 .fixture-controls {
   padding: 14px 32px;
@@ -61,4 +59,15 @@
 
 .fixture-scroll {
   overflow-anchor: none;
+}
+
+@media (max-width: 640px) {
+  .conversation-details-fixture > header {
+    position: static;
+    padding: var(--space-4);
+  }
+  .conversation-details-fixture > main {
+    margin-block: var(--space-6);
+    padding-inline: var(--space-4);
+  }
 }

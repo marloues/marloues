@@ -4,6 +4,7 @@ import { Check, Copy, Maximize2 } from "lucide-react";
 import { WorkflowContentDialog } from "./ContentDialog";
 import { cleanCopiedHtml, copyConversationContent } from "./clipboard";
 import { useCopyFeedback } from "./use-copy-feedback";
+import { Button, FloatingActions } from "@/components/ui";
 
 export function WorkflowMarkdownTable({
   children,
@@ -19,13 +20,12 @@ export function WorkflowMarkdownTable({
     <div
       className={`workflow-markdown-table ${styles.root}`}
       data-kind="markdown-table"
+      data-floating-actions-host
     >
-      <div
-        className={`workflow-table-actions ${styles.actions}`}
-        data-copy-exclude
-      >
-        <button
-          className="icon-button"
+      <FloatingActions className="workflow-table-actions">
+        <Button
+          variant="ghost"
+          size="icon-sm"
           type="button"
           aria-label="展开表格"
           title="展开表格"
@@ -34,9 +34,10 @@ export function WorkflowMarkdownTable({
           onClick={() => setExpanded(true)}
         >
           <Maximize2 size={14} />
-        </button>
-        <button
-          className="icon-button"
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
           type="button"
           aria-label={copied ? "已复制表格" : "复制表格"}
           title="复制表格"
@@ -51,8 +52,8 @@ export function WorkflowMarkdownTable({
           }
         >
           {copied ? <Check size={14} /> : <Copy size={14} />}
-        </button>
-      </div>
+        </Button>
+      </FloatingActions>
       <div
         className={`workflow-table-scroll ${styles.scroll}`}
         tabIndex={0}

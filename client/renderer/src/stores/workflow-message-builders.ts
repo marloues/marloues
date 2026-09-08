@@ -10,6 +10,7 @@ import type { ChatSessionRecord, TimelineItem } from "@shared/types";
 import type { UIEvent } from "@shared/ui-protocol";
 import type { WorkflowReadThreadResponse } from "@shared/workflow-read-thread-contract";
 import type { Message } from "../types";
+import { restoreSdkTaskProgress, SDK_TASK_TYPE } from "./sdk-task-progress";
 import type {
   ExecutionTaskRecord,
   ExecutionSubagentRecord,
@@ -136,9 +137,28 @@ export function restoreExecutionStateFromReadThread(
     )
     .sort((a, b) => a.timestamp - b.timestamp);
 
-  if (!events.length) return state;
-
   let next = state;
+  const hasTaskEvents = events.some(
+    ({ event }) => event.type === "execution.task.update",
+  );
+  const currentTasks = state[snapshot.thread.id]?.tasks;
+  if (
+    hasTaskEvents &&
+    currentTasks &&
+    Object.values(currentTasks).some((task) => task.taskType === SDK_TASK_TYPE)
+  ) {
+    next = {
+      ...state,
+      [snapshot.thread.id]: {
+        ...state[snapshot.thread.id]!,
+        tasks: Object.fromEntries(
+          Object.entries(currentTasks).filter(
+            ([, task]) => task.taskType !== SDK_TASK_TYPE,
+          ),
+        ),
+      },
+    };
+  }
   for (const { event } of events) {
     if (event.type === "execution.task.update") {
       next = upsertExecutionTask(next, event);
@@ -149,6 +169,12 @@ export function restoreExecutionStateFromReadThread(
     } else if (event.type === "execution.subagent.complete") {
       next = completeExecutionSubagent(next, event);
     }
+  }
+  if (!hasTaskEvents) {
+    const current = ensureExecutionSession(next, snapshot.thread.id);
+    const tasks = restoreSdkTaskProgress(snapshot, current.tasks);
+    if (tasks !== current.tasks)
+      next = { ...next, [snapshot.thread.id]: { ...current, tasks } };
   }
   return next;
 }

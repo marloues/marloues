@@ -30,10 +30,16 @@ function markInlineCode() {
     children?: Node[];
   };
   return (tree: Node) => {
-    const walk = (node: Node, parent?: Node) => {
+    const walk = (node: Node, parent?: Node, inLink = false) => {
       if (node.tagName === "code" && parent?.tagName !== "pre")
-        node.properties = { ...node.properties, "data-inline-code": true };
-      node.children?.forEach((child) => walk(child, node));
+        node.properties = {
+          ...node.properties,
+          "data-inline-code": true,
+          "data-link-label": inLink,
+        };
+      node.children?.forEach((child) =>
+        walk(child, node, inLink || node.tagName === "a"),
+      );
     };
     walk(tree);
   };
@@ -46,7 +52,8 @@ function WorkflowHorizontalRule() {
 
 const MARKDOWN_COMPONENTS: Components = {
   code: function MarkdownCode({ node, children, className }) {
-    return node?.properties?.["data-inline-code"] ? (
+    return node?.properties?.["data-inline-code"] &&
+      !node.properties["data-link-label"] ? (
       <WorkflowInlineCode>{children}</WorkflowInlineCode>
     ) : (
       <code className={className}>{children}</code>

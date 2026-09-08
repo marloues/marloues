@@ -1,3 +1,4 @@
+import { workflowShouldShowProcessItem } from "../turns/turn-collapse-rules";
 import { WorkflowCollabAgentToolRow } from "./CollabAgentToolRow";
 import { WorkflowCommandExecutionRow } from "./CommandExecutionRow";
 import { WorkflowFileChangeRow } from "./FileChangeRow";
@@ -55,6 +56,7 @@ const SIMPLIFIED_ROW_TYPES: ReadonlySet<ProcessItem["type"]> = new Set([
 ]);
 
 export function WorkflowTurnItemRenderer({ item }: { item: ProcessItem }) {
+  if (!workflowShouldShowProcessItem(item)) return null;
   if (SIMPLIFIED_ROW_TYPES.has(item.type)) {
     return <MessageItemView item={item} />;
   }

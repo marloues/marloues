@@ -4,6 +4,10 @@
  * 限高滚动；配色走语义 token。
  */
 
+import styles from "./IoCard.module.css";
+import { Card, Divider, FloatingActions } from "@/components/ui";
+import { WorkflowDetailCopyButton } from "../activity/DetailCopyButton";
+
 export function IoCard({
   input,
   output,
@@ -14,34 +18,32 @@ export function IoCard({
   failed?: boolean;
 }) {
   return (
-    <div
-      className="my-1 ml-1 flex flex-col overflow-hidden rounded-xl border border-line/60 bg-muted-soft"
-      data-kind="message-tool-io"
-    >
+    <Card className={styles.card} data-kind="message-tool-io">
       {input ? (
-        <div className="grid max-h-[150px] grid-cols-[max-content_1fr] items-baseline gap-x-3.5 overflow-y-auto px-4 py-3">
-          <span className="sticky top-0 self-start text-xs text-text-subtle/70">
-            IN
-          </span>
-          <span className="min-w-0 whitespace-pre-wrap break-words font-mono text-xs leading-[1.6] text-text-muted">
-            {input}
-          </span>
+        <div className={styles.section} data-floating-actions-host>
+          <div className={styles.scroll}>
+            <span className={styles.label}>输入</span>
+            <span className={styles.content}>{input}</span>
+          </div>
+          <FloatingActions>
+            <WorkflowDetailCopyButton value={input} label="复制输入" />
+          </FloatingActions>
         </div>
       ) : null}
-      {input && output ? <div className="h-px shrink-0 bg-line/60" /> : null}
+      {input && output ? <Divider /> : null}
       {output ? (
-        <div className="grid max-h-[150px] grid-cols-[max-content_1fr] items-baseline gap-x-3.5 overflow-y-auto px-4 py-3">
-          <span className="sticky top-0 self-start text-xs text-text-subtle/70">
-            OUT
-          </span>
-          <span
-            className="min-w-0 whitespace-pre-wrap break-words font-mono text-xs leading-[1.6] text-text-muted"
-            data-error={failed || undefined}
-          >
-            {output}
-          </span>
+        <div className={styles.section} data-floating-actions-host>
+          <div className={styles.scroll}>
+            <span className={styles.label}>输出</span>
+            <span className={styles.content} data-error={failed || undefined}>
+              {output}
+            </span>
+          </div>
+          <FloatingActions>
+            <WorkflowDetailCopyButton value={output} label="复制输出" />
+          </FloatingActions>
         </div>
       ) : null}
-    </div>
+    </Card>
   );
 }

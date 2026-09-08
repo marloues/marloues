@@ -11,7 +11,7 @@ import {
   Wrench,
 } from "lucide-react";
 import type { WorkflowTurnItem } from "../../../../../shared/adapters/workflow-messages-to-read-thread";
-import { WorkflowActivityRowContent, WorkflowInlineDots } from "./ActivityRow";
+import { WorkflowActivityRow, WorkflowInlineDots } from "./ActivityRow";
 import {
   workflowActivityGroupViewState,
   type WorkflowActivityGroup as WorkflowActivityGroupModel,
@@ -121,42 +121,34 @@ function ActivitySummaryRow({
   if (!displayLabel) return null;
 
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-expanded={expanded}
-      data-kind="activity-row"
-      data-activity-kind="summary"
-      data-activity-state={
-        thinking ? "thinking" : active ? "active" : "summary"
+    <WorkflowActivityRow
+      open={expanded}
+      onToggle={onToggle}
+      hasDetail
+      activityKind="summary"
+      activityState={thinking ? "thinking" : active ? "active" : "summary"}
+      activitySource={browserSource ? "browser" : undefined}
+      className="workflow-activity-summary-row"
+      icon={<ActivitySummaryIcon group={group} />}
+      iconTone={browserSource ? "accent" : "muted"}
+      label={
+        <>
+          <span
+            className={`workflow-activity-row-text${thinking ? " workflow-activity-thinking-label" : ""}`}
+            title={displayLabel}
+          >
+            {displayLabel}
+          </span>
+          {active ? <WorkflowInlineDots /> : null}
+        </>
       }
-      data-activity-source={browserSource ? "browser" : undefined}
-      className="workflow-activity-row-button workflow-activity-summary-row"
-    >
-      <span className="workflow-activity-row-icon">
-        <ActivitySummaryIcon group={group} />
-      </span>
-      <WorkflowActivityRowContent
-        label={
-          <>
-            <span
-              className={`workflow-activity-row-text${thinking ? " workflow-activity-thinking-label" : ""}`}
-              title={displayLabel}
-            >
-              {displayLabel}
-            </span>
-            {active ? <WorkflowInlineDots /> : null}
-          </>
-        }
-        meta={
-          <InlineDiffStats
-            added={group.summary.addedLineCount}
-            removed={group.summary.removedLineCount}
-          />
-        }
-        interactive
-      />
-    </button>
+      meta={
+        <InlineDiffStats
+          added={group.summary.addedLineCount}
+          removed={group.summary.removedLineCount}
+        />
+      }
+    />
   );
 }
 

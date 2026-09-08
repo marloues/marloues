@@ -118,7 +118,7 @@ describe("buildTurnPresentationModel", () => {
     expect(model.blocks).toEqual([]);
   });
 
-  it("keeps approvals and unknown legacy items in the process projection", () => {
+  it("keeps unknown legacy items but omits permission events from the process projection", () => {
     const model = buildTurnPresentationModel(
       turn({
         status: "running",
@@ -137,9 +137,10 @@ describe("buildTurnPresentationModel", () => {
       { isLastStreaming: true },
     );
 
-    expect(model.process.stepCount).toBe(2);
+    expect(model.process.stepCount).toBe(1);
     expect(model.process.hasActivityItems).toBe(true);
     expect(model.blocks[0]).toMatchObject({ kind: "process" });
+    expect(JSON.stringify(model.blocks)).not.toContain('"id":"approval"');
   });
 
   it("keeps live file edits in process until they become settled results", () => {

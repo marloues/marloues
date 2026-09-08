@@ -1,4 +1,5 @@
 import type { WorkflowReadThreadResponse } from "./workflow-read-thread-contract";
+import type { AgentInputPart } from "./agent-input";
 import type {
   AppVersionInfo,
   RendererReadyInfo,
@@ -252,7 +253,8 @@ export interface TimelineItem {
 export interface ChatSendRequest {
   sessionId: string;
   text: string;
-  attachments?: unknown[];
+  /** Runtime-independent rich input parts accompanying `text`. */
+  attachments?: AgentInputPart[];
   workMode?: AgentWorkMode;
   permissionMode?: AgentPermissionMode;
   deliveryMode?: "normal" | "steer";

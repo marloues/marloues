@@ -268,10 +268,6 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-.workflow-code-block-header button[aria-pressed="true"] {
-  color: var(--accent);
-  background: var(--raised-2);
-}
 /* KaTeX participates in the shared Markdown document contract. */
 .workflow-markdown .katex-display {
   max-width: 100%;

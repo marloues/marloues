@@ -511,8 +511,11 @@ describe("runtime snapshots → host contract → conversation presentation", ()
   });
 
   it.each(["pending", "failed"])(
-    "keeps %s decisions/work visible even with a final answer",
+    "does not promote %s approvals into the process area before a final answer",
     (status) => {
+      // Under the unified contract a permissionRequest without a question form
+      // is carried by the dedicated approval surface, not the process area, so
+      // a final answer stays collapsible regardless of the approval state.
       const message = turn([
         {
           id: "p",
@@ -533,11 +536,9 @@ describe("runtime snapshots → host contract → conversation presentation", ()
       expect(
         buildTurnPresentationModel(message, { isLastStreaming: false }).process
           .canCollapse,
-      ).toBe(false);
+      ).toBe(true);
+      expect(render(message)).toContain("准备好了");
       expect(render(message)).not.toContain(
-        'data-kind="agent-flow-section" hidden=""',
-      );
-      expect(render(message)).toContain(
         'data-activity-kind="permissionRequest"',
       );
     },
@@ -575,13 +576,13 @@ describe("runtime snapshots → host contract → conversation presentation", ()
       expect(html).toContain(`data-activity-kind="${kind}"`);
     expect(html).not.toContain('data-block-kind="results"');
     expect(html).toContain('data-activity-kind="imageView"');
-    expect(html).toContain('data-activity-kind="plan"');
-    expect(html).toContain("已更新计划");
+    // Under the unified contract a plan is task progress, not an activity row.
+    expect(html).not.toContain('data-activity-kind="plan"');
     expect(html).toContain("已查看 1 张图像");
     expect(html).not.toContain("result.png"); // Thumbnail is inside the closed disclosure.
   });
 
-  it("retains early approval, failure, result and final items outside a live trace window", () => {
+  it("retains failure, result and final items outside a live trace window", () => {
     const message = turn(
       [
         {
@@ -621,7 +622,9 @@ describe("runtime snapshots → host contract → conversation presentation", ()
     });
     expect(model.documentText).toBe("中间结果");
     const html = render(message, false, true);
-    expect(html).toContain('data-activity-kind="permissionRequest"');
+    // A plain approval is carried by the dedicated approval surface and is not
+    // re-rendered as a process row, so it is excluded from the live window too.
+    expect(html).not.toContain('data-activity-kind="permissionRequest"');
     expect(html).toContain('data-activity-kind="imageView"');
     expect(JSON.stringify(model.blocks)).toContain("/tmp/retained.png");
     expect(html).toContain("failed command");

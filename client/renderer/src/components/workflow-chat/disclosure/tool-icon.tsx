@@ -16,17 +16,8 @@ import {
   Wrench,
 } from "lucide-react";
 import type { ReactNode } from "react";
-
-export function isReadToolName(name: string): boolean {
-  return (
-    name === "read" ||
-    name.endsWith(".read") ||
-    name === "read_file" ||
-    name === "read_files" ||
-    name.endsWith(".read_file") ||
-    name.endsWith(".read_files")
-  );
-}
+import { isReadToolName } from "../activity/ToolCallRowDetails/helpers";
+export { isReadToolName };
 
 export function isListToolName(name: string): boolean {
   return (
@@ -56,16 +47,14 @@ export function isEditToolName(name: string): boolean {
 
 export function toolIconFor(name: string): ReactNode {
   const n = name.toLowerCase();
-  if (n === "update_plan" || n.includes("todo"))
-    return <ListChecks className="h-4 w-4" />;
-  if (n === "token_count") return <Gauge className="h-4 w-4" />;
-  if (isReadToolName(n)) return <FileText className="h-4 w-4" />;
-  if (isListToolName(n)) return <FolderTree className="h-4 w-4" />;
-  if (isEditToolName(n)) return <FilePenLine className="h-4 w-4" />;
-  if (n === "js" || n.includes("web") || isSearchToolName(n))
-    return <Search className="h-4 w-4" />;
+  if (n === "update_plan" || n.includes("todo")) return <ListChecks />;
+  if (n === "token_count") return <Gauge />;
+  if (isReadToolName(n)) return <FileText />;
+  if (isListToolName(n)) return <FolderTree />;
+  if (isEditToolName(n)) return <FilePenLine />;
+  if (n === "js" || n.includes("web") || isSearchToolName(n)) return <Search />;
   if (n.includes("shell") || n.includes("command") || n === "commands")
-    return <SquareTerminal className="h-4 w-4" />;
-  if (n.includes("clipboard")) return <Clipboard className="h-4 w-4" />;
-  return <Wrench className="h-4 w-4" />;
+    return <SquareTerminal />;
+  if (n.includes("clipboard")) return <Clipboard />;
+  return <Wrench />;
 }

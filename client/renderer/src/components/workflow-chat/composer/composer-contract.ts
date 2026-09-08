@@ -48,13 +48,21 @@ export function composerAttachmentsToContent(
   return attachments.map((attachment) => {
     switch (attachment.kind) {
       case "image":
-        return { type: "image", url: attachment.dataUrl, detail: "auto" };
+        return {
+          type: "image",
+          url: attachment.dataUrl,
+          detail: "auto",
+          name: attachment.name,
+          mimeType: attachment.mimeType,
+          size: attachment.size,
+        };
       case "file":
         return {
           type: "file",
           name: attachment.name,
           mimeType: attachment.mimeType,
           text: attachment.text,
+          size: attachment.size,
         };
       case "url":
         return { type: "url", url: attachment.url };

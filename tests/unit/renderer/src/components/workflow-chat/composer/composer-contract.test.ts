@@ -46,4 +46,43 @@ describe("composer contract", () => {
       }),
     ]);
   });
+
+  it("preserves original image and file metadata in canonical content", () => {
+    expect(
+      composerAttachmentsToContent([
+        {
+          kind: "image",
+          id: "image-1",
+          name: "diagram.png",
+          mimeType: "image/png",
+          dataUrl: "data:image/png;base64,aW1hZ2U=",
+          size: 5,
+        },
+        {
+          kind: "file",
+          id: "file-1",
+          name: "notes.md",
+          mimeType: "text/markdown",
+          text: "# Notes",
+          size: 7,
+        },
+      ]),
+    ).toEqual([
+      {
+        type: "image",
+        url: "data:image/png;base64,aW1hZ2U=",
+        detail: "auto",
+        name: "diagram.png",
+        mimeType: "image/png",
+        size: 5,
+      },
+      {
+        type: "file",
+        name: "notes.md",
+        mimeType: "text/markdown",
+        text: "# Notes",
+        size: 7,
+      },
+    ]);
+  });
 });

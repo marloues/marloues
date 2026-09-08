@@ -121,7 +121,16 @@ function commandFromToolArguments(value: unknown): string {
 function patchTextFromTool(argumentsValue: unknown, output = ""): string {
   if (typeof argumentsValue === "string") return argumentsValue;
   const record = recordValue(argumentsValue);
-  return stringValue(record?.patch) || stringValue(record?.input) || output;
+  const explicitPatch =
+    stringValue(record?.patch) || stringValue(record?.input);
+  if (explicitPatch) return explicitPatch;
+  // SDK Edit/Write usually return a success message. Keep that message from
+  // replacing the diff reconstructed from the tool's old/new content.
+  return /^(?:diff --git |\*\*\* (?:Begin Patch|(?:Add|Update|Delete) File:)|@@ -\d)/m.test(
+    output,
+  )
+    ? output
+    : "";
 }
 
 function patchChanges(patch: string): Array<{

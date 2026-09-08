@@ -1,4 +1,5 @@
-import styles from "./ReadThreadTurnList.module.css";
+import { MessageNavigation } from "./MessageNavigation";
+import { messageNavigationEntries } from "./message-navigation";
 import { useCallback, useLayoutEffect, useMemo, useState, useRef } from "react";
 import type { ReactNode, RefObject } from "react";
 import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
@@ -40,6 +41,8 @@ interface Props {
     index: number,
   ) => ReactNode;
   scrollParentRef?: RefObject<HTMLDivElement | null>;
+  /** Detach output following before jumping to an earlier message. */
+  onNavigateMessage?: () => void;
 }
 
 export function WorkflowReadThreadTurnList({
@@ -58,14 +61,20 @@ export function WorkflowReadThreadTurnList({
   onDeleteMessage,
   renderBeforeTurn,
   scrollParentRef,
+  onNavigateMessage,
 }: Props) {
   const virtualList = useRef<VirtuosoHandle>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const workflowTurns = useMemo(() => {
     const turns = workflowReadThreadTurnsInRenderOrder(readThread).filter(
       (turn) => turn.items.length > 0,
     );
     return turns;
   }, [readThread]);
+  const navigationEntries = useMemo(
+    () => messageNavigationEntries(workflowTurns),
+    [workflowTurns],
+  );
   const collapseMessages = useMemo(
     () => workflowTurns.map(workflowTurnToCollapseMessage),
     [workflowTurns],
@@ -120,10 +129,6 @@ export function WorkflowReadThreadTurnList({
     defaultExpandedMessageId: runningTurnId,
   });
   const [scrollParent, setScrollParent] = useState<HTMLDivElement | null>(null);
-  const [navigationPosition, setNavigationPosition] = useState({
-    right: 22,
-    top: 90,
-  });
   useLayoutEffect(() => {
     const syncScrollParent = () => {
       setScrollParent(scrollParentRef?.current ?? null);
@@ -133,25 +138,6 @@ export function WorkflowReadThreadTurnList({
     const frame = requestAnimationFrame(syncScrollParent);
     return () => cancelAnimationFrame(frame);
   }, [scrollParentRef]);
-
-  useLayoutEffect(() => {
-    if (!scrollParent) return;
-    const update = () => {
-      const bounds = scrollParent.getBoundingClientRect();
-      setNavigationPosition({
-        right: Math.max(12, window.innerWidth - bounds.right + 16),
-        top: Math.max(12, bounds.top + 12),
-      });
-    };
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(scrollParent);
-    window.addEventListener("resize", update);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", update);
-    };
-  }, [scrollParent]);
 
   const renderTurn = useCallback(
     (index: number, turn: WorkflowTurn) => {
@@ -233,55 +219,30 @@ export function WorkflowReadThreadTurnList({
 
   return (
     <WorkflowMarkdownProvider value={markdownContext}>
-      {workflowTurns.length > 1 ? (
-        <details
-          className={`workflow-message-navigation ${styles.navigation}`}
-          style={navigationPosition}
-        >
-          <summary>消息导航</summary>
-          <nav aria-label="消息导航">
-            {workflowTurns.map((turn, index) => {
-              const user = turn.items.find(
-                (item) => item.type === "userMessage",
-              );
-              const label =
-                user?.type === "userMessage"
-                  ? user.content
-                      .filter((part) => part.type === "text")
-                      .map((part) => ("text" in part ? part.text : ""))
-                      .join(" ")
-                  : `第 ${index + 1} 轮`;
-              return (
-                <button
-                  key={turn.id}
-                  type="button"
-                  title={label}
-                  onClick={(event) => {
-                    virtualList.current?.scrollToIndex({
-                      index,
-                      align: "start",
-                      behavior: "auto",
-                    });
-                    event.currentTarget
-                      .closest("details")
-                      ?.removeAttribute("open");
-                  }}
-                >
-                  {index + 1}. {label || "附件消息"}
-                </button>
-              );
-            })}
-          </nav>
-        </details>
-      ) : null}
-      <Virtuoso
-        ref={virtualList}
-        customScrollParent={scrollParent}
-        data={workflowTurns}
-        computeItemKey={(_index, turn) => turn.id}
-        increaseViewportBy={{ top: 1_200, bottom: 1_800 }}
-        itemContent={renderTurn}
-      />
+      <div ref={contentRef}>
+        <MessageNavigation
+          key={scope}
+          entries={navigationEntries}
+          scrollParent={scrollParent}
+          contentRef={contentRef}
+          onNavigate={(index) => {
+            onNavigateMessage?.();
+            virtualList.current?.scrollToIndex({
+              index,
+              align: "start",
+              behavior: "auto",
+            });
+          }}
+        />
+        <Virtuoso
+          ref={virtualList}
+          customScrollParent={scrollParent}
+          data={workflowTurns}
+          computeItemKey={(_index, turn) => turn.id}
+          increaseViewportBy={{ top: 1_200, bottom: 1_800 }}
+          itemContent={renderTurn}
+        />
+      </div>
     </WorkflowMarkdownProvider>
   );
 }

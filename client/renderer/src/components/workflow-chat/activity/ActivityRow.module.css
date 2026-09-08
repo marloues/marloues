@@ -1,0 +1,13 @@
+.detail {
+  margin: var(--space-1) 0 var(--space-1) var(--space-2);
+  padding: var(--space-1) 0 var(--space-1) var(--space-4);
+  border-left: 2px solid var(--border-subtle);
+  color: var(--text-3);
+  font: var(--text-xs)/1.6 var(--font-code);
+}
+@media (max-width: 640px) {
+  .detail {
+    padding-left: var(--space-3);
+    padding-right: var(--space-2);
+  }
+}

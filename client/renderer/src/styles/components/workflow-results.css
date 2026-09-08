@@ -25,6 +25,15 @@
   background: var(--raised-2);
 }
 
+.workflow-result-diff-card {
+  background: transparent;
+}
+
+.workflow-result-diff-card:hover,
+.workflow-result-diff-card[data-hover-preview-open="true"] {
+  background: var(--raised-1);
+}
+
 .workflow-result-card-head,
 .workflow-result-preview-card {
   display: grid;
@@ -119,10 +128,6 @@
   right: 0;
   opacity: 0;
   pointer-events: none;
-}
-
-.workflow-result-card:hover .workflow-result-card-action.is-review {
-  opacity: 0;
 }
 
 .workflow-result-card:hover .workflow-result-card-action.is-undo,
@@ -298,12 +303,6 @@
   width: 12px;
   height: 12px;
 }
-.workflow-result-review-head:hover .workflow-result-review-default {
-  display: none;
-}
-.workflow-result-review-head:hover .workflow-result-review-hover {
-  display: inline-flex;
-}
 
 .workflow-result-file-row:first-child {
   border-top: 0;
@@ -321,36 +320,6 @@
   font-family: var(--font-mono);
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.workflow-result-diff-card .workflow-result-card-copy {
-  position: relative;
-}
-
-.workflow-result-file-popover {
-  position: absolute;
-  z-index: 45;
-  top: calc(100% + 6px);
-  right: 0;
-  display: none;
-  width: min(620px, 82vw);
-  max-height: 360px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface-popover);
-  box-shadow: var(--shadow-lg);
-}
-
-.workflow-result-file-row:hover .workflow-result-file-popover,
-.workflow-result-file-row:focus-within .workflow-result-file-popover,
-.workflow-result-diff-card
-  .workflow-result-card-copy:hover
-  .workflow-result-file-popover,
-.workflow-result-diff-card
-  .workflow-result-card-copy:focus-within
-  .workflow-result-file-popover {
-  display: block;
 }
 
 .workflow-result-file-popover-head {
@@ -379,8 +348,7 @@
 }
 
 .workflow-result-file-popover-body {
-  max-height: 318px;
-  overflow: auto;
+  min-width: 0;
 }
 
 @media (max-width: 560px) {
@@ -401,10 +369,5 @@
 
   .workflow-result-card-actions .workflow-result-card-action svg {
     color: var(--text-2);
-  }
-
-  .workflow-result-file-popover {
-    right: calc(-1 * var(--space-2));
-    width: min(620px, calc(100vw - 24px));
   }
 }

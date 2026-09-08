@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { Button, HoverPreview } from "@/components/ui";
+import { filePatchStats, patchForFile } from "@/components/diff/file-patch";
+import { useUnifiedChatStore } from "@/stores/unified-chat-store";
+import { useRef, useState, type RefObject } from "react";
 import { useMarkdownContext } from "../content/MarkdownContext";
 import {
   ExternalLink,
@@ -24,7 +27,6 @@ import { imageGenerationLabel } from "./ImageGenerationRow";
 import {
   ConversationChangesIcon,
   ConversationChevronDownIcon,
-  ConversationReviewArrowIcon,
 } from "../conversation-icons";
 
 type ProcessItem = Exclude<
@@ -36,11 +38,6 @@ type ToolLikeItem = Exclude<
   ProcessItem,
   Extract<WorkflowTurnItem, { type: "reasoning" }> | FileChangeItemModel
 >;
-type DiffLine = {
-  kind: "add" | "remove" | "meta" | "context";
-  prefix: string;
-  text: string;
-};
 type FileEditSummary = {
   path: string;
   added: number;
@@ -61,7 +58,11 @@ interface Props {
   userMessageId?: string;
 }
 
-export function WorkflowResultCards({ items, showFileChanges = true }: Props) {
+export function WorkflowResultCards({
+  items,
+  sessionId,
+  showFileChanges = true,
+}: Props) {
   const [previewImage, setPreviewImage] = useState<WorkflowImagePreview | null>(
     null,
   );
@@ -73,7 +74,8 @@ export function WorkflowResultCards({ items, showFileChanges = true }: Props) {
           isCompletedFileChangeItem(item),
       )
     : [];
-  const localFileSummaries = fileEditSummaries(visibleFiles);
+  const { cwd } = useMarkdownContext();
+  const localFileSummaries = fileEditSummaries(visibleFiles, cwd);
   const fileSummaries = localFileSummaries;
   const browserItem = items.find(
     (item) =>
@@ -97,7 +99,7 @@ export function WorkflowResultCards({ items, showFileChanges = true }: Props) {
           />
         ))}
         {fileSummaries.length ? (
-          <EditSummaryCard summaries={fileSummaries} />
+          <EditSummaryCard summaries={fileSummaries} sessionId={sessionId} />
         ) : null}
       </div>
       <WorkflowImageLightbox
@@ -235,8 +237,23 @@ function browserPreviewInfo(item: ProcessItem): {
   return { title: "网页预览", subtitle: "网站" };
 }
 
-function EditSummaryCard({ summaries }: { summaries: FileEditSummary[] }) {
-  const { cwd } = useMarkdownContext();
+function EditSummaryCard({
+  summaries,
+  sessionId,
+}: {
+  summaries: FileEditSummary[];
+  sessionId?: string;
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const context = useMarkdownContext();
+  const { cwd } = context;
+  const activeSessionId = useUnifiedChatStore((state) => state.activeSessionId);
+  const reviewSessionId = sessionId ?? context.sessionId ?? activeSessionId;
+  const previewEnabled = useInspectorStore(
+    (state) =>
+      !reviewSessionId ||
+      !Object.values(state.visibleAuxiliaryPanels).includes(reviewSessionId),
+  );
   const openReview = useInspectorStore((state) => state.openReview);
   const stats = summaries.reduce(
     (total, file) => ({
@@ -251,7 +268,10 @@ function EditSummaryCard({ summaries }: { summaries: FileEditSummary[] }) {
 
   const handleReview = (summary = firstSummary) => {
     if (!summary) return;
-    openReview(summary.path, summary.diff);
+    openReview(summary.path, summary.diff, {
+      sessionId: reviewSessionId ?? undefined,
+      cwd,
+    });
   };
 
   const singleFile = summaries.length === 1;
@@ -264,6 +284,7 @@ function EditSummaryCard({ summaries }: { summaries: FileEditSummary[] }) {
   return (
     <div
       className="result-card workflow-result-card workflow-result-diff-card"
+      ref={cardRef}
       data-kind="result-card"
       data-result-kind="diff"
     >
@@ -278,41 +299,33 @@ function EditSummaryCard({ summaries }: { summaries: FileEditSummary[] }) {
               <b>+{stats.added}</b>
               <em>-{stats.removed}</em>
             </span>
-            <span className="workflow-result-review-hover">
-              审核变更 <ConversationReviewArrowIcon />
-            </span>
           </small>
-          {singleFile ? <FileDiffHoverPreview file={firstSummary} /> : null}
         </div>
         <div className="workflow-result-card-actions">
-          <button
+          <Button
             type="button"
-            className="workflow-result-card-action is-review"
+            variant="outline"
+            size="sm"
             onClick={() => handleReview()}
             aria-label="审核文件变更"
           >
             审核
-          </button>
+          </Button>
         </div>
       </div>
+      {singleFile && previewEnabled ? (
+        <FileDiffHoverPreview file={firstSummary} anchorRef={cardRef} />
+      ) : null}
       {!singleFile && summaries.length ? (
         <div className="workflow-result-file-list">
           {visibleFiles.map((file) => (
-            <button
-              type="button"
+            <FileSummaryRow
               key={file.path}
-              className="workflow-result-file-row"
-              onClick={() => handleReview(file)}
-            >
-              <span className="workflow-result-file-path" title={file.path}>
-                {relativeFileLabel(file.path, cwd)}
-              </span>
-              <span className="workflow-result-diff-stats">
-                <b>+{file.added}</b>
-                <em>-{file.removed}</em>
-              </span>
-              <FileDiffHoverPreview file={file} />
-            </button>
+              file={file}
+              cwd={cwd}
+              onReview={() => handleReview(file)}
+              previewEnabled={previewEnabled}
+            />
           ))}
           {remainingFiles > 0 ? (
             <button
@@ -335,15 +348,18 @@ function EditSummaryCard({ summaries }: { summaries: FileEditSummary[] }) {
   );
 }
 
-function fileEditSummaries(items: FileChangeItemModel[]): FileEditSummary[] {
+function fileEditSummaries(
+  items: FileChangeItemModel[],
+  cwd?: string | null,
+): FileEditSummary[] {
   const files = new Map<string, FileEditSummary>();
 
   for (const item of items) {
     for (const change of item.changes) {
       if (!change.path) continue;
-      const patch = patchForFile(change.diff?.text ?? "", change.path);
+      const patch = patchForFile(change.diff?.text ?? "", change.path, cwd);
       const previous = files.get(change.path);
-      const stats = patchStats(patchPreviewLines(patch));
+      const stats = filePatchStats(patch);
       files.set(change.path, {
         path: change.path,
         added: (previous?.added ?? 0) + stats.added,
@@ -365,7 +381,66 @@ function relativeFileLabel(path: string, cwd?: string | null): string {
     ? normalized.slice(root.length + 1)
     : path;
 }
-function FileDiffHoverPreview({ file }: { file: FileEditSummary }) {
+function FileSummaryRow({
+  file,
+  cwd,
+  onReview,
+  previewEnabled,
+}: {
+  file: FileEditSummary;
+  cwd?: string | null;
+  onReview: () => void;
+  previewEnabled: boolean;
+}) {
+  const rowRef = useRef<HTMLButtonElement>(null);
+  return (
+    <>
+      <button
+        ref={rowRef}
+        type="button"
+        className="workflow-result-file-row"
+        onClick={onReview}
+      >
+        <span className="workflow-result-file-path" title={file.path}>
+          {relativeFileLabel(file.path, cwd)}
+        </span>
+        <span className="workflow-result-diff-stats">
+          <b>+{file.added}</b>
+          <em>-{file.removed}</em>
+        </span>
+      </button>
+      {previewEnabled ? (
+        <FileDiffHoverPreview file={file} anchorRef={rowRef} />
+      ) : null}
+    </>
+  );
+}
+
+function filePreviewBoundary(anchor: HTMLElement) {
+  const viewport = anchor.closest<HTMLElement>(".messages-scroll");
+  if (!viewport) return undefined;
+  const bounds = viewport.getBoundingClientRect();
+  const dockHeight =
+    Number.parseFloat(
+      getComputedStyle(viewport).getPropertyValue(
+        "--interaction-dock-safe-area",
+      ),
+    ) || 0;
+  return {
+    left: 0,
+    right: window.innerWidth,
+    top: bounds.top,
+    bottom: bounds.bottom - dockHeight,
+  };
+}
+
+function FileDiffHoverPreview({
+  file,
+  anchorRef,
+}: {
+  file: FileEditSummary;
+  anchorRef: RefObject<HTMLElement | null>;
+}) {
   const diffThemeType = useThemeStore((state) =>
     state.isDark ? "dark" : "light",
   );
@@ -373,7 +448,16 @@ function FileDiffHoverPreview({ file }: { file: FileEditSummary }) {
   if (!patch) return null;
 
   return (
-    <div className="workflow-result-file-popover" aria-hidden="true">
+    <HoverPreview
+      anchorRef={anchorRef}
+      className="workflow-result-file-popover"
+      label={`审核预览：${basename(file.path)}`}
+      getBoundary={filePreviewBoundary}
+      openDelay={350}
+      width={800}
+      limitWidthToAnchor
+      horizontalBoundary="viewport"
+    >
       <div className="workflow-result-file-popover-head">
         <FileText />
         <span>{basename(file.path)}</span>
@@ -395,102 +479,13 @@ function FileDiffHoverPreview({ file }: { file: FileEditSummary }) {
           }}
         />
       </div>
-    </div>
+    </HoverPreview>
   );
 }
 
 function isCompletedFileChangeItem(item: FileChangeItemModel): boolean {
   const status = String(item.status).toLowerCase();
   return status === "completed" || status === "done";
-}
-
-function patchPreviewLines(patch: string): DiffLine[] {
-  if (!patch.trim()) return [];
-
-  const rawLines = patch
-    .replace(/\r/g, "")
-    .split("\n")
-    .filter((line) => {
-      if (!line.trim()) return false;
-      if (line === "*** Begin Patch" || line === "*** End Patch") return false;
-      return true;
-    });
-  return rawLines.map(diffLineFromPatchLine);
-}
-
-function diffLineFromPatchLine(line: string): DiffLine {
-  if (line.startsWith("+") && !line.startsWith("+++"))
-    return { kind: "add", prefix: "+", text: line.slice(1) };
-  if (line.startsWith("-") && !line.startsWith("---"))
-    return { kind: "remove", prefix: "-", text: line.slice(1) };
-  if (line.startsWith("*** ") || line.startsWith("@@"))
-    return { kind: "meta", prefix: "", text: line };
-  return {
-    kind: "context",
-    prefix: "",
-    text: line.startsWith(" ") ? line.slice(1) : line,
-  };
-}
-
-function patchStats(lines: DiffLine[]): { added: number; removed: number } {
-  return {
-    added: lines.filter((line) => line.kind === "add").length,
-    removed: lines.filter((line) => line.kind === "remove").length,
-  };
-}
-
-function patchForFile(patch: string, filePath: string): string {
-  if (!patch.trim()) return "";
-  return (
-    applyPatchSectionForFile(patch, filePath) ||
-    gitDiffSectionForFile(patch, filePath) ||
-    patch
-  );
-}
-
-function applyPatchSectionForFile(patch: string, filePath: string): string {
-  const lines = patch.replace(/\r/g, "").split("\n");
-  const target = normalizePathForCompare(filePath);
-  const collected: string[] = [];
-  let capturing = false;
-
-  for (const line of lines) {
-    const match = line.match(/^\*\*\* (?:Add|Update|Delete) File: (.+)$/);
-    if (match) {
-      if (capturing) break;
-      capturing = normalizePathForCompare(match[1]) === target;
-    }
-    if (capturing) collected.push(line);
-  }
-
-  return collected.join("\n");
-}
-
-function gitDiffSectionForFile(patch: string, filePath: string): string {
-  const lines = patch.replace(/\r/g, "").split("\n");
-  const target = normalizePathForCompare(filePath);
-  const collected: string[] = [];
-  let capturing = false;
-
-  for (const line of lines) {
-    const match = line.match(/^diff --git a\/(.+?) b\/(.+)$/);
-    if (match) {
-      if (capturing) break;
-      capturing =
-        normalizePathForCompare(match[2]) === target ||
-        normalizePathForCompare(match[1]) === target;
-    }
-    if (capturing) collected.push(line);
-  }
-
-  return collected.join("\n");
-}
-
-function normalizePathForCompare(filePath: string): string {
-  return filePath
-    .replace(/\\/g, "/")
-    .replace(/^["']|["']$/g, "")
-    .trim();
 }
 
 function parseJsonRecord(value: string): Record<string, unknown> | null {

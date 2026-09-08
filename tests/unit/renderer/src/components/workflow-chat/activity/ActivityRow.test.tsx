@@ -20,9 +20,12 @@ describe("WorkflowActivityRow", () => {
     expect(html).toContain('data-activity-kind="fileChange"');
     expect(html).toContain('aria-expanded="true"');
     expect(html).toContain('class="workflow-activity-row-icon');
-    expect(html).toContain('class="workflow-activity-row-label"');
-    expect(html).toContain('class="workflow-activity-row-meta"');
-    expect(html).toContain('class="workflow-activity-detail"');
+    expect(html).toMatch(/class="[^"]*\bworkflow-activity-row-label\b[^"]*"/);
+    expect(html).toMatch(/class="[^"]*\bworkflow-activity-row-meta\b[^"]*"/);
+    expect(html).toMatch(/class="[^"]*\bworkflow-activity-detail\b[^"]*"/);
+    const contentId = html.match(/aria-controls="([^"]+)"/)?.[1];
+    expect(contentId).toBeTruthy();
+    expect(html).toContain(`id="${contentId}"`);
     expect(html).toContain("src/Workbench.tsx");
   });
 
@@ -35,7 +38,9 @@ describe("WorkflowActivityRow", () => {
       />,
     );
 
-    expect(html).toContain('class="workflow-activity-row-button is-static"');
+    expect(html).toMatch(
+      /class="[^"]*\bworkflow-activity-row-button\b[^"]*\bis-static\b[^"]*"/,
+    );
     expect(html).not.toContain("<button");
     expect(html).not.toContain("aria-expanded");
   });

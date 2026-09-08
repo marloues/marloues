@@ -1,54 +1,8 @@
-/* 过程区网格容器（grid item min-width:auto）会按内容撑宽，
-   约束披露行在会话列宽内，保证摘要就地省略。 */
-.message-disclosure {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-}
-.message-disclosure-row {
-  max-width: 100%;
-}
-
-/* 消息区渲染全局样式：running 行的扫光动画 + 时间戳 hover 显示 */
-
-[data-state="running"] > [data-disclosure-row]::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 300px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    color-mix(in srgb, var(--bg) 60%, transparent) 55%,
-    transparent 100%
-  );
-  animation: message-row-sweep 2.6s ease-out infinite;
-  pointer-events: none;
-}
-
-@keyframes message-row-sweep {
-  0% {
-    left: -300px;
-  }
-  90%,
-  100% {
-    left: 100%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  [data-state="running"] > [data-disclosure-row]::after {
-    animation: none;
-  }
-}
-
 /* 时间戳 hover 显示（data-time-hover-root 方案）：
    只在该消息容器自身 hover 时淡入，不依赖 React group 类。 */
 [data-time-hover-root] [data-time-hover-label] {
   opacity: 0;
-  transition: opacity 80ms ease;
+  transition: opacity var(--motion-fast) var(--ease);
 }
 
 [data-time-hover-root]:hover [data-time-hover-label],
@@ -62,29 +16,6 @@
   }
 }
 
-/* leading 图标 hover 时替换为 chevron：
-   纯 CSS，只在该行自身 hover 时生效。 */
-.message-row-leading-chevron {
-  opacity: 0;
-  transition: opacity 100ms ease;
-}
-
-.message-disclosure-row:hover .message-row-leading-icon {
-  opacity: 0;
-}
-
-.message-disclosure-row:hover .message-row-leading-chevron {
-  opacity: 1;
-}
-
-.message-disclosure-row:focus-visible .message-row-leading-icon {
-  opacity: 0;
-}
-
-.message-disclosure-row:focus-visible .message-row-leading-chevron {
-  opacity: 1;
-}
-
 /* 消息区顶部的流式状态条（"正在思考"固定在顶部，流式期间一直显示）。 */
 .conversation-thinking-top {
   padding: 2px 0 10px;
@@ -95,9 +26,9 @@
 .message-status-shimmer {
   background: linear-gradient(
     90deg,
-    hsl(var(--tw-text-subtle)) 20%,
-    hsl(var(--tw-text-normal)) 50%,
-    hsl(var(--tw-text-subtle)) 80%
+    var(--text-3) 20%,
+    var(--text-1) 50%,
+    var(--text-3) 80%
   );
   background-size: 220% 100%;
   background-clip: text;

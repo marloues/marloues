@@ -23,7 +23,16 @@ describe("TurnPresentationBlocks", () => {
     const html = render(
       turn({
         items: [
-          { type: "webSearch", id: "search", action: { type: "openPage", url: "https://example.com", title: "Project" }, query: "Codex app-server" },
+          {
+            type: "webSearch",
+            id: "search",
+            action: {
+              type: "openPage",
+              url: "https://example.com",
+              title: "Project",
+            },
+            query: "Codex app-server",
+          },
           { type: "agentMessage", id: "answer", text: "Implemented once." },
         ],
       }),
@@ -35,7 +44,7 @@ describe("TurnPresentationBlocks", () => {
     expect(html).toContain('data-result-kind="preview"');
   });
 
-  it("renders running tools and approvals only in the process block", () => {
+  it("renders running tools in the process block while leaving approvals to the interaction area", () => {
     const html = render(
       turn({
         status: "running",
@@ -64,7 +73,8 @@ describe("TurnPresentationBlocks", () => {
     expect(html).toContain('data-block-kind="process"');
     expect(html).not.toContain('data-block-kind="document"');
     expect(html).not.toContain('data-block-kind="results"');
-    expect(html).toContain('data-kind="activity-row"');
+    expect(html).toContain('data-activity-kind="commandExecution"');
+    expect(html).not.toContain('data-activity-kind="permissionRequest"');
   });
 
   it("renders failed output through the error document", () => {

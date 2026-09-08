@@ -23,6 +23,7 @@ export function WorkflowImageViewGroup({ items }: { items: ImageItem[] }) {
   return (
     <div className={styles.group}>
       <WorkflowActivityRow
+        detailVariant="plain"
         activityKind="imageView"
         icon={<Images />}
         label={`已查看 ${items.length} 张图像`}

@@ -1,4 +1,5 @@
 import { workflowStatusIsRunning } from "../adapter/item-status";
+import { isTaskManagementToolName } from "@shared/execution-tools";
 export { workflowStatusIsRunning } from "../adapter/item-status";
 import type {
   WorkflowMessageBlock as WorkflowMessageBlock,
@@ -78,6 +79,20 @@ export function workflowActivityGroupViewState(
 export function workflowShouldShowProcessItem(
   item: WorkflowProcessItem,
 ): boolean {
+  // Execution plans belong to task progress; permission decisions belong to
+  // the interaction area. Questions share the protocol type but remain in chat.
+  if (item.type === "plan") return false;
+  if (item.type === "permissionRequest" && !item.question) return false;
+  if (item.type === "dynamicToolCall" || item.type === "mcpToolCall") {
+    const name = item.tool.toLowerCase().split(/[.:/]/).at(-1) ?? "";
+    if (
+      ["update_plan", "plan_snapshot", "todowrite", "todo_write"].includes(
+        name,
+      ) ||
+      isTaskManagementToolName(name)
+    )
+      return false;
+  }
   if (item.type === "reasoning")
     return Boolean(
       item.encrypted ||

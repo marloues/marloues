@@ -1,9 +1,9 @@
 import styles from "./MarkdownLink.module.css";
-import { useEffect, useState, type ReactNode } from "react";
-import { WorkflowContentDialog } from "./ContentDialog";
+import { Children, isValidElement, type ReactNode } from "react";
+import { Tooltip } from "@/components/ui";
+import { useInspectorStore } from "@/stores/inspector-store";
 import { useMarkdownContext } from "./MarkdownContext";
 import { resolveContentTarget } from "./content-target";
-import { WorkflowDetailCopyButton } from "../activity/DetailCopyButton";
 
 export function WorkflowMarkdownLink({
   href = "",
@@ -17,7 +17,6 @@ export function WorkflowMarkdownLink({
 }) {
   const { cwd } = useMarkdownContext();
   const target = resolveContentTarget(href, cwd);
-  const [open, setOpen] = useState(false);
   if (target.kind === "url")
     return (
       <a
@@ -42,92 +41,72 @@ export function WorkflowMarkdownLink({
       </span>
     );
   return (
-    <>
-      <button
-        type="button"
-        className={`workflow-file-link ${className ?? styles.link}`}
-        title={target.path}
-        onClick={() => setOpen(true)}
-      >
-        {children}
-      </button>
-      {open ? (
-        <WorkflowContentDialog
-          title={target.path.split(/[\\/]/).at(-1) || "文件预览"}
-          onClose={() => setOpen(false)}
-        >
-          <FilePreview path={target.path} line={target.line} />
-        </WorkflowContentDialog>
-      ) : null}
-    </>
+    <WorkflowFileLink
+      path={target.path}
+      line={target.line}
+      sourceHref={href}
+      className={className}
+    >
+      {children}
+    </WorkflowFileLink>
   );
 }
 
-function FilePreview({ path, line }: { path: string; line?: number }) {
-  const [result, setResult] = useState<{
-    path: string;
-    text?: string;
-    error?: string;
-  }>();
-  useEffect(() => {
-    let disposed = false;
-    if (!window.marloues?.fs) {
-      setResult({ path, error: "此环境暂不支持读取本地文件" });
-      return;
-    }
-    window.marloues.fs.readFile(path).then(
-      (text) => {
-        if (!disposed) setResult({ path, text });
-      },
-      (error) => {
-        if (!disposed)
-          setResult({
-            path,
-            error: error instanceof Error ? error.message : String(error),
-          });
-      },
-    );
-    return () => {
-      disposed = true;
-    };
-  }, [path]);
-  if (result?.path !== path) return <p role="status">正在读取文件…</p>;
-  if (result.error)
-    return (
-      <p role="alert" className={styles.error}>
-        {result.error}
-      </p>
+/** 已解析的文件路径不再按 Markdown URL 解码，保留文件名中的 %、# 等字符。 */
+export function WorkflowFileLink({
+  path,
+  line,
+  children,
+  className,
+  sourceHref,
+}: {
+  path: string;
+  line?: number;
+  children?: ReactNode;
+  className?: string;
+  /** 仅用于识别 Markdown 原始路径标签，不参与文件读取或二次解码。 */
+  sourceHref?: string;
+}) {
+  const { sessionId, cwd, readFile } = useMarkdownContext();
+  const openFile = useInspectorStore((state) => state.openFile);
+  const basename = path.split(/[\\/]/).at(-1) || path;
+  const lineSuffix = line ? `:${line}` : "";
+  const title = `${path}${lineSuffix}`;
+  const labelText = fileLinkText(children).trim();
+  const useFilename =
+    !labelText ||
+    labelText === path ||
+    labelText === title ||
+    labelText === sourceHref?.trim() ||
+    (line && labelText === `${path} (line ${line})`);
+  const hasLineSuffix =
+    line &&
+    [lineSuffix, `#L${line}`, `(line ${line})`].some((suffix) =>
+      labelText.endsWith(suffix),
     );
   return (
-    <div className={`workflow-file-preview ${styles.preview}`}>
-      <div className="workflow-code-block-header">
-        <span className={styles.path}>
-          {path}
-          {line ? `:${line}` : ""}
-        </span>
-        <WorkflowDetailCopyButton
-          value={result.text ?? ""}
-          label="复制文件内容"
-        />
-      </div>
-      <pre className={styles.code}>
-        {(result.text ?? "").split("\n").map((text, i) => (
-          <span
-            key={i}
-            className={`${styles.line} ${line === i + 1 ? `is-target-line ${styles.target}` : ""}`}
-            ref={(node) => {
-              if (node && line === i + 1)
-                node.scrollIntoView({ block: "center" });
-            }}
-          >
-            <span className={`workflow-line-number ${styles.lineNumber}`}>
-              {i + 1}
-            </span>
-            {text}
-            {"\n"}
-          </span>
-        ))}
-      </pre>
-    </div>
+    <Tooltip content={title} delay={350}>
+      <button
+        type="button"
+        className={`workflow-file-link ${className ?? styles.link}`}
+        onClick={() => openFile(path, { line, sessionId, cwd, readFile })}
+      >
+        {useFilename ? `${basename}${lineSuffix}` : children}
+        {!useFilename && !hasLineSuffix ? lineSuffix : null}
+      </button>
+    </Tooltip>
   );
+}
+
+/** 保留自定义标签的 React 格式，仅提取文字来判断是否使用默认文件名。 */
+function fileLinkText(children: ReactNode): string {
+  return Children.toArray(children)
+    .map((child) => {
+      if (typeof child === "string" || typeof child === "number")
+        return String(child);
+      return isValidElement<{ children?: ReactNode }>(child)
+        ? fileLinkText(child.props.children)
+        : "";
+    })
+    .join("");
 }

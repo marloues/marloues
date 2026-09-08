@@ -7,6 +7,7 @@ import {
 } from "./conversation-theme";
 import { WorkflowImageLightbox } from "../activity/ImageLightbox";
 import { WorkflowDetailCopyButton } from "../activity/DetailCopyButton";
+import { Button, FloatingActions } from "@/components/ui";
 
 // initialize and render share Mermaid configuration; serialize them together.
 let queue: Promise<unknown> = Promise.resolve();
@@ -100,30 +101,33 @@ export function WorkflowMermaidBlock({
     <div
       className={`workflow-mermaid-block ${styles.root}${source || failed ? " workflow-code-block" : ""}`}
       data-kind="mermaid-block"
+      data-floating-actions-host
       aria-busy={!current}
     >
-      <div className={styles.toolbar} data-copy-exclude>
-        <button
+      <FloatingActions>
+        <Button
           type="button"
-          className={`workflow-detail-copy-button ${styles.control}`}
+          variant="ghost"
+          size="sm"
           aria-pressed={source}
           onClick={() => setSource((value) => !value)}
         >
           {source ? "图表" : "源码"}
-        </button>
+        </Button>
         {!fenceOpen ? (
           <WorkflowDetailCopyButton value={code} label="复制图表源码" />
         ) : null}
         {src && !failed ? (
-          <button
+          <Button
             type="button"
-            className={`workflow-detail-copy-button ${styles.control}`}
+            variant="ghost"
+            size="sm"
             onClick={() => setPreview(true)}
           >
             预览图表
-          </button>
+          </Button>
         ) : null}
-      </div>
+      </FloatingActions>
       {source || failed ? (
         <>
           <span

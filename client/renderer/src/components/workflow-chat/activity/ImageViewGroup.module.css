@@ -1,7 +1,5 @@
-.group :global(.workflow-activity-detail) {
-  margin: 0;
-  padding: 0;
-  border: 0;
+.group {
+  min-width: 0;
 }
 .images {
   display: flex;

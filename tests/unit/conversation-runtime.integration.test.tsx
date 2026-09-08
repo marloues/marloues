@@ -47,6 +47,69 @@ const question: ConversationInputRequest = {
 };
 
 describe("conversation runtime contracts", () => {
+  it.each([
+    [73_209, "1分钟 13秒"],
+    [4_496, "4秒"],
+  ])(
+    "restores legacy elapsed time from persisted timestamps (%i ms)",
+    (elapsed, label) => {
+      const store = new WorkflowThreadStore();
+      store.rehydrateFromStoredMessages("s", [
+        { id: "u", role: "user", content: "测试", timestamp: 1000, items: [] },
+        {
+          id: "a",
+          role: "assistant",
+          content: "历史答复",
+          timestamp: 1000 + elapsed,
+          startedAt: 1000,
+          completedAt: 1000 + elapsed,
+          durationMs: null,
+          items: [
+            { type: "agentMessage", id: "a", text: "历史答复", settled: true },
+          ],
+        },
+      ]);
+      const message = projection(store);
+      expect(message.timing).toBeUndefined();
+      expect(message.durationMs).toBeNull();
+      expect(
+        buildTurnPresentationModel(message, { isLastStreaming: false }).runtime,
+      ).toMatchObject({
+        durationMs: elapsed,
+        showDuration: true,
+        clockRunning: false,
+      });
+      const html = renderToStaticMarkup(
+        <WorkflowTurnView
+          message={message}
+          expanded={false}
+          isLastStreaming={false}
+          onToggle={() => {}}
+        />,
+      );
+      expect(html).toContain(
+        `<span class="workflow-turn-duration">${label}</span>`,
+      );
+    },
+  );
+
+  it("shows completed instead of an empty elapsed label when history has no timing facts", () => {
+    const message = {
+      ...projection(setup()),
+      status: "completed" as const,
+      activity: "done" as const,
+      startedAt: undefined,
+      completedAt: undefined,
+      durationMs: null,
+      timing: undefined,
+    };
+    const model = buildTurnPresentationModel(message, {
+      isLastStreaming: false,
+    });
+    expect(model.runtime.showDuration).toBe(false);
+    expect(model.chrome.label).toBe("已完成");
+  });
+
   it("starts timing after observed work, freezes turn start → final at 6 seconds, and persists it", () => {
     const store = setup();
     expect(

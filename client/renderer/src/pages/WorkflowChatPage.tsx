@@ -519,6 +519,7 @@ export function WorkflowChatPage({
     handleScroll: handleMessagesScroll,
     isAtBottom,
     scrollToBottom,
+    stopStick,
   } = useConversationScroll({
     contentSignal: useMemo(
       () => [
@@ -824,7 +825,9 @@ export function WorkflowChatPage({
           taskPresentation.changes?.reviewTarget
             ? () => {
                 const { path, diff } = taskPresentation.changes!.reviewTarget!;
-                openReview(path, diff);
+                openReview(path, diff, {
+                  sessionId: activeSessionId ?? undefined,
+                });
               }
             : undefined
         }
@@ -857,6 +860,7 @@ export function WorkflowChatPage({
                   readThread={displayReadThread}
                   isStreaming={activeSessionIsStreaming}
                   scrollParentRef={scrollRef}
+                  onNavigateMessage={stopStick}
                   stateScopeKey={activeSessionId ?? "default"}
                   modelName={modelName}
                   writingBlockMode
@@ -977,7 +981,9 @@ export function WorkflowChatPage({
             composerReviewTarget
               ? () => {
                   const { path, diff } = composerReviewTarget;
-                  openReview(path, diff);
+                  openReview(path, diff, {
+                    sessionId: activeSessionId ?? undefined,
+                  });
                 }
               : undefined
           }

@@ -280,7 +280,7 @@ export type UIEvent =
       turnId: string;
       messageId: string;
       content: string;
-      userContent?: unknown[];
+      userContent?: WorkflowUserMessageContent[];
       timestamp: number;
     }
   | {
@@ -301,7 +301,7 @@ export type UIRequest =
       type: "chat.send";
       sessionId: string;
       text: string;
-      attachments?: unknown[];
+      attachments?: WorkflowUserMessageContent[];
     }
   | { type: "chat.abort"; turnId: string }
   | {

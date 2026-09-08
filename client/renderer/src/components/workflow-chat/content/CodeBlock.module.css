@@ -1,3 +1,11 @@
+.root,
+.writing {
+  position: relative;
+}
+.wrap[aria-pressed="true"] {
+  color: var(--accent);
+  background: var(--raised-2);
+}
 .writing {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);

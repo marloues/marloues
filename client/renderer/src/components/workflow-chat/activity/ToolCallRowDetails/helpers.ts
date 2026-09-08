@@ -52,14 +52,8 @@ export function detailInputLabel(item: ToolCallRowItem): string {
 }
 
 export function isReadToolName(name: string): boolean {
-  return (
-    name === "read" ||
-    name.endsWith(".read") ||
-    name === "read_file" ||
-    name === "read_files" ||
-    name === "workflow_read_file" ||
-    name.endsWith(".read_file") ||
-    name.endsWith(".read_files")
+  return /(?:^|[.:]|__)(?:read|read_files?|read_text_file|read_multiple_files|workflow_read_file)$/i.test(
+    name,
   );
 }
 

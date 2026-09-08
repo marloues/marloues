@@ -1,4 +1,12 @@
-import { useMemo, useRef, useState } from "react";
+import { MessageNavigationFixture } from "./MessageNavigationFixture";
+import { ConversationInspectorFixture } from "./ConversationInspectorFixture";
+import {
+  componentInspectorSource,
+  detailsInspectorFileSystem,
+} from "./conversation-inspector-source";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui";
+import { useThemeStore } from "@/stores/theme-store";
 import type { WorkflowReadThreadResponse } from "@shared/workflow-read-thread-contract";
 import { workflowToolResult } from "@shared/workflow-tool-result";
 import { WorkflowReadThreadTurnList } from "../turns/ReadThreadTurnList";
@@ -9,6 +17,7 @@ import { WorkflowImageGenerationRow } from "../activity/ImageGenerationRow";
 import { useConversationScroll } from "../composer/use-conversation-scroll";
 import { copyConversationContent } from "../content/clipboard";
 import { MarkdownErrorBoundary } from "../content/MarkdownErrorBoundary";
+import { ConversationComponentGallery } from "./ConversationComponentGallery";
 import "./conversation-details-fixture.css";
 
 const image = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="480" height="180"><rect width="480" height="180" fill="#e6edf2"/><circle cx="90" cy="90" r="44" fill="#355f76"/><text x="170" y="100" font-size="24" fill="#355f76">Marloues</text></svg>')}`;
@@ -23,7 +32,57 @@ const content = [
 ].join("\n\n");
 
 export function ConversationDetailsFixturePage() {
-  const [section, setSection] = useState("content");
+  const [section, setSection] = useState(() => {
+    const value = new URLSearchParams(window.location.search).get(
+      "fixtureSection",
+    );
+    return [
+      "components",
+      "content",
+      "tools",
+      "navigation",
+      "scroll",
+      "recovery",
+    ].includes(value ?? "")
+      ? value!
+      : "content";
+  });
+  const [theme, setTheme] = useState(() => {
+    const value = new URLSearchParams(window.location.search).get(
+      "fixtureTheme",
+    );
+    return value === "light" || value === "warm" ? value : "dark";
+  });
+  useEffect(() => {
+    const root = document.documentElement;
+    const { mode, isDark } = useThemeStore.getState();
+    const previous = {
+      theme: root.dataset.theme,
+      preference: root.dataset.themePreference,
+      scheme: root.style.colorScheme,
+      classes: ["dark", "light", "warm"].filter((value) =>
+        root.classList.contains(value),
+      ),
+    };
+    root.dataset.theme = theme;
+    root.dataset.themePreference = theme;
+    root.style.colorScheme = theme === "dark" ? "dark" : "light";
+    root.classList.remove("dark", "light", "warm");
+    root.classList.add(theme);
+    // 同步依赖主题状态的预览（如 diff），不调用会持久化偏好的 setMode。
+    useThemeStore.setState({ mode: theme, isDark: theme === "dark" });
+    return () => {
+      if (previous.theme === undefined) delete root.dataset.theme;
+      else root.dataset.theme = previous.theme;
+      if (previous.preference === undefined)
+        delete root.dataset.themePreference;
+      else root.dataset.themePreference = previous.preference;
+      root.style.colorScheme = previous.scheme;
+      root.classList.remove("dark", "light", "warm");
+      root.classList.add(...previous.classes);
+      useThemeStore.setState({ mode, isDark });
+    };
+  }, [theme]);
   const [streaming, setStreaming] = useState(false);
   const [source, setSource] = useState(content);
   const [copies, setCopies] = useState(0);
@@ -77,178 +136,237 @@ export function ConversationDetailsFixturePage() {
     [source, streaming],
   );
   return (
-    <div className="conversation-details-fixture">
-      <header>
-        <strong>Marloues / 对话区验收</strong>
-        <nav>
-          {[
-            ["content", "内容"],
-            ["tools", "工具结果"],
-            ["scroll", "滚动"],
-            ["recovery", "异常恢复"],
-          ].map(([id, label]) => (
-            <button
-              key={id}
-              aria-pressed={section === id}
-              onClick={() => setSection(id)}
-            >
-              {label}
-            </button>
-          ))}
-        </nav>
-      </header>
-      {section === "content" ? (
-        <>
-          <div className="fixture-controls">
-            <button
-              onClick={() => {
-                setSource("```ts\nconst first = 1;\n\nconst second = 2;");
-                setStreaming(true);
-              }}
-            >
-              开始流式代码
-            </button>
-            <button
-              onClick={() => setSource((value) => value + "\nconst third = 3;")}
-            >
-              追加代码
-            </button>
-            <button
-              onClick={() => {
-                setSource((value) => value + "\n```\n\n完成。");
-                setStreaming(false);
-              }}
-            >
-              结束流式代码
-            </button>
-            <button
-              onClick={() => {
-                setSource(content);
-                setStreaming(false);
-              }}
-            >
-              恢复内容
-            </button>
-            <button
-              onClick={() => setSource("```mermaid\nthis is invalid\n```")}
-            >
-              错误图表
-            </button>
-            <label>
-              <input
-                type="checkbox"
-                checked={forkFailure}
-                onChange={(e) => setForkFailure(e.target.checked)}
-              />
-              分支失败
-            </label>
-            <output data-testid="action-count">
-              复制 {copies} / 分支 {forks}
-            </output>
-          </div>
-          <main>
-            <WorkflowReadThreadTurnList
-              readThread={readThread}
-              isStreaming={streaming}
-              disableResponseTimer
-              onCopyMessage={async (text) => {
-                setCopies((value) => value + 1);
-                await copyConversationContent({ text });
-              }}
-              onFork={async () => {
-                setForks((value) => value + 1);
-                await new Promise((resolve) => setTimeout(resolve, 300));
-                if (forkFailure) throw new Error("分支暂不可用，请重试");
-              }}
-            />
-          </main>
-        </>
-      ) : section === "tools" ? (
-        <main>
-          <WorkflowMarkdownProvider
-            value={{ sessionId: "details-fixture", cwd: "/fixture" }}
+    <ConversationInspectorFixture
+      source={
+        section === "components"
+          ? componentInspectorSource
+          : {
+              sessionId: "details-fixture",
+              readThread,
+              workspacePath: "/fixture",
+              fileSystem: detailsInspectorFileSystem,
+            }
+      }
+    >
+      <div className="conversation-details-fixture">
+        <header>
+          <strong>Marloues / 对话区验收</strong>
+          <nav aria-label="验收页面">
+            {[
+              ["components", "组件展示"],
+              ["content", "内容"],
+              ["tools", "工具结果"],
+              ["navigation", "消息导航"],
+              ["scroll", "滚动"],
+              ["recovery", "异常恢复"],
+            ].map(([id, label]) => (
+              <Button
+                key={id}
+                variant={section === id ? "secondary" : "ghost"}
+                size="sm"
+                aria-pressed={section === id}
+                onClick={() => {
+                  setSection(id);
+                  updateFixtureQuery("fixtureSection", id);
+                }}
+              >
+                {label}
+              </Button>
+            ))}
+          </nav>
+          <div
+            className="fixture-theme-controls"
+            role="group"
+            aria-label="预览主题"
           >
-            <WorkflowToolCallRow
-              item={{
-                type: "mcpToolCall",
-                id: "mcp-result",
-                tool: "result_preview",
-                server: "demo",
-                status: "completed",
-                settled: true,
-                result: workflowToolResult({
-                  content: [
-                    {
-                      type: "text",
-                      text: "**工具内容**\n\n| 名称 | 结果 |\n| --- | --- |\n| 读取 | 成功 |",
-                    },
-                    {
-                      type: "image",
-                      mimeType: "image/svg+xml",
-                      data: btoa(
-                        '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="50"><rect width="100" height="50" fill="teal"/></svg>',
-                      ),
-                    },
-                    {
-                      type: "audio",
-                      mimeType: "audio/wav",
-                      data: "UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSADAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==",
-                    },
-                    {
-                      type: "resource_link",
-                      uri: "https://example.com/report",
-                      name: "资源报告",
-                    },
-                    {
-                      type: "resource",
-                      resource: {
-                        uri: "file:///fixture/src/example.ts",
-                        mimeType: "text/plain",
-                        text: "const answer = 42;",
+            {(
+              [
+                ["dark", "深色"],
+                ["light", "浅色"],
+                ["warm", "暖色"],
+              ] as const
+            ).map(([value, label]) => (
+              <Button
+                key={value}
+                variant={theme === value ? "secondary" : "ghost"}
+                size="sm"
+                aria-label={`主题：${label}`}
+                aria-pressed={theme === value}
+                onClick={() => {
+                  setTheme(value);
+                  updateFixtureQuery("fixtureTheme", value);
+                }}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
+        </header>
+        {section === "components" ? (
+          <ConversationComponentGallery />
+        ) : section === "content" ? (
+          <>
+            <div className="fixture-controls">
+              <button
+                onClick={() => {
+                  setSource("```ts\nconst first = 1;\n\nconst second = 2;");
+                  setStreaming(true);
+                }}
+              >
+                开始流式代码
+              </button>
+              <button
+                onClick={() =>
+                  setSource((value) => value + "\nconst third = 3;")
+                }
+              >
+                追加代码
+              </button>
+              <button
+                onClick={() => {
+                  setSource((value) => value + "\n```\n\n完成。");
+                  setStreaming(false);
+                }}
+              >
+                结束流式代码
+              </button>
+              <button
+                onClick={() => {
+                  setSource(content);
+                  setStreaming(false);
+                }}
+              >
+                恢复内容
+              </button>
+              <button
+                onClick={() => setSource("```mermaid\nthis is invalid\n```")}
+              >
+                错误图表
+              </button>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={forkFailure}
+                  onChange={(e) => setForkFailure(e.target.checked)}
+                />
+                分支失败
+              </label>
+              <output data-testid="action-count">
+                复制 {copies} / 分支 {forks}
+              </output>
+            </div>
+            <main>
+              <WorkflowReadThreadTurnList
+                readThread={readThread}
+                isStreaming={streaming}
+                disableResponseTimer
+                onCopyMessage={async (text) => {
+                  setCopies((value) => value + 1);
+                  await copyConversationContent({ text });
+                }}
+                onFork={async () => {
+                  setForks((value) => value + 1);
+                  await new Promise((resolve) => setTimeout(resolve, 300));
+                  if (forkFailure) throw new Error("分支暂不可用，请重试");
+                }}
+              />
+            </main>
+          </>
+        ) : section === "tools" ? (
+          <main>
+            <WorkflowMarkdownProvider
+              value={{ sessionId: "details-fixture", cwd: "/fixture" }}
+            >
+              <WorkflowToolCallRow
+                item={{
+                  type: "mcpToolCall",
+                  id: "mcp-result",
+                  tool: "result_preview",
+                  server: "demo",
+                  status: "completed",
+                  settled: true,
+                  result: workflowToolResult({
+                    content: [
+                      {
+                        type: "text",
+                        text: "**工具内容**\n\n| 名称 | 结果 |\n| --- | --- |\n| 读取 | 成功 |",
                       },
-                    },
-                    { type: "future-content", detail: "保留未知类型" },
-                  ],
-                  structuredContent: { count: 2, ok: true },
-                }),
-              }}
-            />
-            <WorkflowImageGenerationRow
-              item={{
-                type: "imageGeneration",
-                id: "cancelled-image",
-                status: "cancelled",
-                revisedPrompt: "一张海报",
-                settled: true,
-              }}
-            />
-            <WorkflowResultCards
-              items={[
-                {
+                      {
+                        type: "image",
+                        mimeType: "image/svg+xml",
+                        data: btoa(
+                          '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="50"><rect width="100" height="50" fill="teal"/></svg>',
+                        ),
+                      },
+                      {
+                        type: "audio",
+                        mimeType: "audio/wav",
+                        data: "UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSADAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==",
+                      },
+                      {
+                        type: "resource_link",
+                        uri: "https://example.com/report",
+                        name: "资源报告",
+                      },
+                      {
+                        type: "resource",
+                        resource: {
+                          uri: "file:///fixture/src/example.ts",
+                          mimeType: "text/plain",
+                          text: "const answer = 42;",
+                        },
+                      },
+                      { type: "future-content", detail: "保留未知类型" },
+                    ],
+                    structuredContent: { count: 2, ok: true },
+                  }),
+                }}
+              />
+              <WorkflowImageGenerationRow
+                item={{
                   type: "imageGeneration",
-                  id: "gallery-a",
-                  status: "completed",
-                  result: image,
+                  id: "cancelled-image",
+                  status: "cancelled",
+                  revisedPrompt: "一张海报",
                   settled: true,
-                },
-                {
-                  type: "imageGeneration",
-                  id: "gallery-b",
-                  status: "completed",
-                  result: image.replace("355f76", "8b4d60"),
-                  settled: true,
-                },
-              ]}
-            />
-          </WorkflowMarkdownProvider>
-        </main>
-      ) : section === "recovery" ? (
-        <RecoveryFixture />
-      ) : (
-        <ScrollFixture />
-      )}
-    </div>
+                }}
+              />
+              <WorkflowResultCards
+                items={[
+                  {
+                    type: "imageGeneration",
+                    id: "gallery-a",
+                    status: "completed",
+                    result: image,
+                    settled: true,
+                  },
+                  {
+                    type: "imageGeneration",
+                    id: "gallery-b",
+                    status: "completed",
+                    result: image.replace("355f76", "8b4d60"),
+                    settled: true,
+                  },
+                ]}
+              />
+            </WorkflowMarkdownProvider>
+          </main>
+        ) : section === "navigation" ? (
+          <MessageNavigationFixture />
+        ) : section === "recovery" ? (
+          <RecoveryFixture />
+        ) : (
+          <ScrollFixture />
+        )}
+      </div>
+    </ConversationInspectorFixture>
   );
+}
+
+function updateFixtureQuery(key: string, value: string) {
+  const url = new URL(window.location.href);
+  url.searchParams.set(key, value);
+  window.history.replaceState(null, "", url);
 }
 
 let fixtureFault = false;

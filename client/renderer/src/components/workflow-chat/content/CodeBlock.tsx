@@ -5,6 +5,7 @@ import { WorkflowDetailCopyButton } from "../activity/DetailCopyButton";
 import { WrapText } from "lucide-react";
 import { useCodePreferences } from "./code-preferences";
 import { WorkflowMermaidBlock } from "./MermaidBlock";
+import { Button, FloatingActions } from "@/components/ui";
 
 export function WorkflowCodeBlock({
   children,
@@ -40,36 +41,47 @@ export function WorkflowCodeBlock({
       <section
         className={`workflow-writing-block ${styles.writing}`}
         data-kind="writing-block"
+        data-floating-actions-host
       >
         <div className={styles.header} data-copy-exclude>
           <span>写作</span>
-          {!fenceOpen ? (
-            <WorkflowDetailCopyButton value={text} label="复制写作内容" />
-          ) : null}
         </div>
+        {!fenceOpen ? (
+          <FloatingActions>
+            <WorkflowDetailCopyButton value={text} label="复制写作内容" />
+          </FloatingActions>
+        ) : null}
         <pre className={styles.body}>{text}</pre>
       </section>
     );
   return (
-    <div className="workflow-code-block" data-kind="workflow-code-block">
+    <div
+      className={`workflow-code-block ${styles.root}`}
+      data-kind="workflow-code-block"
+      data-floating-actions-host
+    >
       <div className="workflow-code-block-header" data-copy-exclude>
         <span className="workflow-code-block-language">
           {language || "text"}
         </span>
-        <button
+      </div>
+      <FloatingActions>
+        <Button
           type="button"
-          className="workflow-detail-copy-button"
+          variant="ghost"
+          size="icon-sm"
+          className={styles.wrap}
           aria-label="代码自动换行"
           title="代码自动换行"
           aria-pressed={wrap}
           onClick={toggleWrap}
         >
           <WrapText size={14} />
-        </button>
+        </Button>
         {!fenceOpen ? (
           <WorkflowDetailCopyButton value={text} label="复制代码" />
         ) : null}
-      </div>
+      </FloatingActions>
       <pre className="workflow-code-block-body" data-wrap={wrap}>
         {children}
       </pre>
