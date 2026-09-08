@@ -1,0 +1,29 @@
+.root {
+  min-width: 0;
+}
+.path {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  vertical-align: middle;
+  cursor: var(--cursor-link);
+}
+.path:hover,
+.path:focus-visible {
+  color: var(--text-1);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.path:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: var(--radius-sm);
+}

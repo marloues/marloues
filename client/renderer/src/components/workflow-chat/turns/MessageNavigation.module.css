@@ -1,0 +1,78 @@
+.rail {
+  position: fixed;
+  z-index: 8;
+  width: 40px;
+  color: var(--text-2);
+  font: var(--text-sm)/1.5 var(--font-ui);
+}
+.markers {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  padding-block: var(--space-1);
+}
+.marker {
+  flex: 0 0 10px;
+  min-height: 10px;
+  height: 10px;
+  width: 40px;
+  padding: 0;
+  justify-content: flex-start;
+}
+.tick {
+  display: block;
+  height: 2px;
+  background: var(--border-strong);
+  border-radius: var(--radius-sm);
+  transition:
+    width var(--motion-fast) var(--ease),
+    background-color var(--motion-fast) var(--ease);
+}
+.marker[aria-current],
+.marker:hover,
+.marker:focus-visible {
+  color: var(--text-1);
+}
+.rail .marker:hover,
+.rail .marker:focus-visible {
+  background: transparent;
+}
+.marker[aria-current] .tick,
+.marker:hover .tick,
+.marker:focus-visible .tick {
+  background: currentColor;
+}
+.previewHost {
+  position: fixed;
+  width: 328px;
+  padding-left: var(--space-2);
+}
+.preview {
+  padding: var(--space-3);
+  background: var(--surface-popover);
+  box-shadow: var(--shadow-md);
+  overflow-wrap: anywhere;
+}
+.preview strong,
+.preview p {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.preview strong {
+  -webkit-line-clamp: 2;
+  color: var(--text-1);
+  font-weight: 600;
+}
+.preview p {
+  margin: var(--space-2) 0 0;
+  -webkit-line-clamp: 3;
+  color: var(--text-3);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tick {
+    transition: none;
+  }
+}

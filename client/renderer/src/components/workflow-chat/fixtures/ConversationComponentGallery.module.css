@@ -1,0 +1,71 @@
+.gallery {
+  display: grid;
+  gap: var(--space-8);
+  font-family: var(--font-ui);
+}
+
+.intro,
+.section,
+.stack {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.intro h1 {
+  font-size: var(--text-xl);
+  font-weight: 600;
+}
+
+.description {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+}
+
+.section > h2 {
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.example {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  padding-block: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.example > h3 {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.verticalDivider {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  gap: var(--space-3);
+}
+
+.feedback {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}

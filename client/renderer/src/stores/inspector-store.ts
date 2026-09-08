@@ -1,33 +1,47 @@
-/**
- * 右侧边栏审核面板的全局触发 store。
- *
- * 对话中的文件卡片点击"审核"后写入 reviewTarget，右侧审核 tab
- * 会自动创建/激活并展示对应 diff；WorkspaceLayout 据此展开边栏。
- */
-
 import { create } from "zustand";
 
-export interface ReviewTarget {
+interface InspectorScope {
+  sessionId?: string;
+  cwd?: string | null;
+}
+export interface ReviewTarget extends InspectorScope {
   path: string;
   rawDiff: string;
   seq: number;
 }
-
+export interface FileTarget extends InspectorScope {
+  path: string;
+  line?: number;
+  readFile?: (path: string) => Promise<string>;
+  seq: number;
+}
 interface InspectorState {
+  visibleAuxiliaryPanels: Record<string, string>;
+  setAuxiliaryPanelSession: (ownerId: string, sessionId: string | null) => void;
   reviewTarget: ReviewTarget | null;
-  /** 打开右侧审核面板并展示指定文件的 diff；若边栏收起会自动展开。 */
-  openReview: (path: string, rawDiff: string) => void;
-  /** 清空当前审核目标（不关闭标签页，仅清空内容）。 */
+  fileTarget: FileTarget | null;
+  openReview: (path: string, rawDiff: string, scope?: InspectorScope) => void;
+  openFile: (path: string, options?: Omit<FileTarget, "path" | "seq">) => void;
   clearReview: () => void;
 }
-
-let reviewSeq = 0;
-
+let revealSeq = 0;
+/** Each intent is consumed once, then retained in that session's auxiliary tab. */
 export const useInspectorStore = create<InspectorState>((set) => ({
+  visibleAuxiliaryPanels: {},
+  setAuxiliaryPanelSession: (ownerId, sessionId) =>
+    set((state) => {
+      if ((state.visibleAuxiliaryPanels[ownerId] ?? null) === sessionId)
+        return state;
+      const visibleAuxiliaryPanels = { ...state.visibleAuxiliaryPanels };
+      if (sessionId) visibleAuxiliaryPanels[ownerId] = sessionId;
+      else delete visibleAuxiliaryPanels[ownerId];
+      return { visibleAuxiliaryPanels };
+    }),
   reviewTarget: null,
-
-  openReview: (path, rawDiff) =>
-    set({ reviewTarget: { path, rawDiff, seq: ++reviewSeq } }),
-
+  fileTarget: null,
+  openReview: (path, rawDiff, scope) =>
+    set({ reviewTarget: { ...scope, path, rawDiff, seq: ++revealSeq } }),
+  openFile: (path, options) =>
+    set({ fileTarget: { ...options, path, seq: ++revealSeq } }),
   clearReview: () => set({ reviewTarget: null }),
 }));

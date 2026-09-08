@@ -5,7 +5,15 @@ import { useInspectorStore } from "@/stores/inspector-store";
 import { buildFileChanges } from "./timeline-builders";
 import type { FileChange } from "./types";
 
-export function OutputsPanel({ timeline }: { timeline: TimelineItem[] }) {
+export function OutputsPanel({
+  timeline,
+  sessionId,
+  cwd,
+}: {
+  timeline: TimelineItem[];
+  sessionId?: string;
+  cwd?: string | null;
+}) {
   const fileChanges = buildFileChanges(timeline);
   const openReview = useInspectorStore((state) => state.openReview);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -47,7 +55,12 @@ export function OutputsPanel({ timeline }: { timeline: TimelineItem[] }) {
               change={change}
               expanded={expanded.has(change.path)}
               onToggle={() => toggle(change.path)}
-              onReview={() => openReview(change.path, change.rawDiff ?? "")}
+              onReview={() =>
+                openReview(change.path, change.rawDiff ?? "", {
+                  sessionId,
+                  cwd,
+                })
+              }
             />
           ))}
         </div>

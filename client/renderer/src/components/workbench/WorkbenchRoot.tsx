@@ -18,7 +18,6 @@ import {
 import { GlobalSearchOverlay } from "./overlays/GlobalSearchOverlay";
 import { PrimarySidebar } from "./primary-sidebar";
 import type { Page } from "./types";
-import { useInspectorStore } from "@/stores/inspector-store";
 import { useSettingsPageStore } from "@/stores/settings-page-store";
 import { useUnifiedChatStore } from "@/stores/unified-chat-store";
 import type { ThemeMode } from "@/stores/theme-store";
@@ -154,14 +153,6 @@ export function WorkbenchRoot({
     setIsMaximized(next);
   };
 
-  // ---- reviewTarget auto-expands the auxiliary region --------------------
-  const reviewTarget = useInspectorStore((state) => state.reviewTarget);
-  useEffect(() => {
-    if (!reviewTarget) return;
-    setAuxiliaryOpen(true);
-    dispatch({ type: "auxiliary.width.ensureMin" });
-  }, [reviewTarget, reviewTarget?.seq, setAuxiliaryOpen, dispatch]);
-
   // ---- setVisibleSession visibility sync ---------------------------------
   const setVisibleSession = useUnifiedChatStore(
     (store) => store.setVisibleSession,
@@ -185,18 +176,6 @@ export function WorkbenchRoot({
       setVisibleSession(null);
     };
   }, [activeSessionId, page, setVisibleSession]);
-
-  // ---- revealSubagentSeq auto-expands the auxiliary region ---------------
-  const revealSubagentSeq = useUnifiedChatStore((store) =>
-    activeSessionId
-      ? store.executionBySession[activeSessionId]?.revealSubagentSeq
-      : undefined,
-  );
-  useEffect(() => {
-    if (!revealSubagentSeq) return;
-    setAuxiliaryOpen(true);
-    dispatch({ type: "auxiliary.width.ensureMin" });
-  }, [revealSubagentSeq, setAuxiliaryOpen, dispatch]);
 
   // ---- Derived platform + page flags --------------------------------------
   const previewPlatform = readPreviewPlatform();
@@ -331,7 +310,19 @@ export function WorkbenchRoot({
             width={state.auxiliaryWidth}
             busy={auxiliarySwitching}
             onTogglePrimary={toggleAuxiliaryPrimary}
-            onEnsureOpen={() => setAuxiliaryOpen(true)}
+            onEnsureOpen={() => {
+              setAuxiliaryOpen(true);
+              dispatch({ type: "auxiliary.width.ensureMin" });
+            }}
+            onLastTabClose={() => {
+              setAuxiliaryOpen(false);
+              dispatch({ type: "auxiliary.mode.set", mode: "closed" });
+              requestAnimationFrame(() =>
+                document
+                  .querySelector<HTMLButtonElement>(".thread-inspector-toggle")
+                  ?.focus(),
+              );
+            }}
             onStartResize={startResize}
             regionRef={(node) => {
               layout.auxiliaryRef.current = node;

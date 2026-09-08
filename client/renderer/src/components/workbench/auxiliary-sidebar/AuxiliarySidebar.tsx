@@ -1,8 +1,13 @@
+import type { WorkflowReadThreadResponse } from "@shared/workflow-read-thread-contract";
+import type { InspectorFileSystem } from "./panels/FileExplorer";
+import { useReviewHistory } from "./use-review-history";
 import {
   type SetStateAction,
   useCallback,
   useDeferredValue,
   useEffect,
+  useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -24,7 +29,11 @@ import { SubagentWorkspace } from "@/components/workflow-chat";
 import type { TimelineItem } from "@shared/types";
 import { useUnifiedChatStore } from "@/stores/unified-chat-store";
 import { useWorkspaceStore } from "@/stores/workspace-store";
-import { type ReviewTarget, useInspectorStore } from "@/stores/inspector-store";
+import {
+  type ReviewTarget,
+  type FileTarget,
+  useInspectorStore,
+} from "@/stores/inspector-store";
 import type { ExecutionSubagentRecord } from "@/stores/unified-chat-store";
 import {
   AUXILIARY_VIEW_ICONS,
@@ -48,6 +57,7 @@ interface TabState {
   type: AuxiliaryStaticViewType | "subagent";
   subagentId?: string;
   reviewTarget?: ReviewTarget;
+  fileTarget?: FileTarget;
   sessionId?: string;
   pageId?: string;
   browserTitle?: string;
@@ -90,7 +100,12 @@ function browserTabId(pageId: string): string {
   return `browser-tab:${pageId}`;
 }
 
-const REVIEW_TAB_ID = "review-tab";
+export interface AuxiliarySource {
+  sessionId: string;
+  readThread: WorkflowReadThreadResponse;
+  workspacePath: string;
+  fileSystem: InspectorFileSystem;
+}
 
 function subagentTabId(subagentId: string): string {
   return `subagent-tab:${subagentId}`;
@@ -107,13 +122,28 @@ export function AuxiliarySidebar({
   primary,
   onTogglePrimary,
   onEnsureOpen,
+  onLastTabClose,
+  source,
 }: {
   open: boolean;
   primary: boolean;
   onTogglePrimary: () => void;
   onEnsureOpen: () => void;
+  onLastTabClose: () => void;
+  source?: AuxiliarySource;
 }) {
-  const activeSessionId = useUnifiedChatStore((state) => state.activeSessionId);
+  const embedded = Boolean(source);
+  const viewOptions = useMemo(
+    () =>
+      embedded
+        ? AUXILIARY_VIEW_OPTIONS.filter(
+            (option) => option.type === "files" || option.type === "review",
+          )
+        : AUXILIARY_VIEW_OPTIONS,
+    [embedded],
+  );
+  const storeSessionId = useUnifiedChatStore((state) => state.activeSessionId);
+  const activeSessionId = source?.sessionId ?? storeSessionId;
   const sessionScope = activeSessionId ?? NO_SESSION_SCOPE;
   const [auxiliaryStateBySession, setAuxiliaryStateBySession] = useState<
     Record<string, SessionAuxiliaryState>
@@ -168,12 +198,26 @@ export function AuxiliarySidebar({
 
   const launcherFirstActionRef = useRef<HTMLButtonElement>(null);
   const handledRevealBySessionRef = useRef(new Map<string, number>());
-  const handledReviewSeqRef = useRef<number | null>(null);
+  const handledInspectorSeqRef = useRef(new Set<number>());
+  const dismissedEmptySessionsRef = useRef(new Set<string>());
 
-  const readThread = useUnifiedChatStore((state) =>
+  // An explicit reopen clears the dismissal. Empty launchers are allowed to
+  // stay open; closing the last tab is the action that collapses the region.
+  useEffect(() => {
+    if (open) dismissedEmptySessionsRef.current.delete(sessionScope);
+  }, [open, sessionScope]);
+
+  const storeReadThread = useUnifiedChatStore((state) =>
     activeSessionId ? state.readThreads[activeSessionId] : undefined,
   );
   const workspace = useWorkspaceStore((state) => state.current);
+  const readThread = source?.readThread ?? storeReadThread;
+  const workspacePath =
+    source?.workspacePath ?? readThread?.thread.cwd ?? workspace?.path;
+  const history = useReviewHistory(
+    activeSessionId,
+    !source && open && tabs.some((tab) => tab.type === "review"),
+  );
   const executionState = useUnifiedChatStore((state) =>
     activeSessionId
       ? (state.executionBySession[activeSessionId] ?? null)
@@ -212,9 +256,11 @@ export function AuxiliarySidebar({
   }, [readThread]);
 
   const reviewTarget = useInspectorStore((state) => state.reviewTarget);
+  const fileTarget = useInspectorStore((state) => state.fileTarget);
 
   useEffect(() => {
-    return window.marloues.browser?.onPageRevealRequested?.(
+    if (embedded) return;
+    return window.marloues?.browser?.onPageRevealRequested?.(
       (threadId, pageId, _url, title) => {
         setAuxiliaryStateBySession((current) => {
           const previous = current[threadId] ?? EMPTY_SESSION_AUXILIARY_STATE;
@@ -242,10 +288,14 @@ export function AuxiliarySidebar({
             [threadId]: { ...previous, tabs, activeTabId: id },
           };
         });
-        if (threadId === activeSessionId) onEnsureOpen();
+        if (
+          threadId === activeSessionId &&
+          !dismissedEmptySessionsRef.current.has(sessionScope)
+        )
+          onEnsureOpen();
       },
     );
-  }, [activeSessionId, onEnsureOpen]);
+  }, [activeSessionId, sessionScope, onEnsureOpen, embedded]);
 
   useEffect(() => {
     setTabs((prev) => {
@@ -301,6 +351,7 @@ export function AuxiliarySidebar({
       return next;
     });
     setActiveTabId(subagentTabId(selectedId));
+    onEnsureOpen();
   }, [
     activeSessionId,
     executionState?.revealSubagentSeq,
@@ -308,24 +359,55 @@ export function AuxiliarySidebar({
     setActiveTabId,
     setClosedSubagentTabs,
     subagentById,
+    onEnsureOpen,
   ]);
 
   useEffect(() => {
-    if (!reviewTarget || handledReviewSeqRef.current === reviewTarget.seq) {
-      return;
-    }
-    handledReviewSeqRef.current = reviewTarget.seq;
-    setTabs((prev) => {
-      const existing = prev.find((tab) => tab.type === "review");
-      if (!existing) {
-        return [...prev, { id: REVIEW_TAB_ID, type: "review", reviewTarget }];
+    const intents = [
+      reviewTarget && { type: "review" as const, target: reviewTarget },
+      fileTarget && { type: "files" as const, target: fileTarget },
+    ]
+      .filter(
+        (intent) =>
+          intent &&
+          !handledInspectorSeqRef.current.has(intent.target.seq) &&
+          (!intent.target.sessionId ||
+            intent.target.sessionId === activeSessionId),
+      )
+      .sort((a, b) => a!.target.seq - b!.target.seq);
+    if (!intents.length) return;
+    for (const intent of intents)
+      if (intent) handledInspectorSeqRef.current.add(intent.target.seq);
+    updateAuxiliaryState((previous) => {
+      let tabs = previous.tabs;
+      let activeTabId = previous.activeTabId;
+      for (const intent of intents) {
+        if (!intent) continue;
+        const existing = tabs.find((tab) => tab.type === intent.type);
+        const id = existing?.id ?? makeTabId();
+        const next: TabState = {
+          ...existing,
+          id,
+          type: intent.type,
+          ...(intent.type === "review"
+            ? { reviewTarget: intent.target as ReviewTarget }
+            : { fileTarget: intent.target as FileTarget }),
+        };
+        tabs = existing
+          ? tabs.map((tab) => (tab.id === id ? next : tab))
+          : [...tabs, next];
+        activeTabId = id;
       }
-      return prev.map((tab) =>
-        tab.type === "review" ? { ...tab, reviewTarget } : tab,
-      );
+      return { ...previous, tabs, activeTabId };
     });
-    setActiveTabId(REVIEW_TAB_ID);
-  }, [reviewTarget, reviewTarget?.seq, setActiveTabId, setTabs]);
+    onEnsureOpen();
+  }, [
+    reviewTarget,
+    fileTarget,
+    activeSessionId,
+    updateAuxiliaryState,
+    onEnsureOpen,
+  ]);
 
   const addTab = useCallback(
     (type: AuxiliaryStaticViewType) => {
@@ -344,7 +426,7 @@ export function AuxiliarySidebar({
         const id = makeTabId();
         setTabs((prev) => [...prev, { id, type }]);
         setActiveTabId(id);
-        void window.marloues.terminal
+        void window.marloues?.terminal
           ?.spawn(workspace?.path ?? "")
           .then((sessionId) => {
             setTabs((prev) =>
@@ -360,7 +442,7 @@ export function AuxiliarySidebar({
         const id = makeTabId();
         setTabs((prev) => [...prev, { id, type }]);
         setActiveTabId(id);
-        void window.marloues.browser
+        void window.marloues?.browser
           ?.newPage("about:blank", activeSessionId ?? undefined)
           .then((pageId) => {
             setTabs((prev) =>
@@ -386,41 +468,43 @@ export function AuxiliarySidebar({
 
   const removeTab = useCallback(
     (id: string) => {
-      const tab = tabs.find((item) => item.id === id);
-      if (tab?.type === "subagent" && tab.subagentId) {
-        setClosedSubagentTabs((prev) => new Set(prev).add(tab.subagentId!));
-      }
+      const index = tabs.findIndex((item) => item.id === id);
+      if (index < 0) return;
+      const tab = tabs[index];
+      const next = tabs.filter((item) => item.id !== id);
+      const nextActiveId =
+        activeTabId === id
+          ? (next[Math.min(index, next.length - 1)]?.id ?? null)
+          : activeTabId;
+      updateAuxiliaryState((previous) => ({
+        ...previous,
+        tabs: next,
+        activeTabId: next.length ? nextActiveId : null,
+        closedSubagentTabs:
+          tab.type === "subagent" && tab.subagentId
+            ? new Set(previous.closedSubagentTabs).add(tab.subagentId)
+            : previous.closedSubagentTabs,
+      }));
       // Clean up terminal/browser sessions when tab is closed
       if (tab?.type === "terminal" && tab.sessionId) {
-        void window.marloues.terminal?.kill(tab.sessionId);
+        void window.marloues?.terminal?.kill(tab.sessionId);
       }
       if (tab?.type === "browser" && tab.pageId) {
-        void window.marloues.browser?.closePage(tab.pageId);
+        void window.marloues?.browser?.closePage(tab.pageId);
       }
-      setTabs((prev) => {
-        const idx = prev.findIndex((tab) => tab.id === id);
-        const next = prev.filter((tab) => tab.id !== id);
-        if (next.length === 0) {
-          setActiveTabId(null);
-          focusTabAfterUpdate(null);
-          return next;
-        }
-        let nextActiveId = activeTabId;
-        if (activeTabId === id) {
-          const newIdx = Math.min(idx, next.length - 1);
-          nextActiveId = next[newIdx].id;
-          setActiveTabId(nextActiveId);
-        }
+      if (next.length === 0) {
+        dismissedEmptySessionsRef.current.add(sessionScope);
+        onLastTabClose();
+      } else {
         focusTabAfterUpdate(nextActiveId ?? next[0].id);
-        return next;
-      });
+      }
     },
     [
       activeTabId,
       focusTabAfterUpdate,
-      setActiveTabId,
-      setClosedSubagentTabs,
-      setTabs,
+      updateAuxiliaryState,
+      sessionScope,
+      onLastTabClose,
       tabs,
     ],
   );
@@ -434,6 +518,20 @@ export function AuxiliarySidebar({
     deferredSessionScope === sessionScope
       ? (tabs.find((tab) => tab.id === deferredActiveTabId) ?? null)
       : null;
+
+  const auxiliaryPanelOwnerId = useId();
+  const setAuxiliaryPanelSession = useInspectorStore(
+    (state) => state.setAuxiliaryPanelSession,
+  );
+  const visibleAuxiliarySession = open ? activeSessionId : null;
+  useLayoutEffect(() => {
+    setAuxiliaryPanelSession(auxiliaryPanelOwnerId, visibleAuxiliarySession);
+    return () => setAuxiliaryPanelSession(auxiliaryPanelOwnerId, null);
+  }, [
+    auxiliaryPanelOwnerId,
+    visibleAuxiliarySession,
+    setAuxiliaryPanelSession,
+  ]);
 
   useEffect(() => {
     if (!activeTabId) return;
@@ -472,9 +570,9 @@ export function AuxiliarySidebar({
   // Reload recovery: restore terminal tabs from active PTY sessions
   const terminalRecoveryRef = useRef(false);
   useEffect(() => {
-    if (terminalRecoveryRef.current) return;
+    if (embedded || terminalRecoveryRef.current) return;
     terminalRecoveryRef.current = true;
-    void window.marloues.terminal?.list().then((sessions) => {
+    void window.marloues?.terminal?.list().then((sessions) => {
       if (!sessions || sessions.length === 0) return;
       setTabs((prev) => {
         const existing = new Set(
@@ -492,15 +590,19 @@ export function AuxiliarySidebar({
         return restored.length > 0 ? [...prev, ...restored] : prev;
       });
     });
-  }, [setTabs]);
+  }, [setTabs, embedded]);
 
   // Reload recovery: restore browser tabs from active `<webview>` tabs
   const browserRecoveryRef = useRef(new Set<string>());
   useEffect(() => {
-    if (!activeSessionId || browserRecoveryRef.current.has(sessionScope))
+    if (
+      embedded ||
+      !activeSessionId ||
+      browserRecoveryRef.current.has(sessionScope)
+    )
       return;
     browserRecoveryRef.current.add(sessionScope);
-    void window.marloues.browser?.listPages(activeSessionId).then((pages) => {
+    void window.marloues?.browser?.listPages(activeSessionId).then((pages) => {
       if (!pages || pages.length === 0) return;
       setTabs((prev) => {
         const existing = new Set(
@@ -519,7 +621,7 @@ export function AuxiliarySidebar({
         return restored.length > 0 ? [...prev, ...restored] : prev;
       });
     });
-  }, [activeSessionId, sessionScope, setTabs]);
+  }, [activeSessionId, sessionScope, setTabs, embedded]);
 
   // Auto-activate first tab if none is active (e.g., after reload recovery restores tabs)
   useEffect(() => {
@@ -563,13 +665,13 @@ export function AuxiliarySidebar({
   // Terminal and browser tabs are always available (multi-tab), others are singleton
   const availableViews = useMemo(
     () =>
-      AUXILIARY_VIEW_OPTIONS.filter(
+      viewOptions.filter(
         (option) =>
           option.type === "terminal" ||
           option.type === "browser" ||
           !tabs.some((tab) => tab.type === option.type),
       ),
-    [tabs],
+    [tabs, viewOptions],
   );
 
   return (
@@ -589,25 +691,34 @@ export function AuxiliarySidebar({
       <AuxiliaryViewHost>
         {tabs.length === 0 ? (
           <AuxiliaryEmptyLauncher
-            options={AUXILIARY_VIEW_OPTIONS}
+            options={viewOptions}
             firstActionRef={launcherFirstActionRef}
             onOpenView={handleOpenView}
           />
         ) : null}
         {tabs.map((tab) => (
           <AuxiliaryViewPanel
-            key={tab.id}
+            key={`${sessionScope}:${tab.id}`}
             tabId={tab.id}
             active={activeTab?.id === tab.id}
           >
             {tab.type === "files" ? (
-              <FileExplorer workspacePath={workspace?.path} />
+              <FileExplorer
+                workspacePath={workspacePath ?? undefined}
+                fileTarget={tab.fileTarget}
+                sessionId={activeSessionId ?? undefined}
+                fileSystem={source?.fileSystem}
+              />
             ) : tab.type === "subagent" &&
               tab.subagentId &&
               subagentById.has(tab.subagentId) ? (
               <SubagentWorkspace subagentId={tab.subagentId} />
             ) : tab.type === "outputs" ? (
-              <OutputsPanel timeline={timeline} />
+              <OutputsPanel
+                timeline={timeline}
+                sessionId={activeSessionId ?? undefined}
+                cwd={workspacePath}
+              />
             ) : tab.type === "memory" ? (
               <MemoryPanel
                 workspacePath={workspace?.path}
@@ -616,7 +727,9 @@ export function AuxiliarySidebar({
             ) : tab.type === "review" ? (
               <ReviewPanel
                 reviewTarget={tab.reviewTarget ?? null}
-                timeline={sessionTimeline}
+                readThread={readThread}
+                workspacePath={workspacePath ?? undefined}
+                history={history}
               />
             ) : tab.type === "terminal" ? (
               <TerminalPanel sessionId={tab.sessionId} />

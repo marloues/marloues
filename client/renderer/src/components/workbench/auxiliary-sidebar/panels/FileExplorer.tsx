@@ -1,341 +1,315 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import hljs from "highlight.js/lib/common";
+import { FileText, Folder, RefreshCcw } from "lucide-react";
+import type { DirEntry, MarlouesAPI } from "@shared/types";
+import { type FileTarget, useInspectorStore } from "@/stores/inspector-store";
+import { Button, ResizableSplitPane } from "@/components/ui";
+import { WorkflowDetailCopyButton } from "@/components/workflow-chat/activity/DetailCopyButton";
 import {
-  ArrowLeft,
-  CheckCircle2,
-  ChevronDown,
-  ChevronRight,
-  Copy,
-  FileText,
-  Folder,
-  RefreshCcw,
-  Search,
-} from "lucide-react";
-import type { DirEntry, FileStat } from "@shared/types";
-import {
-  copyToClipboard,
-  formatBytes,
-  formatDate,
-  joinWorkspacePath,
-  languageFromPath,
-} from "./helpers";
+  InspectorEmpty,
+  InspectorTree,
+  ancestorPaths,
+  type InspectorTreeNode,
+} from "./InspectorTree";
+import { reviewFilePath } from "./session-review";
+import { languageFromPath } from "./helpers";
+import styles from "./InspectorPanel.module.css";
 
-export function FileExplorer({ workspacePath }: { workspacePath?: string }) {
-  const [entriesByPath, setEntriesByPath] = useState<
-    Record<string, DirEntry[]>
-  >({});
-  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(
-    () => new Set(["."]),
+export type InspectorFileSystem = Pick<
+  MarlouesAPI["fs"],
+  "readFile" | "listDir"
+>;
+
+export function FileExplorer({
+  workspacePath,
+  fileTarget,
+  fileSystem,
+  sessionId,
+}: {
+  workspacePath?: string;
+  fileTarget?: FileTarget;
+  fileSystem?: InspectorFileSystem;
+  sessionId?: string;
+}) {
+  const openFile = useInspectorStore((state) => state.openFile);
+  const fs = fileSystem ?? window.marloues?.fs;
+  const workspaceRoot = (workspacePath ?? fileTarget?.cwd ?? "").replace(
+    /\\/g,
+    "/",
   );
-  const [loadingPaths, setLoadingPaths] = useState<Set<string>>(
-    () => new Set(),
+  const root = workspaceRoot === "/" ? "/" : workspaceRoot.replace(/\/$/, "");
+  const absolute = useCallback(
+    (path: string) =>
+      /^(?:\/|[a-z]:[\\/])/i.test(path)
+        ? path
+        : `${root.replace(/\/$/, "")}/${path === "." ? "" : path}`,
+    [root],
   );
-  const [selectedFile, setSelectedFile] = useState<string | null>(null);
-  const [preview, setPreview] = useState("");
-  const [previewCopied, setPreviewCopied] = useState(false);
-  const [fileStat, setFileStat] = useState<FileStat | null>(null);
-  const [fileLoading, setFileLoading] = useState(false);
+  const [entries, setEntries] = useState<Record<string, DirEntry[]>>({});
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState<Set<string>>(new Set());
+  const [directoryError, setDirectoryError] = useState("");
+  const [selection, setSelection] = useState<{ path: string; line?: number }>();
+  const [result, setResult] = useState<{ text?: string; error?: string }>({});
   const [filter, setFilter] = useState("");
-  const [error, setError] = useState("");
-
-  const rootEntries = entriesByPath["."] ?? [];
+  const [showTree, setShowTree] = useState(true);
+  const treeToggleRef = useRef<HTMLButtonElement>(null);
+  const [reload, setReload] = useState(0);
+  const generation = useRef(0);
+  const pendingDirs = useRef(new Map<string, Promise<void>>());
   const loadDir = useCallback(
-    async (nextPath: string) => {
-      if (!workspacePath) return;
-      setError("");
-      setLoadingPaths((paths) => new Set(paths).add(nextPath));
-      try {
-        const nextEntries = await window.marloues.fs.listDir(nextPath);
-        setEntriesByPath((state) => ({
-          ...state,
-          [nextPath]: [...nextEntries].sort(
-            (a, b) =>
-              Number(b.isDirectory) - Number(a.isDirectory) ||
-              a.name.localeCompare(b.name),
-          ),
-        }));
-      } catch (loadError) {
-        setError(
-          loadError instanceof Error ? loadError.message : String(loadError),
-        );
-      } finally {
-        setLoadingPaths((paths) => {
-          const next = new Set(paths);
-          next.delete(nextPath);
-          return next;
+    (path: string) => {
+      const pending = pendingDirs.current.get(path);
+      if (pending) return pending;
+      if (!root || !fs?.listDir) return Promise.resolve();
+      const version = generation.current;
+      setLoading((prev) => new Set(prev).add(path));
+      const request = Promise.resolve()
+        .then(() => fs.listDir(absolute(path)))
+        .then((next) => {
+          if (version !== generation.current) return;
+          setEntries((prev) => ({
+            ...prev,
+            [path]: next.sort(
+              (a, b) =>
+                Number(b.isDirectory) - Number(a.isDirectory) ||
+                a.name.localeCompare(b.name),
+            ),
+          }));
+        })
+        .catch((error) => {
+          if (version === generation.current)
+            setDirectoryError(
+              String(error instanceof Error ? error.message : error),
+            );
+        })
+        .finally(() => {
+          if (version !== generation.current) return;
+          pendingDirs.current.delete(path);
+          setLoading((prev) => {
+            const next = new Set(prev);
+            next.delete(path);
+            return next;
+          });
         });
-      }
+      pendingDirs.current.set(path, request);
+      return request;
     },
-    [workspacePath],
+    [root, fs, absolute],
   );
 
   useEffect(() => {
-    setEntriesByPath({});
-    setExpandedPaths(new Set(["."]));
-    setSelectedFile(null);
-    setPreview("");
-    setPreviewCopied(false);
-    setFileStat(null);
+    generation.current += 1;
+    pendingDirs.current.clear();
+    setEntries({});
+    setExpanded(new Set());
+    setLoading(new Set());
+    setDirectoryError("");
     setFilter("");
-    setError("");
-    if (workspacePath) void loadDir(".");
-  }, [workspacePath, loadDir]);
+    setSelection(undefined);
+    void loadDir(".");
+    return () => {
+      generation.current += 1;
+    };
+  }, [loadDir]);
 
-  const toggleDirectory = (path: string) => {
-    const isExpanded = expandedPaths.has(path);
-    setExpandedPaths((paths) => {
-      const next = new Set(paths);
-      if (isExpanded) next.delete(path);
+  useEffect(() => {
+    if (!fileTarget) return;
+    const path = reviewFilePath(fileTarget.path, root);
+    setSelection({ path, line: fileTarget.line });
+    const ancestors = ancestorPaths(path);
+    setExpanded((prev) => new Set([...prev, ...ancestors]));
+    setFilter("");
+    // Files outside the workspace are readable, but do not replace the workspace tree.
+    if (!/^(?:\/|[a-z]:)/i.test(path) && !path.startsWith("../"))
+      ancestors.forEach((parent) => void loadDir(parent));
+  }, [fileTarget, root, loadDir]);
+
+  useEffect(() => {
+    setResult({});
+    if (!selection) return;
+    let disposed = false;
+    const reader = fileTarget?.readFile ?? fs?.readFile;
+    if (!reader) {
+      setResult({ error: "此环境暂不支持读取本地文件" });
+      return;
+    }
+    Promise.resolve()
+      .then(() => reader(absolute(selection.path)))
+      .then(
+        (text) => {
+          if (!disposed) setResult({ text });
+        },
+        (error) => {
+          if (!disposed)
+            setResult({
+              error: error instanceof Error ? error.message : String(error),
+            });
+        },
+      );
+    return () => {
+      disposed = true;
+    };
+  }, [selection, fileTarget?.readFile, fs, absolute, reload]);
+
+  const nodes = useMemo(() => {
+    const build = (path: string): InspectorTreeNode[] =>
+      (entries[path] ?? []).map((entry) => {
+        const child = path === "." ? entry.name : `${path}/${entry.name}`;
+        return {
+          path: child,
+          name: entry.name,
+          directory: entry.isDirectory,
+          children: entry.isDirectory ? build(child) : undefined,
+        };
+      });
+    return build(".");
+  }, [entries]);
+  const toggle = (path: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path);
       else next.add(path);
       return next;
     });
-    if (!isExpanded && !entriesByPath[path]) void loadDir(path);
+    if (!entries[path]) void loadDir(path);
   };
-
-  const openFile = async (filePath: string) => {
-    setSelectedFile(filePath);
-    setPreview("");
-    setFileStat(null);
-    setFileLoading(true);
-    setPreviewCopied(false);
-    setError("");
-    try {
-      const [stat, content] = await Promise.all([
-        window.marloues.fs.stat(filePath),
-        window.marloues.fs.readFile(filePath),
-      ]);
-      setFileStat(stat);
-      setPreview(content);
-    } catch (readError) {
-      setPreview("");
-      setError(
-        readError instanceof Error ? readError.message : String(readError),
-      );
-    } finally {
-      setFileLoading(false);
-    }
-  };
-
-  const copyPreview = async () => {
-    if (!preview) return;
-    try {
-      await copyToClipboard(preview);
-      setPreviewCopied(true);
-      window.setTimeout(() => setPreviewCopied(false), 1200);
-    } catch {
-      setPreviewCopied(false);
-    }
-  };
-
-  if (!workspacePath) {
-    return (
-      <div className="file-empty-state">
-        <Folder size={32} />
-        <strong>暂无工作区</strong>
-        <p>打开工作区后，这里会显示项目文件。</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="file-panel">
-      {error ? <p className="file-error">{error}</p> : null}
-      {selectedFile ? (
-        <div className="file-preview">
-          <div className="file-preview-toolbar">
-            <button
-              onClick={() => {
-                setSelectedFile(null);
-                setPreview("");
-                setPreviewCopied(false);
-                setFileStat(null);
-              }}
-              title="返回文件列表"
-            >
-              <ArrowLeft size={14} />
-            </button>
-            <div>
-              <strong>{selectedFile.split("/").pop()}</strong>
-              <span>{selectedFile}</span>
-            </div>
-            <button
-              onClick={() => void openFile(selectedFile)}
-              disabled={fileLoading}
-              title="重新加载"
-            >
-              <RefreshCcw size={14} />
-            </button>
-            <button
-              onClick={() => void copyPreview()}
-              disabled={!preview}
-              title={previewCopied ? "已复制" : "复制内容"}
-              aria-label={previewCopied ? "已复制内容" : "复制内容"}
-            >
-              {previewCopied ? <CheckCircle2 size={14} /> : <Copy size={14} />}
-            </button>
-          </div>
-          <div className="file-preview-meta">
-            <span>{selectedFile.split(".").pop() ?? "文本"}</span>
-            {fileStat ? (
-              <>
-                <i />
-                <span>{formatBytes(fileStat.size)}</span>
-                <i />
-                <span>{formatDate(fileStat.modifiedAt)}</span>
-              </>
-            ) : null}
-          </div>
-          {fileLoading ? (
-            <p className="file-loading">正在读取文件...</p>
+    <div className={styles.panel}>
+      <div className={styles.toolbar}>
+        <FileText size={16} />
+        <span
+          className={styles.title}
+          title={selection ? absolute(selection.path) : root}
+        >
+          {selection?.path ?? (root || "/")}
+          {selection?.line ? `:${selection.line}` : ""}
+        </span>
+        {result.text !== undefined ? (
+          <WorkflowDetailCopyButton value={result.text} label="复制文件内容" />
+        ) : null}
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="重新加载文件和目录"
+          onClick={() => {
+            setReload((value) => value + 1);
+            setDirectoryError("");
+            void loadDir(".");
+            expanded.forEach((path) => void loadDir(path));
+          }}
+        >
+          <RefreshCcw size={16} />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          ref={treeToggleRef}
+          aria-label="文件目录树"
+          aria-pressed={showTree}
+          onClick={() => setShowTree((value) => !value)}
+        >
+          <Folder size={16} />
+        </Button>
+      </div>
+      {directoryError ? (
+        <p role="alert" className={`${styles.message} ${styles.error}`}>
+          {directoryError}
+        </p>
+      ) : null}
+      <ResizableSplitPane
+        label="调整文件目录宽度"
+        asideOpen={showTree}
+        onAsideOpenChange={(open) => {
+          setShowTree(open);
+          if (!open) treeToggleRef.current?.focus();
+        }}
+        aside={
+          <InspectorTree
+            nodes={nodes}
+            selected={selection?.path}
+            expanded={expanded}
+            onToggle={toggle}
+            onSelect={(path) =>
+              openFile(absolute(path), {
+                sessionId: sessionId ?? fileTarget?.sessionId,
+                cwd: root,
+                readFile: fileTarget?.readFile,
+              })
+            }
+            filter={filter}
+            onFilter={setFilter}
+            loading={loading}
+            keepDirectories
+          />
+        }
+      >
+        <div className={`${styles.content} scrollbar-thin`}>
+          {!selection ? (
+            <InspectorEmpty title="打开文件">
+              从工作区目录树中选择文件
+            </InspectorEmpty>
+          ) : result.error ? (
+            <p role="alert" className={`${styles.message} ${styles.error}`}>
+              {result.error}
+            </p>
+          ) : result.text === undefined ? (
+            <p role="status" className={styles.message}>
+              正在读取文件…
+            </p>
           ) : (
-            <FilePreviewCode path={selectedFile} content={preview} />
+            <FilePreviewCode
+              path={selection.path}
+              content={result.text}
+              line={selection.line}
+            />
           )}
         </div>
-      ) : (
-        <>
-          <label className="file-filter">
-            <Search size={14} aria-hidden="true" />
-            <input
-              value={filter}
-              onChange={(event) => setFilter(event.target.value)}
-              placeholder="筛选文件"
-              aria-label="筛选文件"
-            />
-          </label>
-          <div className="file-list scrollbar-thin">
-            <FileTree
-              dirPath="."
-              entries={rootEntries}
-              entriesByPath={entriesByPath}
-              expandedPaths={expandedPaths}
-              loadingPaths={loadingPaths}
-              onToggleDirectory={toggleDirectory}
-              onOpenFile={openFile}
-              filter={filter}
-            />
-          </div>
-        </>
-      )}
+      </ResizableSplitPane>
     </div>
   );
 }
 
-function FileTree({
-  dirPath,
-  entries,
-  entriesByPath,
-  expandedPaths,
-  loadingPaths,
-  onToggleDirectory,
-  onOpenFile,
-  filter,
-  depth = 0,
+function FilePreviewCode({
+  path,
+  content,
+  line,
 }: {
-  dirPath: string;
-  entries: DirEntry[];
-  entriesByPath: Record<string, DirEntry[]>;
-  expandedPaths: Set<string>;
-  loadingPaths: Set<string>;
-  onToggleDirectory: (path: string) => void;
-  onOpenFile: (path: string) => void;
-  filter: string;
-  depth?: number;
+  path: string;
+  content: string;
+  line?: number;
 }) {
-  if (loadingPaths.has(dirPath) && entries.length === 0) {
-    return <div className="file-tree-empty">正在读取文件...</div>;
-  }
-
-  const normalizedFilter = filter.trim().toLocaleLowerCase();
-  const visibleEntries = normalizedFilter
-    ? entries.filter((entry) =>
-        entry.name.toLocaleLowerCase().includes(normalizedFilter),
-      )
-    : entries;
-
-  if (visibleEntries.length === 0) {
-    return <div className="file-tree-empty">这个目录是空的。</div>;
-  }
-
-  return (
-    <div className="file-tree">
-      {visibleEntries.map((entry) => {
-        const itemPath = joinWorkspacePath(dirPath, entry.name);
-        const expanded = expandedPaths.has(itemPath);
-        const childEntries = entriesByPath[itemPath] ?? [];
-
-        return (
-          <div key={itemPath}>
-            <button
-              className="file-tree-row"
-              style={{ paddingLeft: fileTreeRowPadding(depth) }}
-              title={itemPath}
-              onClick={() => {
-                if (entry.isDirectory) onToggleDirectory(itemPath);
-                else void onOpenFile(itemPath);
-              }}
-            >
-              {entry.isDirectory ? (
-                expanded ? (
-                  <ChevronDown size={14} />
-                ) : (
-                  <ChevronRight size={14} />
-                )
-              ) : (
-                <span className="file-tree-indent" />
-              )}
-              {entry.isDirectory ? (
-                <Folder size={14} className="folder-icon" />
-              ) : (
-                <FileText size={14} />
-              )}
-              <span>{entry.name}</span>
-            </button>
-            {entry.isDirectory && expanded ? (
-              <FileTree
-                dirPath={itemPath}
-                entries={childEntries}
-                entriesByPath={entriesByPath}
-                expandedPaths={expandedPaths}
-                loadingPaths={loadingPaths}
-                onToggleDirectory={onToggleDirectory}
-                onOpenFile={onOpenFile}
-                filter={filter}
-                depth={depth + 1}
-              />
-            ) : null}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function fileTreeRowPadding(depth: number): number {
-  if (depth <= 0) return 7;
-  if (depth === 1) return 21;
-  return 37 + (depth - 2) * 14;
-}
-
-function FilePreviewCode({ path, content }: { path: string; content: string }) {
-  const language = languageFromPath(path);
   const lines = useMemo(() => {
-    if (!content) return ["文件为空。"];
-    const highlighted = hljs.getLanguage(language)
-      ? hljs.highlight(content, { language, ignoreIllegals: true }).value
-      : hljs.highlightAuto(content).value;
-    return highlighted.split(/\r?\n/);
-  }, [content, language]);
-
+    const language = languageFromPath(path);
+    return content
+      .split(/\r?\n/)
+      .map((text) =>
+        hljs.getLanguage(language)
+          ? hljs.highlight(text, { language, ignoreIllegals: true }).value
+          : null,
+      );
+  }, [path, content]);
+  const targetRef = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    targetRef.current?.scrollIntoView({ block: "center" });
+  }, [content, line]);
   return (
-    <div className="file-code-view scrollbar-thin">
-      {lines.map((line, index) => (
-        <div className="file-code-line" key={`${index}-${line.slice(0, 16)}`}>
-          <span className="file-code-number">{index + 1}</span>
-          <code
-            dangerouslySetInnerHTML={{ __html: line.length > 0 ? line : " " }}
-          />
-        </div>
+    <pre className={`${styles.code} workflow-file-preview`}>
+      {content.split(/\r?\n/).map((text, index) => (
+        <span
+          key={index}
+          ref={line === index + 1 ? targetRef : undefined}
+          className={`${styles.line} ${line === index + 1 ? "is-target-line" : ""}`}
+          data-target={line === index + 1}
+        >
+          <span className={styles.lineNumber}>{index + 1}</span>
+          {lines[index] !== null ? (
+            <code dangerouslySetInnerHTML={{ __html: lines[index] }} />
+          ) : (
+            <code>{text || " "}</code>
+          )}
+        </span>
       ))}
-    </div>
+    </pre>
   );
 }

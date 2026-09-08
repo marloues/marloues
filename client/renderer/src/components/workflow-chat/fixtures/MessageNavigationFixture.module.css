@@ -1,0 +1,28 @@
+.demo {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - 92px);
+  min-height: 360px;
+  min-width: 0;
+}
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.controls span {
+  color: var(--text-3);
+  font-size: var(--text-sm);
+}
+.canvas {
+  --interaction-dock-safe-area: 0px;
+  flex: 1;
+  height: auto;
+  margin-inline: auto;
+}
+.canvas[data-narrow="true"] {
+  width: min(100%, 760px);
+}

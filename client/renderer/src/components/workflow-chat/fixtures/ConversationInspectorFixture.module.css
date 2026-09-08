@@ -1,0 +1,36 @@
+.shell {
+  display: flex;
+  height: 100dvh;
+  min-width: 0;
+  background: var(--surface-workspace);
+}
+.main {
+  flex: 1;
+  min-width: 0;
+}
+.auxiliary {
+  width: clamp(340px, 48vw, 760px);
+  min-width: 0;
+  height: 100%;
+  border-left: 1px solid var(--border);
+}
+.auxiliary[data-primary="true"] {
+  flex: 1;
+  width: 100%;
+}
+.toggle {
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 20;
+  background: var(--surface-popover);
+}
+@media (max-width: 700px) {
+  .shell:has(.auxiliary:not([hidden])) .main {
+    display: none;
+  }
+  .auxiliary {
+    flex: 1;
+    width: 100%;
+  }
+}
