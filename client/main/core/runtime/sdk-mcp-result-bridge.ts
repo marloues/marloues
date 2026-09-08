@@ -72,7 +72,7 @@ export function createSdkMcpResultBridges(
     const client = () =>
       (connected ??= (async () => {
         const upstream = new Client(
-          { name: "Marloues SDK bridge", version: "0.3.4" },
+          { name: "Marloues SDK bridge", version: "0.4.0" },
           {
             capabilities: {
               elicitation: { form: {}, url: {} },

@@ -118,7 +118,7 @@ function createEntry(
       }
       reply(entry, id, {
         protocolVersion: "2026-01-26",
-        hostInfo: { name: "Marloues", version: "0.3.4" },
+        hostInfo: { name: "Marloues", version: "0.4.0" },
         hostCapabilities: { serverTools: {} },
         hostContext: {
           theme: readConversationTheme().theme,

@@ -72,7 +72,7 @@ async function connection(owner: ConversationAppOwner) {
   if (!promise) {
     promise = (async () => {
       const client = new Client(
-        { name: "Marloues conversation", version: "0.3.4" },
+        { name: "Marloues conversation", version: "0.4.0" },
         {
           capabilities: {
             extensions: {
