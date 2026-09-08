@@ -104,6 +104,8 @@ vi.mock("../../../../../client/main/gateway", () => ({
 vi.mock("../../../../../client/main/core/runtime/steer-queue", () => ({
   SteerQueue: class {
     flushNextAtBoundary = vi.fn(() => false);
+    setInputProjectionContext = vi.fn();
+    clearInputProjectionContext = vi.fn();
   },
 }));
 vi.mock("../../../../../client/main/core/runtime/message-channel", () => ({

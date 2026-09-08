@@ -64,6 +64,7 @@ import type {
   ScheduledTaskRunStatus,
 } from "@shared/types";
 import type { WorkflowUserMessageContent } from "@shared/workflow-read-thread-contract";
+import { createCanonicalUserContent } from "@shared/agent-input";
 import {
   getRuntime,
   getRuntimeState,
@@ -180,6 +181,12 @@ import {
   subscribeOutbox,
   cancelSessionOutbox,
 } from "../services/outbox-service";
+import {
+  createDeliveryAttempt,
+  persistTurnInput,
+  updateDeliveryAttempt,
+  updateTurnInputState,
+} from "../services/turn-input-store";
 import {
   generateWecomBotQRCode,
   pollWecomBotQRResult,
@@ -1543,93 +1550,9 @@ function modelSnapshotFromProvider(
 
 function userContentFromAttachments(
   text: string,
-  attachments: unknown[] | undefined,
+  attachments: readonly unknown[] | undefined,
 ): import("@shared/workflow-read-thread-contract").WorkflowUserMessageContent[] {
-  const content: import("@shared/workflow-read-thread-contract").WorkflowUserMessageContent[] =
-    [];
-  if (text.trim()) content.push({ type: "text", text });
-  for (const attachment of attachments ?? []) {
-    const record =
-      attachment && typeof attachment === "object"
-        ? (attachment as Record<string, unknown>)
-        : null;
-    if (!record) continue;
-    if (
-      record.type === "localImage" &&
-      typeof record.path === "string" &&
-      record.path.trim()
-    ) {
-      content.push({ type: "localImage", path: record.path });
-      continue;
-    }
-    const imageUrl =
-      typeof record.url === "string"
-        ? record.url
-        : typeof record.dataUrl === "string"
-          ? record.dataUrl
-          : "";
-    if ((record.type === "image" || record.dataUrl) && imageUrl.trim()) {
-      content.push({ type: "image", url: imageUrl });
-      continue;
-    }
-    if (
-      (record.type === "skill" || record.type === "mention") &&
-      typeof record.name === "string" &&
-      record.name.trim()
-    ) {
-      const path =
-        typeof record.path === "string" && record.path.trim()
-          ? record.path
-          : undefined;
-      content.push(
-        record.type === "skill"
-          ? { type: "skill", name: record.name, path }
-          : { type: "mention", name: record.name, path },
-      );
-      continue;
-    }
-    if (
-      record.type === "browserComment" &&
-      typeof record.commentId === "number" &&
-      typeof record.ref === "string" &&
-      typeof record.comment === "string"
-    ) {
-      content.push({
-        type: "browserComment",
-        commentId: record.commentId,
-        ref: record.ref,
-        tagName: typeof record.tagName === "string" ? record.tagName : "",
-        text: typeof record.text === "string" ? record.text : "",
-        attributes:
-          record.attributes && typeof record.attributes === "object"
-            ? (record.attributes as Record<string, string>)
-            : {},
-        rect:
-          record.rect && typeof record.rect === "object"
-            ? (record.rect as {
-                x: number;
-                y: number;
-                width: number;
-                height: number;
-              })
-            : { x: 0, y: 0, width: 0, height: 0 },
-        viewport:
-          record.viewport && typeof record.viewport === "object"
-            ? (record.viewport as { width: number; height: number })
-            : { width: 0, height: 0 },
-        scrollX: typeof record.scrollX === "number" ? record.scrollX : 0,
-        scrollY: typeof record.scrollY === "number" ? record.scrollY : 0,
-        comment: record.comment,
-        pageUrl:
-          typeof record.pageUrl === "string" ? record.pageUrl : undefined,
-        screenshotDataUrl:
-          typeof record.screenshotDataUrl === "string"
-            ? record.screenshotDataUrl
-            : undefined,
-      });
-    }
-  }
-  return content;
+  return createCanonicalUserContent(text, attachments);
 }
 
 function titleSeedFromUserContent(
@@ -1642,105 +1565,6 @@ function titleSeedFromUserContent(
     return image.path.split(/[\\/]/).pop() || "Image message";
   if (image?.type === "image") return "Image message";
   return "New chat";
-}
-
-function appendAttachmentSummaryToPrompt(
-  text: string,
-  attachments: unknown[] | undefined,
-): string {
-  const summaries = attachmentPromptSummaries(attachments);
-  if (summaries.length === 0) return text;
-  const base = text.trim() ? text : "(No text message.)";
-  return [
-    base,
-    "",
-    `[User attached ${summaries.length} item${
-      summaries.length === 1 ? "" : "s"
-    }. The current runtime receives this metadata, but not binary image pixels.]`,
-    ...summaries,
-  ].join("\n");
-}
-
-function attachmentPromptSummaries(
-  attachments: unknown[] | undefined,
-): string[] {
-  const summaries: string[] = [];
-  for (const attachment of attachments ?? []) {
-    const record =
-      attachment && typeof attachment === "object"
-        ? (attachment as Record<string, unknown>)
-        : null;
-    if (!record) continue;
-    const type = typeof record.type === "string" ? record.type : "";
-    if (
-      type === "localImage" &&
-      typeof record.path === "string" &&
-      record.path.trim()
-    ) {
-      summaries.push(
-        `${summaries.length + 1}. ${
-          record.path.split(/[\\/]/).pop() || "local image"
-        } (local path: ${record.path})`,
-      );
-      continue;
-    }
-    const imageUrl =
-      typeof record.url === "string"
-        ? record.url
-        : typeof record.dataUrl === "string"
-          ? record.dataUrl
-          : "";
-    if ((type === "image" || record.dataUrl) && imageUrl.trim()) {
-      const name =
-        typeof record.name === "string" && record.name.trim()
-          ? record.name.trim()
-          : `image-${summaries.length + 1}`;
-      const mediaType =
-        typeof record.mimeType === "string" && record.mimeType.trim()
-          ? record.mimeType.trim()
-          : mediaTypeFromImageUrl(imageUrl);
-      const size =
-        typeof record.size === "number" &&
-        Number.isFinite(record.size) &&
-        record.size > 0
-          ? `, ${Math.round(record.size / 1024)} KB`
-          : "";
-      summaries.push(
-        `${summaries.length + 1}. ${name} (${mediaType || "image"}${size})`,
-      );
-      continue;
-    }
-    if (
-      type === "browserComment" &&
-      typeof record.comment === "string" &&
-      record.comment.trim()
-    ) {
-      const pageUrl =
-        typeof record.pageUrl === "string" && record.pageUrl.trim()
-          ? record.pageUrl.trim()
-          : "unknown page";
-      const ref =
-        typeof record.ref === "string" ? record.ref : "unknown target";
-      const selectedText =
-        typeof record.text === "string" ? record.text.trim() : "";
-      summaries.push(
-        `${
-          summaries.length + 1
-        }. Browser annotation on ${pageUrl}\n   target: ${ref}${
-          selectedText ? `\n   selected text: ${selectedText}` : ""
-        }\n   comment: ${record.comment.trim()}`,
-      );
-    }
-  }
-  return summaries;
-}
-
-function mediaTypeFromImageUrl(value: string): string {
-  const match = value.match(/^data:([^;,]+)[;,]/i);
-  if (match?.[1]) return match[1];
-  if (/^https?:\/\//i.test(value)) return "remote image";
-  if (/^file:/i.test(value)) return "local image";
-  return "image";
 }
 
 function truncateStoredSession(
@@ -1834,9 +1658,39 @@ async function sendChatTurn(
   const nativeRuntimeThreadId =
     savedSession?.runtimeThreadIds?.[activeRuntimeId] ??
     (activeRuntimeId === "sdk" ? savedSession?.runtimeThreadId : undefined);
-  const userContent =
+  const canonicalUserContent =
     overrides.userContent ??
     userContentFromAttachments(content, request.attachments);
+  let persistedInput: ReturnType<typeof persistTurnInput>;
+  try {
+    // This synchronous durability boundary intentionally precedes every
+    // runtime call (including steer). Runtime-specific payloads are derived
+    // from the hydrated canonical record, never used as the source of truth.
+    persistedInput = persistTurnInput({
+      sessionId: threadId,
+      turnId,
+      messageId: userMessageId,
+      content: canonicalUserContent,
+      runtimeId: activeRuntimeId,
+      modelId: turnModelSnapshot.modelId,
+      createdAt: startedAt,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    logInfo("chat.turnInputPersistenceFailed", {
+      sessionId: threadId,
+      messageId: userMessageId,
+      error: message,
+    });
+    return {
+      status: "failed",
+      sessionId: threadId,
+      messageId: userMessageId,
+      reason: "rejected",
+      error: `Unable to durably store user input: ${message}`,
+    };
+  }
+  const userContent = persistedInput.content;
   const imTarget = overrides.imTarget;
   const publishedItems = new Map<string, WorkflowTurnItem>();
   const publishItem = (item: WorkflowTurnItem) => {
@@ -1886,19 +1740,50 @@ async function sendChatTurn(
   let fellBackFromSteer = false;
   if (request.deliveryMode === "steer") {
     if (runtime.steerTurn) {
-      const steerContent = appendAttachmentSummaryToPrompt(
-        runtimeContent,
-        request.attachments,
-      );
-      const result = await runtime.steerTurn({
-        threadId,
-        content: steerContent,
-        displayContent: content,
-        userContent,
-        attachments: request.attachments,
-        messageId: userMessageId,
+      const steerAttemptId = createDeliveryAttempt({
+        inputId: persistedInput.id,
+        turnId,
+        runtimeId: activeRuntimeId,
+        modelId: turnModelSnapshot.modelId,
+        report: {
+          transport: "steer",
+          parts: userContent.map((part, index) => ({ index, type: part.type })),
+        },
       });
+      updateTurnInputState(persistedInput.id, "dispatching");
+      updateDeliveryAttempt(steerAttemptId, "dispatching");
+      let result: ChatSendReceipt;
+      try {
+        result = await runtime.steerTurn({
+          threadId,
+          content: runtimeContent,
+          displayContent: content,
+          userContent,
+          attachments: userContent,
+          messageId: userMessageId,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        updateDeliveryAttempt(steerAttemptId, "failed", {
+          lastError: message,
+        });
+        updateTurnInputState(persistedInput.id, "failed", {
+          lastError: message,
+        });
+        throw error;
+      }
       if (result.status === "queued") {
+        updateDeliveryAttempt(steerAttemptId, "acknowledged", {
+          report: {
+            transport: "steer",
+            status: "durably_queued",
+            parts: userContent.map((part, index) => ({
+              index,
+              type: part.type,
+            })),
+          },
+        });
+        updateTurnInputState(persistedInput.id, "queued");
         logInfo("chat.turnSteered", {
           sessionId: threadId,
           turnId: result.turnId,
@@ -1906,6 +1791,10 @@ async function sendChatTurn(
         });
         return result;
       }
+      updateDeliveryAttempt(steerAttemptId, "completed", {
+        report: { transport: "steer", status: "fallback_to_new_turn" },
+      });
+      updateTurnInputState(persistedInput.id, "queued");
       fellBackFromSteer = true;
       logInfo("chat.turnSteerFallback", {
         sessionId: threadId,
@@ -1916,6 +1805,18 @@ async function sendChatTurn(
       fellBackFromSteer = true;
     }
   }
+
+  const deliveryAttemptId = createDeliveryAttempt({
+    inputId: persistedInput.id,
+    turnId,
+    runtimeId: activeRuntimeId,
+    modelId: turnModelSnapshot.modelId,
+    report: {
+      transport: "turn",
+      parts: userContent.map((part, index) => ({ index, type: part.type })),
+    },
+  });
+  updateTurnInputState(persistedInput.id, "preparing");
 
   logInfo("chat.turnStarted", {
     sessionId: threadId,
@@ -1934,7 +1835,7 @@ async function sendChatTurn(
     threadId,
     turnId,
     content,
-    attachments: request.attachments,
+    attachments: userContent,
     userMessageId,
     startedAt,
     cwd: workspacePath ?? null,
@@ -1976,6 +1877,7 @@ async function sendChatTurn(
     const items = new Map<string, MessageItem>();
     let lastAgentId = "";
     let agentSequence = 0;
+    let deliverySettled = false;
     let tokenUsage: ChatSessionRecord["messages"][number]["usage"] | undefined;
 
     const fullAgentText = () =>
@@ -2177,13 +2079,17 @@ async function sendChatTurn(
             modelName: turnModelSnapshot.modelName,
             items: [],
           });
+          updateDeliveryAttempt(deliveryAttemptId, "blocked", {
+            lastError: blockedMessage,
+            report: { transport: "turn", status: "context_blocked" },
+          });
+          updateTurnInputState(persistedInput.id, "blocked", {
+            lastError: blockedMessage,
+          });
+          deliverySettled = true;
           return;
         }
       }
-      runtimeContent = appendAttachmentSummaryToPrompt(
-        runtimeContent,
-        request.attachments,
-      );
       runtime.forwardDeferredEvent = (evt) => {
         const deferredUiEvent = translateRuntimeEventToUIEvent(
           evt,
@@ -2194,17 +2100,22 @@ async function sendChatTurn(
         emitImUIEvent(imTarget, threadId, turnId, deferredUiEvent);
         mainWindow.webContents.send(IPC.CHAT_EVENT, deferredUiEvent);
       };
+      updateTurnInputState(persistedInput.id, "dispatching");
+      updateDeliveryAttempt(deliveryAttemptId, "dispatching");
       const eventStream = await runtime.sendMessage({
         threadId,
         turnId,
+        userContent,
         content: runtimeContent,
         displayContent: content,
         cwd: workspacePath,
-        attachments: request.attachments,
+        attachments: userContent,
         messageId: userMessageId,
         runtimeThreadId: nativeRuntimeThreadId,
         settingsSnapshot: turnSettings,
       });
+      updateTurnInputState(persistedInput.id, "acknowledged");
+      updateDeliveryAttempt(deliveryAttemptId, "acknowledged");
       for await (const evt of eventStream) {
         const ts = Date.now();
         if (evt.kind === "item-updated") {
@@ -2431,6 +2342,28 @@ async function sendChatTurn(
             elapsedMs: Date.now() - startedAt,
             ...(usageStr ? { usage: usageStr } : {}),
           });
+          const deliveryFailed = uiEvent.result === "error";
+          updateDeliveryAttempt(
+            deliveryAttemptId,
+            deliveryFailed ? "failed" : "completed",
+            {
+              lastError: uiEvent.error ?? null,
+              report: {
+                transport: "turn",
+                status: uiEvent.result,
+                parts: userContent.map((part, index) => ({
+                  index,
+                  type: part.type,
+                })),
+              },
+            },
+          );
+          updateTurnInputState(
+            persistedInput.id,
+            deliveryFailed ? "failed" : "completed",
+            { lastError: uiEvent.error ?? null },
+          );
+          deliverySettled = true;
           continue;
         }
 
@@ -2468,6 +2401,14 @@ async function sendChatTurn(
             usage: tokenUsage,
             items: [...publishedItems.values()],
           });
+          updateDeliveryAttempt(deliveryAttemptId, "failed", {
+            lastError: uiEvent.message,
+            report: { transport: "turn", status: "runtime_error_event" },
+          });
+          updateTurnInputState(persistedInput.id, "failed", {
+            lastError: uiEvent.message,
+          });
+          deliverySettled = true;
         }
       }
     } catch (err) {
@@ -2517,7 +2458,23 @@ async function sendChatTurn(
         usage: tokenUsage,
         items: [...publishedItems.values()],
       });
+      updateDeliveryAttempt(deliveryAttemptId, "failed", {
+        lastError: errorMessage,
+        report: { transport: "turn", status: "dispatch_exception" },
+      });
+      updateTurnInputState(persistedInput.id, "failed", {
+        lastError: errorMessage,
+      });
+      deliverySettled = true;
     } finally {
+      if (!deliverySettled) {
+        updateDeliveryAttempt(deliveryAttemptId, "uncertain", {
+          lastError: "Runtime event stream ended without a terminal event",
+        });
+        updateTurnInputState(persistedInput.id, "uncertain", {
+          lastError: "Runtime event stream ended without a terminal event",
+        });
+      }
       // A turn ending changes whether durable outbox messages are deliverable,
       // even when no outbox row changed. Publish after the runtime iterator has
       // closed so a stopped turn exposes its remaining queue as paused.

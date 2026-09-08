@@ -9,6 +9,7 @@ import {
   type ThreadStartResult,
 } from "./transport/types";
 import { normalizeCodexItem, type NormalizedThreadItem } from "./normalize";
+import type { CodexUserInput } from "./input-adapter";
 
 export interface CodexInputRequest {
   method: string;
@@ -153,12 +154,12 @@ export class CodexAppServerSession {
     this.emit({ type: "initialized" });
   }
 
-  async send(prompt: string): Promise<void> {
+  async send(input: readonly CodexUserInput[]): Promise<void> {
     log(
       "[session] send() called, threadId=",
       this.threadId,
-      "prompt=",
-      prompt.slice(0, 50),
+      "inputTypes=",
+      input.map((item) => item.type).join(","),
     );
 
     if (!this.threadId) {
@@ -181,7 +182,7 @@ export class CodexAppServerSession {
     log("[session] calling turn/start threadId=", this.threadId);
     const turnResult = await this.rpc.request(ClientMethods.TurnStart, {
       threadId: this.threadId,
-      input: [{ type: "text", text: prompt }],
+      input,
     });
     log("[session] turn/start result=", JSON.stringify(turnResult));
 

@@ -1109,6 +1109,7 @@ export class ClaudeRuntime implements AgentRuntime {
         }
       }
       this.activeTurns.delete(threadId);
+      this.steerQueue.clearInputProjectionContext(threadId);
       entry.finish();
     }
     this.resolvePendingApprovals(false);
@@ -1151,6 +1152,7 @@ export class ClaudeRuntime implements AgentRuntime {
         }
       }
       this.activeTurns.delete(threadId);
+      this.steerQueue.clearInputProjectionContext(threadId);
       active.finish();
     }
     threads.delete(threadId);
@@ -1174,6 +1176,7 @@ export class ClaudeRuntime implements AgentRuntime {
         }
       }
       this.activeTurns.delete(threadId);
+      this.steerQueue.clearInputProjectionContext(threadId);
       active.finish();
     }
     const thread = ensureThread(threadId);
@@ -1256,6 +1259,7 @@ export class ClaudeRuntime implements AgentRuntime {
     content: string;
     displayContent?: string;
     cwd?: string;
+    userContent?: WorkflowUserMessageContent[];
     attachments?: unknown[];
     messageId?: string;
     runtimeThreadId?: string;
@@ -1327,6 +1331,10 @@ export class ClaudeRuntime implements AgentRuntime {
       opts.cwd,
       "sdk",
     );
+    const provider = resolveModelProvider(effectiveSettings);
+    const supportsVision =
+      provider.provider?.models?.find((m) => m.id === provider.model)
+        ?.supportsVision ?? false;
     const channel = createMessageChannel();
     const entry: ActiveTurn = {
       turnId,
@@ -1342,6 +1350,10 @@ export class ClaudeRuntime implements AgentRuntime {
       status: "running",
     };
     this.activeTurns.set(opts.threadId, entry);
+    this.steerQueue.setInputProjectionContext(opts.threadId, {
+      supportsVision,
+      enabledSkills: extensionPlan.skills,
+    });
     const queue = entry.eventQueue!;
     const sdkCommandSandbox = new SdkCommandSandbox();
     const sdkTerminalServer = createSdkTerminalServer(this.approvalTracker);
@@ -1828,14 +1840,12 @@ export class ClaudeRuntime implements AgentRuntime {
       });
     }
 
-    const provider = resolveModelProvider(effectiveSettings);
-    const supportsVision =
-      provider.provider?.models?.find((m) => m.id === provider.model)
-        ?.supportsVision ?? false;
-    const sdkContent = buildSdkUserContent(
+    const sdkContent = await buildSdkUserContent(
       opts.content,
       opts.attachments,
       supportsVision,
+      opts.userContent,
+      extensionPlan.skills,
     );
 
     let query: ClaudeQuery;
@@ -1865,6 +1875,7 @@ export class ClaudeRuntime implements AgentRuntime {
       sdkBrowserServer.clear();
       await mcpResultBridges.close();
       this.activeTurns.delete(opts.threadId);
+      this.steerQueue.clearInputProjectionContext(opts.threadId);
       entry.finish();
       throw err;
     }
@@ -1879,6 +1890,7 @@ export class ClaudeRuntime implements AgentRuntime {
       sdkBrowserServer.clear();
       await mcpResultBridges.close();
       this.activeTurns.delete(opts.threadId);
+      this.steerQueue.clearInputProjectionContext(opts.threadId);
       entry.finish();
       return canceledTurnStream(opts.threadId, turnId);
     }
@@ -1903,6 +1915,8 @@ export class ClaudeRuntime implements AgentRuntime {
     };
     const flushNextPendingSteerAtBoundary =
       this.flushNextPendingSteerAtBoundary.bind(this);
+    const clearSteerInputProjectionContext = () =>
+      this.steerQueue.clearInputProjectionContext(opts.threadId);
 
     // Start the SDK query and stream normalized events.
     async function* wrapStream(): AsyncIterable<RuntimeEvent> {
@@ -2211,6 +2225,7 @@ export class ClaudeRuntime implements AgentRuntime {
         }
         if (activeTurns.get(opts.threadId) === entry) {
           activeTurns.delete(opts.threadId);
+          clearSteerInputProjectionContext();
         }
         entry.finish();
       }

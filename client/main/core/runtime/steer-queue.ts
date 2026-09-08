@@ -11,6 +11,7 @@
 import type {
   ChatSendReceipt,
   OutboxSnapshot,
+  SkillInfo,
   SteerActionReceipt,
 } from "@shared/types";
 import type { Message } from "@shared/agent-runtime";
@@ -22,8 +23,11 @@ import {
   reorderOutboxMessages,
   updateOutboxState,
 } from "../../services/outbox-service";
-import { getAgentSettings } from "../../services/config-service";
-import { resolveModelProvider } from "../config/model-provider";
+import {
+  getTurnInput,
+  updateTurnInputState,
+  type TurnInputState,
+} from "../../services/turn-input-store";
 import { logInfo, logWarn } from "../logging/app-logger";
 import { buildSdkUserContent } from "./sdk-content";
 import { genId, now } from "./claude-runtime-utils";
@@ -40,10 +44,52 @@ export interface SteerQueueDeps {
   pushMessage: (threadId: string, message: Message) => void;
 }
 
+export interface SteerInputProjectionContext {
+  supportsVision: boolean;
+  enabledSkills: readonly SkillInfo[];
+}
+
 export class SteerQueue {
   private deliveries = new Map<string, SteerDeliveryRecord>();
+  private projectionContexts = new Map<string, SteerInputProjectionContext>();
 
   constructor(private readonly deps: SteerQueueDeps) {}
+
+  setInputProjectionContext(
+    threadId: string,
+    context: SteerInputProjectionContext,
+  ): void {
+    this.projectionContexts.set(threadId, {
+      supportsVision: context.supportsVision,
+      enabledSkills: [...context.enabledSkills],
+    });
+  }
+
+  clearInputProjectionContext(threadId: string): void {
+    this.projectionContexts.delete(threadId);
+  }
+
+  private syncCanonicalInputState(
+    threadId: string,
+    messageId: string,
+    state: TurnInputState,
+    lastError?: string,
+  ): void {
+    try {
+      const canonical = getTurnInput(threadId, messageId);
+      if (!canonical) return;
+      updateTurnInputState(canonical.id, state, {
+        lastError: lastError ?? null,
+      });
+    } catch (error) {
+      logWarn("claude.turn.canonicalInput.persistStateFailed", {
+        threadId,
+        messageId,
+        state,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
 
   private deliveryKey(threadId: string, messageId: string): string {
     return `${threadId}${messageId}`;
@@ -92,6 +138,12 @@ export class SteerQueue {
     opts: { applied?: boolean } = {},
   ): void {
     if (!entry.channel || entry.channel.isClosed()) {
+      this.syncCanonicalInputState(
+        threadId,
+        steer.messageId,
+        "failed",
+        "The active SDK message channel closed before the steer was delivered.",
+      );
       throw new Error("no active message channel to steer");
     }
 
@@ -105,6 +157,7 @@ export class SteerQueue {
       messageId: steer.messageId,
       state: "dispatched",
     });
+    this.syncCanonicalInputState(threadId, steer.messageId, "acknowledged");
 
     this.deps.pushMessage(threadId, {
       id: steer.messageId,
@@ -199,16 +252,23 @@ export class SteerQueue {
       opts.userContent && opts.userContent.length > 0
         ? opts.userContent
         : [{ type: "text" as const, text: displayContent }];
-
-    const steerSettings = getAgentSettings();
-    const steerProvider = resolveModelProvider(steerSettings);
-    const steerSupportsVision =
-      steerProvider.provider?.models?.find((m) => m.id === steerProvider.model)
-        ?.supportsVision ?? false;
-    const steerSdkContent = buildSdkUserContent(
+    const projectionContext = this.projectionContexts.get(opts.threadId);
+    if (!projectionContext) {
+      return {
+        status: "failed",
+        sessionId: opts.threadId,
+        messageId,
+        turnId: entry.turnId,
+        reason: "rejected",
+        error: "SDK input projection context is unavailable for this turn.",
+      };
+    }
+    const steerSdkContent = await buildSdkUserContent(
       opts.content,
       opts.attachments,
-      steerSupportsVision,
+      projectionContext.supportsVision,
+      userContent,
+      projectionContext.enabledSkills,
     );
 
     const timestamp = now();
@@ -235,6 +295,12 @@ export class SteerQueue {
         createdAt: timestamp,
       });
     } catch (error) {
+      this.syncCanonicalInputState(
+        opts.threadId,
+        messageId,
+        "failed",
+        error instanceof Error ? error.message : String(error),
+      );
       return {
         status: "failed",
         sessionId: opts.threadId,
@@ -245,6 +311,7 @@ export class SteerQueue {
       };
     }
     entry.pendingSteers.push(pendingSteer);
+    this.syncCanonicalInputState(opts.threadId, messageId, "queued");
 
     this.rememberDelivery(
       {
@@ -333,6 +400,7 @@ export class SteerQueue {
       messageId,
       state: "applying",
     });
+    this.syncCanonicalInputState(threadId, messageId, "dispatching");
     entry.applyInterruptPhase = "awaiting_boundary";
     logInfo("steer.debug.apply", {
       threadId,
@@ -369,6 +437,7 @@ export class SteerQueue {
         messageId,
         state: "queued",
       });
+      this.syncCanonicalInputState(threadId, messageId, "queued");
       entry.applyInterruptPhase = "idle";
       return {
         action: "apply",
@@ -429,6 +498,12 @@ export class SteerQueue {
         messageId,
         state: "canceled",
       });
+      this.syncCanonicalInputState(
+        threadId,
+        messageId,
+        "blocked",
+        "The queued steer was canceled before delivery.",
+      );
       return {
         action: "cancel",
         status: "canceled",
@@ -444,6 +519,12 @@ export class SteerQueue {
         messageId,
         state: "canceled",
       });
+      this.syncCanonicalInputState(
+        threadId,
+        messageId,
+        "blocked",
+        "The queued steer was canceled before delivery.",
+      );
       return {
         action: "cancel",
         status: "canceled",
@@ -470,6 +551,12 @@ export class SteerQueue {
         messageId,
         state: "canceled",
       });
+      this.syncCanonicalInputState(
+        threadId,
+        messageId,
+        "blocked",
+        "The queued steer was canceled before delivery.",
+      );
     }
     return {
       action: "cancel",

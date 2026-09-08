@@ -2,6 +2,8 @@ import type { ConversationTiming } from "@shared/conversation-timing";
 import type { WorkflowToolResult } from "./workflow-tool-result";
 import type { ContextUsageRecord } from "./types";
 import type { TokenUsage } from "./types";
+import type { AgentInputPart } from "./agent-input";
+export type { WorkflowDelegation } from "./agent-input";
 
 /**
  * Read-thread 数据契约版本。
@@ -133,61 +135,8 @@ export interface WorkflowContextEconomyMeta {
   omittedChars: number;
 }
 
-export type WorkflowUserMessageContent =
-  | {
-      type: "text";
-      text: string;
-      text_elements?: unknown[];
-      /** Native rich-text serialization, decoded only for display. */
-      displayFormat?: "markdown";
-      workflowDelegation?: WorkflowDelegation;
-    }
-  | { type: "image"; url: string; detail?: string }
-  | { type: "localImage"; path: string; detail?: string }
-  | {
-      type: "file";
-      name: string;
-      mimeType: string;
-      text: string;
-      path?: string;
-    }
-  | { type: "url"; url: string; title?: string }
-  | {
-      type: "skill";
-      name: string;
-      path?: string;
-      id?: string;
-      displayName?: string;
-      description?: string;
-      scope?: "user" | "project" | "enterprise" | "marketplace";
-      version?: string;
-      promptLinkLabel?: string;
-    }
-  | { type: "mention"; name: string; path?: string }
-  | {
-      /** A page annotation captured from the embedded browser. */
-      type: "browserComment";
-      commentId: number;
-      targetType?: "element" | "region";
-      ref: string;
-      tagName: string;
-      text: string;
-      attributes: Record<string, string>;
-      rect: { x: number; y: number; width: number; height: number };
-      viewport: { width: number; height: number };
-      scrollX: number;
-      scrollY: number;
-      comment: string;
-      /** Direct style changes proposed for a selected DOM element. */
-      styleEdits?: Record<string, string>;
-      pageUrl?: string;
-      screenshotDataUrl?: string;
-    };
-
-export interface WorkflowDelegation {
-  sourceThreadId: string;
-  input: string;
-}
+/** @deprecated Prefer the runtime-independent AgentInputPart name. */
+export type WorkflowUserMessageContent = AgentInputPart;
 
 export type WorkflowTurnItem =
   | WorkflowUserMessageItem

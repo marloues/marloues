@@ -36,12 +36,14 @@ import {
   type SandboxProfile,
 } from "../core/security/sandbox-broker";
 import type { AgentSettings, ModelProviderConfig } from "@shared/types";
+import type { AgentInputPart } from "@shared/agent-input";
 import {
   codexExtraSkillRoots,
   codexMcpServersConfig,
   codexSkillConfig,
   resolveEffectiveExtensionPlan,
 } from "../services/extension-plan-service";
+import { projectCodexTurnInput } from "./input-adapter";
 
 function svcLog(...args: unknown[]): void {
   log("[svc]", ...args);
@@ -621,7 +623,13 @@ export class CodexService {
   async sendMessage(
     sessionId: string,
     content: string,
-    options?: { cwd?: string; settings?: AgentSettings },
+    options?: {
+      cwd?: string;
+      settings?: AgentSettings;
+      userContent?: readonly AgentInputPart[];
+      /** Legacy IPC bridge; prefer durable canonical `userContent`. */
+      attachments?: readonly unknown[];
+    },
   ): Promise<void> {
     let session = this.sessions.get(sessionId);
     const workingDir = canonicalWorkingDirectory(options?.cwd || process.cwd());
@@ -630,6 +638,14 @@ export class CodexService {
       currentSettings,
       workingDir,
       "binary",
+    );
+    const codexInput = projectCodexTurnInput(
+      content,
+      options?.userContent ?? options?.attachments,
+      {
+        cwd: workingDir,
+        availableSkills: extensionPlan.skills,
+      },
     );
     const currentSandboxProfile = codexSandboxProfileFromSettings({
       sandboxEnabled: currentSettings.sandboxEnabled,
@@ -688,7 +704,7 @@ export class CodexService {
     try {
       while (true) {
         try {
-          await session.codexSession.send(content);
+          await session.codexSession.send(codexInput);
           session.status = "idle";
           session.retryCount = 0;
           this.eventEmitter.emit("status", sessionId, "idle");

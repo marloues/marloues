@@ -17,6 +17,7 @@ import type {
   Thread,
   ToolDefinition,
 } from "@shared/agent-runtime";
+import type { AgentInputPart } from "@shared/agent-input";
 import type { AgentSettings, ModelOption } from "@shared/types";
 import { configuredMcpTools } from "./mcp-tools";
 import { getAgentSettings } from "../../services/config-service";
@@ -38,6 +39,10 @@ import { terminalService } from "../../services/terminal-service";
 import { cdpBrowserService } from "../../services/cdp-browser-service";
 import { workflowThreadStore } from "./workflow-thread-store";
 import { resolveEffectiveExtensionPlan } from "../../services/extension-plan-service";
+import {
+  projectSelfBuiltInput,
+  type SelfBuiltInputDelivery,
+} from "./self-built-input";
 
 function genId(): string {
   return crypto.randomUUID();
@@ -197,6 +202,7 @@ export class SelfBuiltRuntime implements AgentRuntime {
   async sendMessage(opts: {
     threadId: string;
     turnId?: string;
+    userContent?: AgentInputPart[];
     content: string;
     displayContent?: string;
     cwd?: string;
@@ -217,6 +223,11 @@ export class SelfBuiltRuntime implements AgentRuntime {
       opts.cwd,
       "self-built",
     );
+    const inputProjection = projectSelfBuiltInput({
+      runtimeContent: opts.content,
+      userContent: opts.userContent ?? opts.attachments,
+      extensionPlan,
+    });
     pushMessage(opts.threadId, {
       id: userMessageId,
       role: "user",
@@ -227,7 +238,7 @@ export class SelfBuiltRuntime implements AgentRuntime {
       threadId: opts.threadId,
       turnId,
       content: displayContent,
-      attachments: opts.attachments,
+      attachments: inputProjection.parts,
       userMessageId,
       startedAt,
       cwd: opts.cwd ?? null,
@@ -274,12 +285,12 @@ export class SelfBuiltRuntime implements AgentRuntime {
         },
       };
 
-      const plan = this.planTurn(opts.content);
+      const plan = this.planTurn(displayContent, inputProjection.prompt);
       yield {
         kind: "thinking-chunk",
         payload: {
           turnId,
-          content: formatPlan(plan),
+          content: formatPlan(plan, inputProjection.deliveries),
         },
       };
 
@@ -308,7 +319,10 @@ export class SelfBuiltRuntime implements AgentRuntime {
           kind: "token-usage",
           payload: {
             turnId,
-            usage: estimateTokenUsage(opts.content, loopResult.assistantText),
+            usage: estimateTokenUsage(
+              inputProjection.prompt,
+              loopResult.assistantText,
+            ),
           },
         };
         yield {
@@ -432,7 +446,11 @@ export class SelfBuiltRuntime implements AgentRuntime {
         };
       }
 
-      const response = this.composeResponse(opts.content, opts.cwd, plan);
+      const response = this.composeResponse(
+        inputProjection.prompt,
+        opts.cwd,
+        plan,
+      );
       let emitted = "";
       for (const chunk of splitChunks(response, 24)) {
         if (this.abortedTurns.has(turnId)) {
@@ -457,7 +475,7 @@ export class SelfBuiltRuntime implements AgentRuntime {
         kind: "token-usage",
         payload: {
           turnId,
-          usage: estimateTokenUsage(opts.content, emitted),
+          usage: estimateTokenUsage(inputProjection.prompt, emitted),
         },
       };
       yield { kind: "turn-complete", payload: { turnId, result: "success" } };
@@ -706,18 +724,20 @@ export class SelfBuiltRuntime implements AgentRuntime {
     );
   }
 
-  private planTurn(content: string): SelfBuiltPlan {
+  private planTurn(content: string, semanticInput = content): SelfBuiltPlan {
     const trimmed = content.trim();
     if (/^\/list(?:\s+|$)/i.test(trimmed)) {
       return {
         intent: "list",
         targetPath: trimmed.replace(/^\/list\s*/i, "").trim() || ".",
+        input: semanticInput,
       };
     }
     if (/^\/read(?:\s+|$)/i.test(trimmed)) {
       return {
         intent: "read",
         targetPath: trimmed.replace(/^\/read\s*/i, "").trim() || ".",
+        input: semanticInput,
       };
     }
     if (/^\/patch(?:\s+|$)/i.test(trimmed)) {
@@ -725,20 +745,20 @@ export class SelfBuiltRuntime implements AgentRuntime {
       const newline = body.indexOf("\n");
       const targetPath = (newline >= 0 ? body.slice(0, newline) : body).trim();
       const content = newline >= 0 ? body.slice(newline + 1) : "";
-      return { intent: "patch", targetPath, content };
+      return { intent: "patch", targetPath, content, input: semanticInput };
     }
     if (/^\/undo\b/i.test(trimmed)) {
-      return { intent: "undo" };
+      return { intent: "undo", input: semanticInput };
     }
     if (/^\/term(?:\s+|$)/i.test(trimmed)) {
       const command = trimmed.replace(/^\/term\s*/i, "").trim();
-      return { intent: "terminal", command };
+      return { intent: "terminal", command, input: semanticInput };
     }
     if (/^\/browse(?:\s+|$)/i.test(trimmed)) {
       const url = trimmed.replace(/^\/browse\s*/i, "").trim();
-      return { intent: "browser", url };
+      return { intent: "browser", url, input: semanticInput };
     }
-    return { intent: "respond" };
+    return { intent: "respond", input: semanticInput };
   }
 
   private async *executePlan(
@@ -750,6 +770,7 @@ export class SelfBuiltRuntime implements AgentRuntime {
       content: string;
       cwd?: string;
       attachments?: unknown[];
+      userContent?: AgentInputPart[];
       messageId?: string;
     },
   ): AsyncGenerator<RuntimeEvent, SelfBuiltLoopResult> {
@@ -1120,7 +1141,7 @@ export class SelfBuiltRuntime implements AgentRuntime {
       `Plan: ${plan?.intent ?? "respond"} → execute → verify`,
       "",
       "Received task:",
-      content.trim() || "(empty)",
+      plan?.input.trim() || content.trim() || "(empty)",
       "",
       "Self-built commands available: /list <dir>, /read <file>, /patch <file>\\n<content>, /undo, /term <command>, /browse <url>",
     ].join("\n");
@@ -1469,14 +1490,15 @@ function estimateTokens(text: string): number {
   return Math.max(1, Math.ceil(text.length / 4));
 }
 
-type SelfBuiltPlan =
+type SelfBuiltPlan = (
   | { intent: "respond" }
   | { intent: "list"; targetPath: string }
   | { intent: "read"; targetPath: string }
   | { intent: "patch"; targetPath: string; content: string }
   | { intent: "undo" }
   | { intent: "terminal"; command: string }
-  | { intent: "browser"; url: string };
+  | { intent: "browser"; url: string }
+) & { input: string };
 
 interface SelfBuiltLoopResult {
   done: boolean;
@@ -1485,13 +1507,20 @@ interface SelfBuiltLoopResult {
   error?: string;
 }
 
-function formatPlan(plan: SelfBuiltPlan): string {
+function formatPlan(
+  plan: SelfBuiltPlan,
+  deliveries: SelfBuiltInputDelivery[] = [],
+): string {
   const target = "targetPath" in plan ? ` ${plan.targetPath || "."}` : "";
+  const delivery = deliveries.length
+    ? deliveries.map((item) => `${item.type}:${item.outcome}`).join(", ")
+    : "text-only";
   return [
     "Plan:",
     `1. Understand intent: ${plan.intent}${target}`,
-    "2. Execute with workspace sandbox checks",
-    "3. Verify and report result",
+    `2. Project canonical input: ${delivery}`,
+    "3. Execute with workspace sandbox checks",
+    "4. Verify and report result",
   ].join("\n");
 }
 

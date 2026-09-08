@@ -23,6 +23,7 @@ import {
 } from "./read-thread-serializer";
 import { compressToolResult } from "../context/token-economy";
 import { textOutputFromUnknown } from "../../../shared/adapters/runtime-event-to-turn-item";
+import { createCanonicalUserContent } from "../../../shared/agent-input";
 
 /** Minimal shape needed to rehydrate turns from persisted session messages. */
 interface RehydratableMessage {
@@ -74,100 +75,7 @@ function userContentFromInput(
   text: string,
   attachments: unknown[] | undefined,
 ): WorkflowUserMessageContent[] {
-  const content: WorkflowUserMessageContent[] = [];
-  if (text.trim()) content.push({ type: "text", text });
-  for (const attachment of attachments ?? []) {
-    const record =
-      attachment && typeof attachment === "object"
-        ? (attachment as Record<string, unknown>)
-        : null;
-    if (!record) continue;
-    if (
-      record.type === "localImage" &&
-      typeof record.path === "string" &&
-      record.path.trim()
-    ) {
-      content.push({ type: "localImage", path: record.path });
-      continue;
-    }
-    const imageUrl =
-      typeof record.url === "string"
-        ? record.url
-        : typeof record.dataUrl === "string"
-          ? record.dataUrl
-          : "";
-    if ((record.type === "image" || record.dataUrl) && imageUrl.trim()) {
-      content.push({ type: "image", url: imageUrl });
-      continue;
-    }
-    if (
-      (record.type === "skill" || record.type === "mention") &&
-      typeof record.name === "string" &&
-      record.name.trim()
-    ) {
-      const path =
-        typeof record.path === "string" && record.path.trim()
-          ? record.path
-          : undefined;
-      content.push(
-        record.type === "skill"
-          ? { type: "skill", name: record.name, path }
-          : { type: "mention", name: record.name, path },
-      );
-      continue;
-    }
-    if (
-      record.type === "browserComment" &&
-      typeof record.commentId === "number" &&
-      typeof record.ref === "string" &&
-      typeof record.comment === "string"
-    ) {
-      content.push({
-        type: "browserComment",
-        commentId: record.commentId,
-        targetType: record.targetType === "region" ? "region" : "element",
-        ref: record.ref,
-        tagName: typeof record.tagName === "string" ? record.tagName : "",
-        text: typeof record.text === "string" ? record.text : "",
-        attributes:
-          record.attributes && typeof record.attributes === "object"
-            ? (record.attributes as Record<string, string>)
-            : {},
-        rect:
-          record.rect && typeof record.rect === "object"
-            ? (record.rect as {
-                x: number;
-                y: number;
-                width: number;
-                height: number;
-              })
-            : { x: 0, y: 0, width: 0, height: 0 },
-        viewport:
-          record.viewport && typeof record.viewport === "object"
-            ? (record.viewport as { width: number; height: number })
-            : { width: 0, height: 0 },
-        scrollX: typeof record.scrollX === "number" ? record.scrollX : 0,
-        scrollY: typeof record.scrollY === "number" ? record.scrollY : 0,
-        comment: record.comment,
-        styleEdits:
-          record.styleEdits && typeof record.styleEdits === "object"
-            ? Object.fromEntries(
-                Object.entries(record.styleEdits).filter(
-                  (entry): entry is [string, string] =>
-                    typeof entry[1] === "string",
-                ),
-              )
-            : undefined,
-        pageUrl:
-          typeof record.pageUrl === "string" ? record.pageUrl : undefined,
-        screenshotDataUrl:
-          typeof record.screenshotDataUrl === "string"
-            ? record.screenshotDataUrl
-            : undefined,
-      });
-    }
-  }
-  return content;
+  return createCanonicalUserContent(text, attachments);
 }
 
 function textOutput(text: string): WorkflowTextOutput {

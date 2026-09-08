@@ -73,6 +73,18 @@ function importDevStateIfAvailable(database: Database.Database): void {
       "scheduled_task_runs",
       "dev_state.scheduled_task_runs",
     );
+    importTableRows(database, "input_assets", "dev_state.input_assets");
+    importTableRows(database, "turn_inputs", "dev_state.turn_inputs");
+    importTableRows(
+      database,
+      "turn_input_assets",
+      "dev_state.turn_input_assets",
+    );
+    importTableRows(
+      database,
+      "delivery_attempts",
+      "dev_state.delivery_attempts",
+    );
 
     if (importedArtifacts > 0 || importedAuditEvents > 0) {
       logInfo("stateDb.devStateImported", {
@@ -411,6 +423,78 @@ function migrate(database: Database.Database): void {
       PRAGMA user_version = 8;
     `);
     logInfo("stateDb.migrated", { version: 8, dbPath: getStateDbPath() });
+  }
+
+  const afterScheduledTasksVersion = database.pragma("user_version", {
+    simple: true,
+  }) as number;
+  if (afterScheduledTasksVersion < 9) {
+    database.exec(`
+      CREATE TABLE IF NOT EXISTS turn_inputs (
+        id TEXT PRIMARY KEY,
+        session_id TEXT NOT NULL,
+        turn_id TEXT NOT NULL,
+        message_id TEXT NOT NULL,
+        revision INTEGER NOT NULL DEFAULT 1,
+        schema_version INTEGER NOT NULL,
+        content_json TEXT NOT NULL,
+        integrity_sha256 TEXT NOT NULL,
+        state TEXT NOT NULL DEFAULT 'queued',
+        runtime_id TEXT,
+        model_id TEXT,
+        last_error TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        UNIQUE (session_id, message_id, revision)
+      );
+
+      CREATE TABLE IF NOT EXISTS input_assets (
+        sha256 TEXT PRIMARY KEY,
+        storage_path TEXT NOT NULL UNIQUE,
+        byte_length INTEGER NOT NULL,
+        media_type TEXT,
+        original_name TEXT,
+        created_at INTEGER NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS turn_input_assets (
+        input_id TEXT NOT NULL REFERENCES turn_inputs(id) ON DELETE CASCADE,
+        part_index INTEGER NOT NULL,
+        field_name TEXT NOT NULL,
+        asset_sha256 TEXT NOT NULL REFERENCES input_assets(sha256),
+        PRIMARY KEY (input_id, part_index, field_name)
+      );
+
+      CREATE TABLE IF NOT EXISTS delivery_attempts (
+        id TEXT PRIMARY KEY,
+        input_id TEXT NOT NULL REFERENCES turn_inputs(id) ON DELETE CASCADE,
+        turn_id TEXT NOT NULL,
+        runtime_id TEXT NOT NULL,
+        model_id TEXT,
+        adapter_version TEXT NOT NULL,
+        capability_fingerprint TEXT,
+        state TEXT NOT NULL DEFAULT 'preparing',
+        report_json TEXT,
+        payload_sha256 TEXT,
+        last_error TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        completed_at INTEGER
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_turn_inputs_session_created
+        ON turn_inputs(session_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_turn_inputs_state_updated
+        ON turn_inputs(state, updated_at);
+      CREATE INDEX IF NOT EXISTS idx_turn_input_assets_sha
+        ON turn_input_assets(asset_sha256);
+      CREATE INDEX IF NOT EXISTS idx_delivery_attempts_input_created
+        ON delivery_attempts(input_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_delivery_attempts_state_updated
+        ON delivery_attempts(state, updated_at);
+      PRAGMA user_version = 9;
+    `);
+    logInfo("stateDb.migrated", { version: 9, dbPath: getStateDbPath() });
   }
 }
 

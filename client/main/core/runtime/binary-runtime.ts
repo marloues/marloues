@@ -10,6 +10,7 @@ import type {
   ToolDefinition,
 } from "@shared/agent-runtime";
 import type { AgentSettings, ModelOption } from "@shared/types";
+import type { WorkflowUserMessageContent } from "@shared/workflow-read-thread-contract";
 import { applySecurityMode } from "@shared/security-policy";
 import { eventLog } from "../../codex/event-log";
 import { codexService, type ThreadEvent } from "../../codex/service";
@@ -171,6 +172,7 @@ export class BinaryRuntime implements AgentRuntime {
   async sendMessage(opts: {
     threadId: string;
     turnId?: string;
+    userContent?: WorkflowUserMessageContent[];
     content: string;
     displayContent?: string;
     cwd?: string;
@@ -195,7 +197,7 @@ export class BinaryRuntime implements AgentRuntime {
       threadId: opts.threadId,
       turnId,
       content: displayContent,
-      attachments: opts.attachments,
+      attachments: opts.userContent ?? opts.attachments,
       userMessageId,
       startedAt: now(),
       cwd: opts.cwd ?? null,
@@ -473,6 +475,8 @@ export class BinaryRuntime implements AgentRuntime {
           .sendMessage(opts.threadId, opts.content, {
             cwd: opts.cwd,
             settings: effectiveSettings,
+            userContent: opts.userContent,
+            attachments: opts.attachments,
           })
           .catch((err) => {
             onError(

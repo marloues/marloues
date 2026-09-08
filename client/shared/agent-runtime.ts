@@ -213,6 +213,8 @@ export interface AgentRuntime {
   sendMessage(opts: {
     threadId: string;
     turnId?: string;
+    /** Durable, runtime-independent input. Adapters must project every part. */
+    userContent?: WorkflowUserMessageContent[];
     content: string;
     displayContent?: string;
     cwd?: string;
