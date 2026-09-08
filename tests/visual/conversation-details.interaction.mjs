@@ -56,6 +56,70 @@ try {
   await expect(
     page.getByRole("button", { name: "展开表格", exact: true }),
   ).toBeVisible();
+  await check(
+    "content actions float on hover or keyboard focus without changing layout",
+    async () => {
+      for (const kind of [
+        "markdown-table",
+        "workflow-code-block",
+        "mermaid-block",
+      ]) {
+        const block = page.locator(`[data-kind="${kind}"]`).first();
+        const actions = block.locator(":scope > [data-floating-actions]");
+        await block.scrollIntoViewIfNeeded();
+        await page.mouse.move(0, 0);
+        await expect(actions).toHaveCSS("opacity", "0");
+        await expect(actions).toHaveCSS("pointer-events", "none");
+        await expect(actions).toHaveCSS("position", "absolute");
+        const before = await block.boundingBox();
+        await block.hover();
+        await expect(actions).toHaveCSS("opacity", "1");
+        const after = await block.boundingBox();
+        expect(after.height).toBeCloseTo(before.height, 0);
+        const controls = await actions.boundingBox();
+        expect(controls.x + controls.width).toBeLessThanOrEqual(
+          after.x + after.width,
+        );
+        expect(controls.y).toBeGreaterThanOrEqual(after.y);
+        expect(controls.y - after.y).toBeLessThan(10);
+        await page.mouse.move(0, 0);
+        await expect(actions).toHaveCSS("opacity", "0");
+        await actions.getByRole("button").first().focus();
+        await expect(actions).toHaveCSS("opacity", "1");
+        await page.keyboard.press("Tab");
+        await page.getByRole("button", { name: "内容", exact: true }).focus();
+      }
+    },
+  );
+  await check(
+    "table fills the conversation width without a separate actions row",
+    async () => {
+      const block = page.locator('[data-kind="markdown-table"]');
+      for (const width of [1280, 390]) {
+        await page.setViewportSize({ width, height: 900 });
+        await block.scrollIntoViewIfNeeded();
+        const geometry = await block.evaluate((el) => {
+          const root = el.getBoundingClientRect();
+          const table = el.querySelector("table").getBoundingClientRect();
+          const scroll = el.querySelector(".workflow-table-scroll");
+          return {
+            rootWidth: root.width,
+            tableWidth: table.width,
+            tableTop: table.top - root.top,
+            overflow: document.documentElement.scrollWidth > innerWidth,
+            scrollWidth: scroll.clientWidth,
+          };
+        });
+        expect(geometry.tableWidth).toBeGreaterThanOrEqual(
+          geometry.rootWidth - 1,
+        );
+        expect(geometry.tableTop).toBeCloseTo(0, 0);
+        expect(geometry.overflow).toBe(false);
+        expect(geometry.scrollWidth).toBeLessThanOrEqual(geometry.rootWidth);
+      }
+      await page.setViewportSize({ width: 1280, height: 900 });
+    },
+  );
   await check("formal turn → rich content, formula and Mermaid", async () => {
     await expect(page.locator('[data-kind="workflow-turn"]')).toHaveCount(1);
     await expect(page.locator(".katex").first()).toBeVisible();
@@ -77,6 +141,7 @@ try {
         name: "展开表格",
         exact: true,
       });
+      await page.locator('[data-kind="markdown-table"]').hover();
       await button.click();
       await expect(
         page.getByRole("dialog", { name: "表格预览" }),
@@ -111,17 +176,23 @@ try {
   await check(
     "relative file link uses conversation cwd and highlights requested line",
     async () => {
-      await page.getByRole("button", { name: "示例文件", exact: true }).click();
+      await page
+        .getByRole("button", { name: "示例文件:3", exact: true })
+        .click();
       await expect(
-        page.getByRole("dialog", { name: "example.ts" }),
-      ).toBeVisible();
+        page.getByRole("tab", { name: "文件", exact: true }),
+      ).toHaveAttribute("aria-selected", "true");
+      await expect(page.getByRole("dialog")).toHaveCount(0);
+      await expect(
+        page.getByRole("button", { name: "src/example.ts", exact: true }),
+      ).toHaveAttribute("aria-current", "true");
       await expect(page.locator(".is-target-line")).toContainText(
         "const answer = 42;",
       );
-      expect(await page.evaluate(() => window.__fixtureReadPath)).toBe(
-        "/fixture/./src/example.ts",
-      );
-      await page.keyboard.press("Escape");
+      await expect(page.getByRole("list", { name: "文件目录" })).toBeVisible();
+      await page
+        .getByRole("button", { name: "收起辅助区", exact: true })
+        .click();
     },
   );
   await check("image lightbox opens and restores focus", async () => {
@@ -141,6 +212,7 @@ try {
       await expect(
         page.getByRole("button", { name: "复制代码", exact: true }),
       ).toHaveCount(0);
+      await page.locator('[data-kind="workflow-code-block"]').hover();
       await page
         .getByRole("button", { name: "代码自动换行", exact: true })
         .click();

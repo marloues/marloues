@@ -916,7 +916,7 @@ try {
       s.addRange(r);
     });
     await article.dispatchEvent("mouseup");
-    await page.getByRole("button", { name: "添加选区到输入框" }).click();
+    await page.getByRole("button", { name: "添加到对话", exact: true }).click();
     const composer = page.getByPlaceholder("随心输入");
     await expect(composer).toHaveValue(/> 子任务已完成/);
     await choose("markdown");
@@ -980,9 +980,8 @@ try {
       scrollBounds.x + scrollBounds.width,
     );
     const before = await scroll.evaluate((e) => e.scrollTop);
-    await page.locator(".workflow-message-navigation summary").hover();
+    await page.locator(".workflow-message-navigation [aria-current]").hover();
     expect(await scroll.evaluate((e) => e.scrollTop)).toBe(before);
-    await page.locator(".workflow-message-navigation summary").click();
     await page
       .getByRole("navigation", { name: "消息导航", exact: true })
       .getByRole("button")
@@ -993,9 +992,8 @@ try {
       .toBeLessThan(before);
     await scroll.evaluate((e) => (e.scrollTop = 0));
     await expect(
-      page.locator(".workflow-message-navigation nav button"),
+      page.locator(".workflow-message-navigation button"),
     ).toHaveCount(160, { timeout: 15000 });
-    await page.locator(".workflow-message-navigation summary").click();
     await page
       .getByRole("navigation", { name: "消息导航", exact: true })
       .getByRole("button")
@@ -1034,9 +1032,8 @@ try {
       e.scrollTop = 0;
     });
     await expect(
-      page.locator(".workflow-message-navigation nav button"),
+      page.locator(".workflow-message-navigation button"),
     ).toHaveCount(160);
-    await page.locator(".workflow-message-navigation summary").click();
     await page
       .getByRole("navigation", { name: "消息导航", exact: true })
       .getByRole("button")
