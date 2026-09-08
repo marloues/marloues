@@ -1,0 +1,16 @@
+.root {
+  position: fixed;
+  z-index: 80;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-popover);
+  color: var(--text-1);
+  box-shadow: var(--shadow-md);
+}
+
+.action {
+  border-radius: inherit;
+  color: var(--text-1);
+}

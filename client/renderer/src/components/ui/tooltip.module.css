@@ -1,0 +1,27 @@
+.trigger {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  vertical-align: baseline;
+}
+
+.bubble {
+  position: fixed;
+  z-index: 90;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(420px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  overflow: hidden;
+  pointer-events: none;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-popover);
+  color: var(--text-1);
+  box-shadow: var(--shadow-md);
+  font: var(--text-sm)/1.5 var(--font-ui);
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

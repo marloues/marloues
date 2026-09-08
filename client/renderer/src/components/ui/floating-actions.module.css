@@ -1,0 +1,35 @@
+.root {
+  position: absolute;
+  z-index: 1;
+  top: var(--space-1);
+  right: var(--space-1);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: calc(100% - var(--space-2));
+  border-radius: var(--control-radius);
+  background: var(--surface-popover);
+  box-shadow: var(--shadow-sm);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--motion-fast) var(--ease);
+}
+
+:global([data-floating-actions-host]):hover > .root,
+:global([data-floating-actions-host]):focus-within > .root {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (hover: none) {
+  .root {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    transition: none;
+  }
+}

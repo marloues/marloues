@@ -23,5 +23,14 @@ export { Badge, type BadgeProps, type BadgeVariant } from "./badge";
 export { Spinner, type SpinnerProps, type SpinnerSize } from "./spinner";
 export { Skeleton, type SkeletonProps } from "./skeleton";
 export { Tooltip, type TooltipProps } from "./tooltip";
+export { TextSelectionAction } from "./text-selection-action";
 export { Divider, type DividerProps, type DividerOrientation } from "./divider";
 export { ConfirmDialog } from "./ConfirmDialog";
+export { FloatingActions } from "./floating-actions";
+export { HoverPreview } from "./hover-preview";
+export { ResizableSplitPane } from "./resizable-split-pane";
+export {
+  DisclosureRow,
+  StateDot,
+  type DisclosureRowProps,
+} from "./disclosure-row";

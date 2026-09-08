@@ -1,0 +1,181 @@
+/* 共享行只消费 tokens.css 的语义变量；不依赖消息区的全局样式。 */
+.root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 24px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: calc(var(--space-1) / 2) 0;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  border: 0;
+  background: transparent;
+  color: var(--text-1);
+  font: var(--text-md)/1.7 var(--font-ui);
+  text-align: left;
+  transition: background var(--motion-fast) var(--ease);
+}
+.row[aria-expanded] {
+  cursor: var(--cursor-control);
+}
+.row[aria-expanded]:hover {
+  background: var(--raised-1);
+}
+.row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.leading {
+  position: relative;
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--text-3);
+}
+.leadingIcon {
+  display: grid;
+}
+.leading[data-tone="danger"] {
+  color: var(--danger);
+}
+.leading[data-tone="accent"] {
+  color: var(--accent);
+}
+.leadingIcon > svg {
+  width: var(--space-4);
+  height: var(--space-4);
+}
+.chevron {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+}
+.chevron > svg {
+  width: 14px;
+  height: 14px;
+}
+.leadingIcon,
+.chevron {
+  transition: opacity var(--motion-fast) var(--ease);
+}
+.row[aria-expanded]:is(:hover, :focus-visible) .leadingIcon {
+  opacity: 0;
+}
+.row[aria-expanded]:is(:hover, :focus-visible) .chevron {
+  opacity: 1;
+}
+.title,
+.summary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.title {
+  display: inline-flex;
+  align-items: center;
+}
+.meta {
+  min-width: 0;
+  margin-left: auto;
+  overflow: hidden;
+  color: var(--text-3);
+  font: var(--text-xs)/1.6 var(--font-code);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.content {
+  min-width: 0;
+  max-width: 100%;
+}
+@media (max-width: 640px) {
+  .meta {
+    display: none;
+  }
+}
+.separator {
+  flex-shrink: 0;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: var(--text-3);
+}
+.summary {
+  flex: 1;
+  color: var(--text-3);
+}
+.summary[data-tone="danger"] {
+  color: var(--danger);
+}
+.root[data-state="running"] > .row::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 300px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--surface-workspace) 60%, transparent) 55%,
+    transparent 100%
+  );
+  animation: sweep var(--motion-progress) var(--ease) infinite;
+  pointer-events: none;
+}
+
+@keyframes sweep {
+  0% {
+    left: -300px;
+  }
+  90%,
+  100% {
+    left: 100%;
+  }
+}
+
+.stateDot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--success);
+}
+.stateDot[data-state="error"] {
+  background: var(--danger);
+}
+.stateDot[data-state="running"] {
+  background: var(--accent);
+  animation: pulse var(--motion-pulse) ease-in-out infinite;
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .root[data-state="running"] > .row::after,
+  .stateDot[data-state="running"] {
+    animation: none;
+  }
+  .row,
+  .leadingIcon,
+  .chevron {
+    transition: none;
+  }
+}

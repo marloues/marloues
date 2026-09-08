@@ -1,0 +1,42 @@
+.root {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+.pane {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.separator {
+  position: relative;
+  z-index: 1;
+  cursor: var(--cursor-resize-column);
+  touch-action: none;
+  background: var(--border-subtle);
+  -webkit-app-region: no-drag;
+}
+.separator::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: 50%;
+  width: var(--resize-handle-hit-area);
+  transform: translateX(-50%);
+}
+.separator:hover,
+.separator:focus-visible,
+.root[data-resizing="true"] > .separator {
+  background: var(--resize-handle-active);
+}
+.separator:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+.root[data-resizing="true"] {
+  cursor: var(--cursor-resize-column);
+  user-select: none;
+}

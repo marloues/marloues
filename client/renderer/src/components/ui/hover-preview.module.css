@@ -1,0 +1,13 @@
+.root {
+  position: fixed;
+  z-index: 80;
+  box-sizing: border-box;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-popover);
+  color: var(--text-1);
+  box-shadow: var(--shadow-lg);
+  font: var(--text-sm)/1.5 var(--font-ui);
+}
