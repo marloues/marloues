@@ -2,7 +2,7 @@ import { WorkflowActivityGroup } from "./ActivityGroup";
 import { WorkflowImageViewGroup } from "./ImageViewGroup";
 import type { WorkflowActivityGroupEntry } from "./ActivityGroup";
 import { WorkflowAssistantAnswer } from "../";
-import { WorkflowCommandExecutionRow } from "./CommandExecutionRow";
+import { MessageItemView } from "../message-view";
 import { WorkflowTurnItemRenderer } from "./TurnItemRenderer";
 import type { WorkflowTurnItem } from "../../../../../shared/adapters/workflow-messages-to-read-thread";
 import type { WorkflowActivityGroup as WorkflowActivityGroupModel } from "../";
@@ -17,7 +17,6 @@ type Props =
       kind: "activityItem";
       item: ProcessItem;
       expanded?: boolean;
-      reasoningDefaultOpen?: boolean;
     }
   | {
       kind: "activityGroup";
@@ -26,7 +25,6 @@ type Props =
       expanded: boolean;
       active?: boolean;
       thinking?: boolean;
-      reasoningDefaultOpen?: boolean;
     };
 
 export function WorkflowActivityRenderer(props: Props) {
@@ -36,12 +34,7 @@ export function WorkflowActivityRenderer(props: Props) {
         <WorkflowImageViewGroup items={[props.item]} />
       ) : null;
     }
-    return (
-      <WorkflowTurnItemRenderer
-        item={props.item}
-        reasoningDefaultOpen={props.reasoningDefaultOpen}
-      />
-    );
+    return <WorkflowTurnItemRenderer item={props.item} />;
   }
 
   if (props.group.items.every((item) => item.type === "imageView")) {
@@ -58,7 +51,6 @@ export function WorkflowActivityRenderer(props: Props) {
       expanded={props.expanded}
       active={props.active}
       thinking={props.thinking}
-      reasoningDefaultOpen={props.reasoningDefaultOpen}
     />
   );
 }
@@ -69,14 +61,12 @@ function ActivityGroupBridge({
   expanded,
   active,
   thinking,
-  reasoningDefaultOpen,
 }: {
   group: WorkflowActivityGroupModel;
   defaultDetailExpanded?: boolean;
   expanded: boolean;
   active?: boolean;
   thinking?: boolean;
-  reasoningDefaultOpen?: boolean;
 }) {
   return (
     <WorkflowActivityGroup
@@ -89,7 +79,7 @@ function ActivityGroupBridge({
       renderCommandGroup={(id, items) => (
         <div key={id} className="workflow-command-group">
           {items.map((item) => (
-            <WorkflowCommandExecutionRow key={item.id} item={item} />
+            <MessageItemView key={item.id} item={item} />
           ))}
         </div>
       )}
@@ -106,7 +96,6 @@ function ActivityGroupBridge({
           <WorkflowTurnItemRenderer
             key={item.id}
             item={settledGroupItem(group, item)}
-            reasoningDefaultOpen={reasoningDefaultOpen}
           />
         );
       }}

@@ -306,7 +306,7 @@ describe("runtime snapshots → host contract → conversation presentation", ()
       ],
       { status: "failed", activity: "failed" },
     );
-    expect(render(message)).toContain('data-activity-kind="fileChange"');
+    expect(render(message)).toContain('data-tool="apply_patch"');
     workflowThreadStore.rehydrateFromStoredMessages(replayId, [
       {
         id: "failed-history",

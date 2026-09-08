@@ -48,7 +48,8 @@ export function codexActivityPresentationItems(
 export function codexActivityGrouping(
   item: ProcessItem,
 ): CodexActivityGrouping {
-  if (item.type === "reasoning") return "hidden";
+  // 思考条目直接作为独立行展示（Think 折叠行），不参与分组。
+  if (item.type === "reasoning") return "standalone";
   if (item.type === "webSearch" && !item.query?.trim()) return "hidden";
   if (item.type === "permissionRequest") return "standalone";
   if (item.type === "dynamicToolCall" || item.type === "mcpToolCall") {

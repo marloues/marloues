@@ -16,6 +16,33 @@ import {
 import { workflowStatusIsRunning } from "../../adapter/item-status";
 import type { ToolCallRowItem } from "./types";
 
+/** 工具行的静态短名（中文）；未识别的工具名保留原始标识。
+ *  与 toolLabel（上下文感知完整句）互补：短名作行标题，完整句作行摘要。 */
+export function toolDisplayName(name: string): string {
+  const n = name.toLowerCase();
+  if (n === "exec_command" || n.includes("shell") || n === "commands")
+    return "运行命令";
+  if (n === "apply_patch") return "修改文件";
+  if (n === "web_search") return "搜索网页";
+  if (n === "update_plan" || n.includes("todo")) return "更新计划";
+  if (n === "token_count") return "统计用量";
+  if (n === "js" || n.includes("node_repl")) return "运行脚本";
+  if (isReadToolName(n)) return "读取文件";
+  if (isListToolName(n)) return "列出文件";
+  if (isSearchToolName(n)) return "搜索内容";
+  if (
+    n === "write" ||
+    n.endsWith(".write") ||
+    n === "write_file" ||
+    n.endsWith(".write_file")
+  )
+    return "写入文件";
+  if (isEditToolName(n)) return "编辑文件";
+  if (n.includes("clipboard")) return "剪贴板";
+  if (n === "wait") return "等待";
+  return name;
+}
+
 export function toolLabel(item: ToolCallRowItem): string {
   const label = readableToolLabel(item);
   const status = itemStatus(item);

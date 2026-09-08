@@ -3,7 +3,7 @@ import type { WorkflowMessageBlock } from "../../../../../../../client/shared/ad
 import { buildTurnPresentationModel } from "../../../../../../../client/renderer/src/components/workflow-chat/turns/turn-presentation-model";
 
 describe("historical turn presentation", () => {
-  it("keeps raw reasoning out of the Codex activity presentation", () => {
+  it("keeps raw reasoning visible as a standalone Think row", () => {
     const message: WorkflowMessageBlock = {
       id: "history",
       user: "Inspect this session",
@@ -30,7 +30,13 @@ describe("historical turn presentation", () => {
     const model = buildTurnPresentationModel(message, {
       isLastStreaming: false,
     });
-    expect(model.blocks.some((block) => block.kind === "process")).toBe(false);
+    const process = model.blocks.find((block) => block.kind === "process");
+    expect(process).toBeDefined();
+    expect(process?.entries[0]?.kind).toBe("activityItem");
+    expect(
+      process?.entries[0]?.kind === "activityItem" &&
+        process.entries[0].item.type,
+    ).toBe("reasoning");
     expect(model.blocks.some((block) => block.kind === "document")).toBe(true);
   });
 });
