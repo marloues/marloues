@@ -109,6 +109,12 @@ const api: MarlouesAPI = {
         workspaceId,
         workspacePath,
       ),
+    getProjectReview: (workspaceId: string, workspacePath?: string) =>
+      ipcRenderer.invoke(
+        IPC.WORKSPACE_GET_PROJECT_REVIEW,
+        workspaceId,
+        workspacePath,
+      ),
     openInExplorer: (workspaceId: string) =>
       ipcRenderer.invoke(IPC.WORKSPACE_OPEN_IN_EXPLORER, workspaceId),
   },

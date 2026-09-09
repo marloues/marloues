@@ -1,11 +1,15 @@
 import {
   ArrowUp,
+  Camera,
   CheckCircle2,
   CircleDashed,
   FileText,
   GitBranch,
   Globe2,
+  Image as ImageIcon,
   Laptop,
+  Link,
+  Layers,
   ListChecks,
   LockKeyhole,
   Network,
@@ -15,7 +19,6 @@ import {
   Square,
   SquareTerminal,
   Terminal,
-  Wrench,
 } from "lucide-react";
 
 /**
@@ -26,7 +29,10 @@ export const CONVERSATION_ICONS = {
   composer: {
     addContext: Plus,
     uploadFile: Paperclip,
-    skill: Wrench,
+    photo: ImageIcon,
+    appshot: Camera,
+    link: Link,
+    skill: Layers,
     workspaceFile: FileText,
     command: Terminal,
     send: ArrowUp,

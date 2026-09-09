@@ -15,9 +15,11 @@ import {
   fileToFileAttachment,
   fileToImageAttachment,
   isTextFile,
-  isUrl,
-  urlAttachment,
+  normalizeUrl,
+  pastedTextAttachment,
+  shouldExternalizePastedText,
 } from "./composer-attachments";
+import { hasFormattedClipboard } from "./html-to-markdown";
 import { notify } from "@/lib/notifications";
 import type { UserMessageContent } from "../../../types";
 
@@ -118,7 +120,7 @@ export function useComposerAttachments(onInputChange: (value: string) => void) {
   );
 
   const handlePaste = useCallback(
-    (event: ClipboardEvent<HTMLTextAreaElement>) => {
+    (event: ClipboardEvent<HTMLElement>) => {
       const files = Array.from(event.clipboardData.items)
         .filter((item) => item.kind === "file")
         .map((item) => item.getAsFile())
@@ -128,38 +130,61 @@ export function useComposerAttachments(onInputChange: (value: string) => void) {
         void addFiles(files);
         return;
       }
-      const text = event.clipboardData.getData("text");
-      if (isUrl(text) && attachments.length < MAX_ATTACHMENTS) {
+      const text = event.clipboardData.getData("text/plain");
+      if (
+        !hasFormattedClipboard(event) &&
+        shouldExternalizePastedText(text) &&
+        attachments.length < MAX_ATTACHMENTS
+      ) {
         event.preventDefault();
-        setAttachments((prev) => [...prev, urlAttachment(text)]);
+        setAttachments((previous) => {
+          if (previous.length >= MAX_ATTACHMENTS) return previous;
+          const sequence =
+            previous.reduce(
+              (max, attachment) =>
+                attachment.kind === "pasted-text"
+                  ? Math.max(max, attachment.sequence)
+                  : max,
+              0,
+            ) + 1;
+          return [...previous, pastedTextAttachment(text, sequence)];
+        });
+        return;
       }
     },
-    [addFiles, attachments.length],
+    [addFiles, attachments],
   );
 
   /**
-   * Intercept textarea input: if the entire value is a URL, convert it to a
-   * link attachment and clear the input. Mirrors the paste path so users who
-   * type a URL (instead of pasting) get the same chip treatment.
+   * Manual input intentionally stays in the editor until submit. Converting
+   * while typing would steal the URL before the user finishes editing it.
    */
-  const handleInputChange = useCallback(
-    (event: ChangeEvent<HTMLTextAreaElement>) => {
-      const value = event.target.value;
-      if (isUrl(value) && attachments.length < MAX_ATTACHMENTS) {
-        setAttachments((prev) => [...prev, urlAttachment(value)]);
-        onInputChange("");
-        return;
-      }
+  const commitInputValue = useCallback(
+    (value: string) => {
       onInputChange(value);
     },
-    [attachments.length, onInputChange],
+    [onInputChange],
   );
 
   const handleDrop = useCallback(
-    (event: DragEvent<HTMLFormElement>) => {
+    (
+      event: DragEvent<HTMLFormElement>,
+      options?: { insertText?: (text: string) => void },
+    ) => {
       const files = Array.from(event.dataTransfer.files ?? []);
-      event.preventDefault();
-      void addFiles(files);
+      if (files.length > 0) {
+        event.preventDefault();
+        void addFiles(files);
+        return;
+      }
+      const draggedUrl = normalizeUrl(
+        event.dataTransfer.getData("text/uri-list") ||
+          event.dataTransfer.getData("text/plain"),
+      );
+      if (draggedUrl) {
+        event.preventDefault();
+        options?.insertText?.(draggedUrl);
+      }
     },
     [addFiles],
   );
@@ -176,7 +201,7 @@ export function useComposerAttachments(onInputChange: (value: string) => void) {
     removeAttachment,
     handleFileInputChange,
     handlePaste,
-    handleInputChange,
+    commitInputValue,
     handleDrop,
     sendAttachments,
     fileAccept: FILE_ACCEPT,

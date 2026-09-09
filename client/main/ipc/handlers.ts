@@ -49,6 +49,7 @@ import type {
   WorkspaceConfigUpdate,
   WorkspaceCreateInput,
   WorkspaceGitContext,
+  WorkspaceProjectReview,
   WorkspaceSettings,
   ChatSessionRecord,
   AgentSettings,
@@ -174,6 +175,7 @@ import {
   captureWorkspaceCheckpoint,
   previewWorkspaceRewind,
   readWorkspaceGitContext,
+  readWorkspaceProjectReview,
 } from "../services/workspace-checkpoint-service";
 import {
   claimNextOutboxMessage,
@@ -3296,6 +3298,33 @@ export function registerHandlers(): void {
       const targetPath = workspace?.path ?? sessionWorkspacePath;
       if (!targetPath) return null;
       return readWorkspaceGitContext(targetPath);
+    },
+  );
+
+  ipcMain.handle(
+    IPC.WORKSPACE_GET_PROJECT_REVIEW,
+    async (
+      _e,
+      id: string,
+      workspacePath?: string,
+    ): Promise<WorkspaceProjectReview | null> => {
+      const settings = getWorkspaceSettings();
+      const workspace =
+        (workspacePath
+          ? settings.workspaces.find((item) =>
+              workspacePathsEqual(item.path, workspacePath),
+            )
+          : undefined) ?? settings.workspaces.find((item) => item.id === id);
+      const sessionWorkspacePath =
+        workspacePath &&
+        store
+          .getSessions()
+          .some((session) => workspacePathsEqual(session.cwd, workspacePath))
+          ? workspacePath
+          : undefined;
+      const targetPath = workspace?.path ?? sessionWorkspacePath;
+      if (!targetPath) return null;
+      return readWorkspaceProjectReview(targetPath);
     },
   );
 

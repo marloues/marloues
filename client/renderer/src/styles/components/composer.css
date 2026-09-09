@@ -101,10 +101,17 @@
 }
 
 .composer-input {
+  position: relative;
   min-width: 0;
 }
 
-.composer textarea {
+.composer-input-field {
+  position: relative;
+  min-width: 0;
+}
+
+.composer textarea,
+.composer .composer-editable {
   width: 100%;
   min-height: 64px;
   max-height: 150px;
@@ -121,16 +128,183 @@
   line-height: 1.55;
 }
 
-.composer textarea:focus-visible {
-  box-shadow: none;
+.composer .composer-editable {
+  cursor: text;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
-.composer textarea::placeholder {
+.composer .composer-rich-input {
+  display: flex;
+  min-height: 64px;
+  max-height: 150px;
+  flex-direction: column;
+  color: var(--text-1);
+  font-size: var(--text-md);
+  line-height: 1.55;
+}
+
+.composer .composer-rich-input .cm-editor {
+  flex: 1;
+  min-height: 0;
+  background: transparent;
+  color: var(--text-1);
+  font-family: inherit;
+}
+
+.composer .composer-rich-input .cm-editor.cm-focused {
+  outline: none;
+}
+
+.composer .composer-rich-input .cm-scroller {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  font-family: inherit;
+}
+
+.composer .composer-rich-input .cm-content {
+  padding: 14px 15px 6px;
+  caret-color: var(--accent);
+}
+
+.composer .composer-rich-input .cm-line {
+  padding: 0;
+}
+
+.composer .composer-rich-input .cm-placeholder,
+.composer .composer-rich-input ::selection {
   color: var(--text-3);
 }
 
-.composer-input.has-chips textarea {
+.composer .composer-rich-input .cm-selectionBackground,
+.composer .composer-rich-input .cm-content ::selection {
+  background-color: var(--accent-soft);
+}
+
+.composer .composer-rich-input .cm-composer-hidden {
+  display: none;
+}
+
+.composer .composer-rich-input .cm-composer-strong {
+  color: var(--text-1);
+  font-weight: 650;
+}
+
+.composer .composer-rich-input .cm-composer-emphasis {
+  font-style: italic;
+}
+
+.composer .composer-rich-input .cm-composer-code {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--surface-raised, var(--raised-1));
+  color: var(--text-1);
+  font-family: var(--mono);
+  font-size: 0.94em;
+}
+
+.composer .composer-rich-input .cm-composer-link {
+  color: var(--chat-text-link, var(--accent));
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.composer .composer-rich-input .composer-bare-url {
+  overflow-wrap: anywhere;
+}
+
+.composer .composer-rich-input .composer-text-link {
+  color: var(--chat-text-link, var(--accent));
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  border-radius: 2px;
+  cursor: var(--cursor-control);
+}
+
+.composer .composer-rich-input .composer-text-link-icon {
+  margin-right: 3px;
+  vertical-align: -1px;
+}
+
+.composer .composer-rich-input .composer-text-link:hover,
+.composer .composer-rich-input .composer-text-link:focus-visible {
+  color: var(--accent);
+}
+
+.composer .composer-rich-input .composer-inline-link {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  align-items: center;
+  gap: 3px;
+  color: var(--chat-text-link, var(--accent));
+  line-height: inherit;
+  text-align: left;
+  vertical-align: bottom;
+  cursor: var(--cursor-control);
+}
+
+.composer .composer-rich-input .composer-inline-link:hover,
+.composer .composer-rich-input .composer-inline-link:focus-visible {
+  color: var(--accent);
+  text-decoration: underline dashed;
+  text-decoration-thickness: 0.5px;
+  text-underline-offset: 2px;
+}
+
+.composer .composer-rich-input .composer-inline-link-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.composer .composer-rich-input .composer-inline-link-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.composer .composer-rich-input .cm-composer-heading {
+  color: var(--text-1);
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.composer .composer-rich-input .cm-composer-heading-1,
+.composer .composer-rich-input .cm-composer-heading-2 {
+  font-size: 1.05em;
+}
+
+.composer .composer-rich-input .cm-composer-heading-3,
+.composer .composer-rich-input .cm-composer-heading-4,
+.composer .composer-rich-input .cm-composer-heading-5,
+.composer .composer-rich-input .cm-composer-heading-6 {
+  font-size: 1em;
+}
+
+.composer textarea:focus-visible,
+.composer .composer-editable:focus-visible {
+  box-shadow: none;
+}
+
+.composer textarea::placeholder,
+.composer .composer-editable:empty::before {
+  color: var(--text-3);
+}
+
+.composer .composer-editable:empty::before {
+  content: attr(data-placeholder);
+  pointer-events: none;
+}
+
+.composer-input.has-chips textarea,
+.composer-input.has-chips .composer-editable,
+.composer-input.has-chips .composer-rich-input {
   min-height: 60px;
+}
+
+.composer-input.has-chips .composer-rich-input .cm-content {
   padding-top: 10px;
 }
 
@@ -243,8 +417,7 @@
   font-size: 10px;
 }
 
-.composer-chip-remove,
-.composer-skill-token-remove {
+.composer-chip-remove {
   position: absolute;
   z-index: 2;
   top: 4px;
@@ -564,22 +737,58 @@ button.composer-browser-review-image {
   font-weight: 600;
 }
 
-.composer-chip-remove::before,
-.composer-skill-token-remove::before {
+.composer-chip-remove::before {
   position: absolute;
   inset: -3px;
   content: "";
 }
 
 .composer-chip-remove:hover,
-.composer-chip-remove:focus-visible,
-.composer-skill-token-remove:hover,
-.composer-skill-token-remove:focus-visible {
+.composer-chip-remove:focus-visible {
   outline: 0;
   transform: scale(1.06);
 }
 
-.composer-skill-token {
+.composer .composer-rich-input .composer-skill-mention {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  align-items: center;
+  gap: 3px;
+  padding-inline: 1px;
+  color: var(--chat-text-link, var(--accent));
+  font-weight: 500;
+  line-height: inherit;
+  text-align: left;
+  vertical-align: bottom;
+  cursor: var(--cursor-control);
+}
+
+.composer .composer-rich-input .composer-skill-mention:hover {
+  color: var(--accent);
+  text-decoration: underline dashed;
+  text-decoration-thickness: 0.5px;
+  text-underline-offset: 2px;
+}
+
+.composer .composer-rich-input .composer-skill-mention-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.composer .composer-rich-input .composer-skill-mention-icon > svg {
+  flex: 0 0 auto;
+  color: currentColor;
+}
+
+.composer .composer-rich-input .composer-skill-mention-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.composer-mention-token {
   position: relative;
   display: inline-flex;
   max-width: var(--composer-file-attachment-width);
@@ -595,21 +804,21 @@ button.composer-browser-review-image {
   font-size: var(--text-sm);
 }
 
-.composer-skill-token > svg {
+.composer-mention-token > svg {
   flex: 0 0 auto;
   color: var(--text-3);
 }
 
-.composer-skill-token-name {
+.composer-mention-token .composer-chip-remove {
+  top: 5px;
+}
+
+.composer-mention-token-name {
   min-width: 0;
   overflow: hidden;
   color: var(--text-1);
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.composer-skill-token-remove {
-  top: 5px;
 }
 
 .composer-toolbar {
@@ -885,6 +1094,116 @@ button.composer-browser-review-image {
 .add-context-popover button > span {
   min-width: 0;
   flex: 1;
+}
+
+.composer-link-editor-popover {
+  position: fixed;
+  z-index: calc(var(--layer-menu, 60) + 1);
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px;
+  background: var(--surface);
+  box-shadow: var(--shadow-menu, 0 12px 32px rgb(0 0 0 / 18%));
+}
+
+.composer-link-actions-row {
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  border-radius: 5px;
+}
+
+.composer-link-actions-row button,
+.composer-link-editor-popover form {
+  display: flex;
+  min-height: 30px;
+  align-items: center;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+
+.composer-link-actions-row button {
+  flex: 1 1 0;
+  min-width: 0;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 6px;
+  border-right: 1px solid var(--border);
+  background: transparent;
+}
+
+.composer-link-actions-row button:last-child {
+  border-right: 0;
+}
+
+.composer-link-actions-row button:hover,
+.composer-link-actions-row button:focus-visible {
+  background: var(--accent-soft);
+  color: var(--text-1);
+  outline: 0;
+}
+
+.composer-link-actions-row .composer-link-remove {
+  color: var(--danger, #d14b4b);
+}
+
+.composer-link-editor-popover form {
+  gap: 4px;
+}
+
+.composer-link-editor-popover form > input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 0 var(--space-2);
+  background: var(--surface-raised, var(--raised-1));
+  color: var(--text-1);
+  font-size: var(--text-sm);
+}
+
+.composer-link-editor-popover form > input:focus-visible {
+  border-color: var(--accent);
+  outline: 0;
+}
+
+.composer-link-back,
+.composer-link-editor-popover form > button[type="submit"] {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  color: var(--text-2);
+}
+
+.composer-link-back:hover,
+.composer-link-back:focus-visible,
+.composer-link-editor-popover form > button[type="submit"]:hover,
+.composer-link-editor-popover form > button[type="submit"]:focus-visible {
+  background: var(--accent-soft);
+  color: var(--text-1);
+  outline: 0;
+}
+
+.composer-link-editor-popover form > button[type="submit"]:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.composer-link-editor-error {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 4px;
+  margin: 0;
+  color: var(--danger, #d14b4b);
+  font-size: var(--text-xs);
+  line-height: 1.35;
 }
 
 .access-popover button span,
@@ -1660,8 +1979,7 @@ dialog.full-access-dialog::backdrop {
     padding: 0;
   }
 
-  .composer .mode-button > span,
-  .composer .mode-button > svg:last-child {
+  .composer .mode-button > span {
     display: none;
   }
 }
@@ -1676,7 +1994,7 @@ dialog.full-access-dialog::backdrop {
   .composer,
   .composer-chip,
   .composer-chip-remove,
-  .composer-skill-token-remove,
+  .composer .composer-rich-input .composer-skill-mention,
   .composer .tool-button,
   .composer .mode-button,
   .composer .send {

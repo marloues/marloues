@@ -7,14 +7,14 @@
  * 被 FileChangeRow 的对话内 diff 卡片和右侧审核面板共用。
  */
 
-export const DIFF_VIEW_SCROLL_CSS = `
+const diffViewScrollCss = (codeMaxHeight: string) => `
 [data-diff] {
   overflow: auto !important;
   max-width: 100% !important;
 }
 
 [data-code] {
-  max-height: 292px;
+  max-height: ${codeMaxHeight} !important;
   overflow: auto !important;
   overscroll-behavior: contain;
   scrollbar-width: auto !important;
@@ -64,6 +64,57 @@ export const DIFF_VIEW_SCROLL_CSS = `
 [data-code]::-webkit-scrollbar-thumb:horizontal,
 [data-code]::-webkit-scrollbar-thumb:vertical {
   border-radius: 999px !important;
+}
+
+[data-code]::-webkit-scrollbar-thumb:hover {
+  background-color: transparent !important;
+  box-shadow: inset 0 0 0 999px color-mix(in srgb, var(--diffs-fg-number) 54%, transparent) !important;
+}
+
+[data-code]::-webkit-scrollbar-track,
+[data-code]::-webkit-scrollbar-track-piece,
+[data-code]::-webkit-scrollbar-corner {
+  -webkit-appearance: none !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+}
+`;
+
+/** Compact cards keep a bounded code viewport. */
+export const DIFF_VIEW_SCROLL_CSS = diffViewScrollCss("292px");
+
+/** Review rows expand naturally; their parent list owns vertical scrolling. */
+export const DIFF_VIEW_NATURAL_HEIGHT_CSS = `
+[data-diff] {
+  max-width: 100% !important;
+  overflow: visible !important;
+}
+
+[data-code] {
+  max-height: none !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  overscroll-behavior-x: contain;
+  scrollbar-width: auto !important;
+  scrollbar-color: auto !important;
+}
+
+[data-code]::-webkit-scrollbar {
+  -webkit-appearance: none !important;
+  width: 0 !important;
+  height: 8px !important;
+  background: transparent !important;
+}
+
+[data-code]::-webkit-scrollbar-thumb {
+  -webkit-appearance: none !important;
+  min-height: 0 !important;
+  min-width: 40px !important;
+  border: 1px solid transparent !important;
+  border-radius: 999px !important;
+  background-clip: padding-box !important;
+  background-color: transparent !important;
+  box-shadow: inset 0 0 0 999px color-mix(in srgb, var(--diffs-fg-number) 34%, transparent) !important;
 }
 
 [data-code]::-webkit-scrollbar-thumb:hover {

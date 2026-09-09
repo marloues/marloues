@@ -72,8 +72,8 @@ export interface WorkflowComposerShellProps {
   securityMode?: AgentSecurityMode;
   selectedProvider: Provider | null;
   onInputChange: (value: string) => void;
-  onKeyDown: (event: React.KeyboardEvent<HTMLTextAreaElement>) => void;
-  onSend: (attachments?: UserMessageContent[]) => void;
+  onKeyDown: (event: React.KeyboardEvent<HTMLElement>) => void;
+  onSend: (text: string, attachments?: UserMessageContent[]) => void;
   onStop: () => void;
   onSecurityModeChange?: (mode: AgentSecurityMode) => void;
   onOpenSecuritySettings?: () => void;

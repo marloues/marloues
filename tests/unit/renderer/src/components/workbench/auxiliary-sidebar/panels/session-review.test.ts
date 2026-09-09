@@ -5,6 +5,7 @@ import type {
 } from "@shared/workflow-read-thread-contract";
 import {
   buildSessionReview,
+  projectReviewFiles,
   reviewFilePath,
 } from "@/components/workbench/auxiliary-sidebar/panels/session-review";
 
@@ -28,6 +29,60 @@ const turn = (id: string, items: WorkflowTurnItem[]): WorkflowTurn => ({
 });
 
 describe("session review collection", () => {
+  it("maps project review files into review entries", () => {
+    const files = projectReviewFiles({
+      isRepository: true,
+      root: "/workspace",
+      files: [
+        {
+          path: "src/a.ts",
+          added: 2,
+          removed: 1,
+          rawDiff: "diff --git a/src/a.ts b/src/a.ts\n+new",
+          binary: false,
+        },
+        {
+          path: "assets/logo.png",
+          added: 0,
+          removed: 0,
+          rawDiff: "Binary files differ",
+          binary: true,
+        },
+      ],
+      insertions: 2,
+      deletions: 1,
+    });
+
+    expect(files).toEqual([
+      {
+        path: "src/a.ts",
+        added: 2,
+        removed: 1,
+        revisions: [
+          {
+            id: "project:src/a.ts",
+            rawDiff: "diff --git a/src/a.ts b/src/a.ts\n+new",
+            kind: "update",
+            truncated: false,
+          },
+        ],
+      },
+      {
+        path: "assets/logo.png",
+        added: 0,
+        removed: 0,
+        revisions: [
+          {
+            id: "project:assets/logo.png",
+            rawDiff: "Binary files differ",
+            kind: "binary",
+            truncated: false,
+          },
+        ],
+      },
+    ]);
+  });
+
   it("collects SDK edits across turns using their content, not success messages", () => {
     const sdkEdit = (
       id: string,

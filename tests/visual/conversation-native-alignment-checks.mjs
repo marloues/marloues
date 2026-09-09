@@ -9,12 +9,13 @@ export async function verifyNativeAlignment(page, caseId, capture) {
   const images = [];
   if (caseId === "qa-markdown") {
     const user = page.locator(".workflow-user-message-text");
-    await expect(user).toContainText("# 标题一级");
+    await expect(user.locator("h1")).toHaveText("标题一级");
+    await expect(user.locator("strong").first()).toContainText("粗体");
     const visible = await user.textContent();
     expect(visible).not.toContain("\\#");
     expect(visible).not.toContain("\\\n");
     expect(visible).not.toContain("&#x20;");
-    expect(visible).toContain("**粗体**");
+    expect(visible).not.toContain("**粗体**");
     await user.scrollIntoViewIfNeeded();
     images.push(await capture("aligned-user-input"));
 
@@ -64,6 +65,50 @@ export async function verifyNativeAlignment(page, caseId, capture) {
     images.push(await capture("aligned-table-narrow"));
     await page.keyboard.press("Escape");
     await page.setViewportSize({ width: 1440, height: 980 });
+
+    const composerInput = page.locator(".composer-rich-input");
+    const composerContent = composerInput.locator(".cm-content");
+    await expect(page.locator(".composer textarea")).toHaveCount(0);
+    await composerContent.click();
+    await composerContent.evaluate((element) => {
+      const clipboardData = new DataTransfer();
+      clipboardData.setData(
+        "text/html",
+        "<h1>草稿标题</h1><p><strong>粗体草稿</strong></p>",
+      );
+      clipboardData.setData("text/plain", "草稿标题\n\n粗体草稿");
+      element.dispatchEvent(
+        new ClipboardEvent("paste", {
+          clipboardData,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+    const composerHeading = composerContent.locator(".cm-composer-heading-1");
+    await expect(composerHeading).toContainText("草稿标题");
+    expect(await composerHeading.evaluate((node) => node.innerText)).toBe(
+      "草稿标题",
+    );
+    const composerStrong = composerContent.locator(".cm-composer-strong");
+    await expect(composerStrong).toContainText("粗体草稿");
+    expect(await composerStrong.evaluate((node) => node.innerText)).toBe(
+      "粗体草稿",
+    );
+    await expect(
+      composerContent.locator(".cm-composer-hidden").first(),
+    ).toBeHidden();
+    expect(
+      await composerContent.evaluate((node) => node.innerText),
+    ).not.toContain("#");
+    expect(
+      await composerContent.evaluate((node) => node.innerText),
+    ).not.toContain("**");
+    await composerInput.scrollIntoViewIfNeeded();
+    images.push(await capture("aligned-composer-rich-input"));
+    await composerContent.click();
+    await page.keyboard.press("ControlOrMeta+A");
+    await page.keyboard.press("Backspace");
   } else if (caseId === "qa-command-completed") {
     await expect(page.locator(".workflow-turn-duration").first()).toHaveText(
       "1分钟 16秒",

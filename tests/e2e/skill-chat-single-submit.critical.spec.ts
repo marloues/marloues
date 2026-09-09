@@ -36,9 +36,16 @@ test("project Skill selection sends and renders exactly one user message", async
     "skills",
     "project-e2e",
   );
+  const secondProjectSkillDir = join(
+    workspaceDir,
+    ".agents",
+    "skills",
+    "second-e2e",
+  );
   mkdirSync(join(testHome, "config"), { recursive: true });
   mkdirSync(globalSkillDir, { recursive: true });
   mkdirSync(projectSkillDir, { recursive: true });
+  mkdirSync(secondProjectSkillDir, { recursive: true });
   writeFileSync(
     join(globalSkillDir, "SKILL.md"),
     "---\nname: global-e2e\ndescription: Global E2E Skill\n---\n",
@@ -47,6 +54,11 @@ test("project Skill selection sends and renders exactly one user message", async
   writeFileSync(
     join(projectSkillDir, "SKILL.md"),
     "---\nname: project-e2e\ndescription: Project E2E Skill\n---\n",
+    "utf8",
+  );
+  writeFileSync(
+    join(secondProjectSkillDir, "SKILL.md"),
+    "---\nname: second-e2e\ndescription: Second E2E Skill\n---\n",
     "utf8",
   );
   writeFileSync(
@@ -104,8 +116,10 @@ test("project Skill selection sends and renders exactly one user message", async
     await window.setViewportSize({ width: 1280, height: 900 });
     await completeOnboarding(window);
 
-    const textarea = window.locator(".composer textarea");
-    await expect(textarea).toBeVisible();
+    const richInput = window.locator(".composer-rich-input .cm-content");
+    await expect(richInput).toBeVisible();
+    await expect(window.locator(".composer-editable")).toHaveCount(0);
+    await expect(window.locator(".composer-skill-mention")).toHaveCount(0);
     await expect
       .poll(() =>
         window.evaluate(async () =>
@@ -118,10 +132,10 @@ test("project Skill selection sends and renders exactly one user message", async
             .map((skill) => skill.name),
         ),
       )
-      .toEqual(["project-e2e"]);
+      .toEqual(["project-e2e", "second-e2e"]);
     await window.waitForTimeout(750);
-    await textarea.click();
-    await textarea.pressSequentially("$project");
+    await richInput.click();
+    await richInput.pressSequentially("$project");
 
     const projectOption = window
       .getByRole("option")
@@ -131,16 +145,70 @@ test("project Skill selection sends and renders exactly one user message", async
       window.getByRole("option").filter({ hasText: "$global-e2e" }),
     ).toHaveCount(0);
     await projectOption.click();
-    await expect(window.locator(".composer-skill-token")).toHaveText(
+    await expect(window.locator(".composer-skill-mention")).toHaveText(
       "project-e2e",
     );
+    await richInput.press("Backspace");
+    await expect(window.locator(".composer-skill-mention")).toHaveCount(0);
+    await expect(richInput).toBeVisible();
+    await expect(richInput).toBeFocused();
+    await richInput.pressSequentially("/");
+    await window.waitForTimeout(300);
+    await expect(window.locator(".composer-skill-mention")).toHaveCount(0);
+
+    const slashOption = window
+      .getByRole("option")
+      .filter({ hasText: "/project-e2e" });
+    await expect(slashOption).toBeVisible();
+    await slashOption.click();
+    await expect(window.locator(".composer-skill-mention")).toHaveText(
+      "project-e2e",
+    );
+    await richInput.pressSequentially("/second");
+    const secondOption = window
+      .getByRole("option")
+      .filter({ hasText: "/second-e2e" });
+    await expect(secondOption).toHaveCount(1);
+    await secondOption.click();
+    await expect(window.locator(".composer-skill-mention")).toHaveCount(2);
+    await expect(window.locator(".composer-skill-mention")).toHaveText([
+      "project-e2e",
+      "second-e2e",
+    ]);
+    await richInput.click();
+    await richInput.pressSequentially(" 继续执行");
+    await expect(richInput).toContainText("继续执行");
+
+    const skillLinkIsInline = await richInput.evaluate((element) => {
+      const link = element.querySelector<HTMLElement>(
+        ".composer-skill-mention",
+      );
+      if (!link?.closest(".cm-content")) return false;
+
+      const textNode = Array.from(link.parentElement?.childNodes ?? []).find(
+        (node) => node.nodeType === Node.TEXT_NODE && node.textContent?.trim(),
+      );
+      if (!textNode) return false;
+
+      const textRange = document.createRange();
+      textRange.selectNodeContents(textNode);
+      const textRect = textRange.getClientRects()[0];
+      const linkRect = link.getBoundingClientRect();
+      if (!textRect) return false;
+
+      return (
+        Math.abs(linkRect.top - textRect.top) < 2 &&
+        textRect.left >= linkRect.right - 1
+      );
+    });
+    expect(skillLinkIsInline).toBe(true);
 
     await window.getByRole("button", { name: "发送消息" }).click();
     const userMessages = window.locator(".workflow-user-message");
     await expect(userMessages).toHaveCount(1);
     await expect(
       userMessages.locator(".workflow-user-attachment-pill"),
-    ).toContainText("project-e2e");
+    ).toContainText(["project-e2e", "second-e2e"]);
 
     // readThread refreshes asynchronously just after the send. The regression
     // used to add a second seed turn during that window, so assert again after

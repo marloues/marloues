@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { FileText, Wrench } from "lucide-react";
+import { FileText, Layers } from "lucide-react";
 import type { SkillInfo } from "@shared/types";
 
 export type ComposerSuggestion =
@@ -54,7 +54,7 @@ export function ComposerSuggestionPopover({
           >
             <span className="slash-command-name">
               {item.kind === "skill" ? (
-                <Wrench size={14} />
+                <Layers size={14} />
               ) : (
                 <FileText size={14} />
               )}

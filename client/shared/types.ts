@@ -85,6 +85,22 @@ export interface WorkspaceGitContext {
   deletions: number;
 }
 
+export interface WorkspaceProjectReviewFile {
+  path: string;
+  added: number;
+  removed: number;
+  rawDiff: string;
+  binary: boolean;
+}
+
+export interface WorkspaceProjectReview {
+  isRepository: boolean;
+  root: string;
+  files: WorkspaceProjectReviewFile[];
+  insertions: number;
+  deletions: number;
+}
+
 export interface WorkspaceSettings {
   currentWorkspaceId?: string;
   workspaces: WorkspaceInfo[];
@@ -1218,6 +1234,10 @@ export interface MarlouesAPI {
       workspaceId: string,
       workspacePath?: string,
     ): Promise<WorkspaceGitContext | null>;
+    getProjectReview(
+      workspaceId: string,
+      workspacePath?: string,
+    ): Promise<WorkspaceProjectReview | null>;
     openInExplorer(workspaceId: string): Promise<void>;
   };
   fs: {
@@ -1567,6 +1587,7 @@ export const IPC = {
   WORKSPACE_GET_CURRENT: "workspace:get-current",
   WORKSPACE_GET_SETTINGS: "workspace:get-settings",
   WORKSPACE_GET_GIT_CONTEXT: "workspace:get-git-context",
+  WORKSPACE_GET_PROJECT_REVIEW: "workspace:get-project-review",
   WORKSPACE_OPEN_IN_EXPLORER: "workspace:open-in-explorer",
   FS_LIST_DIR: "fs:list-dir",
   FS_READ_FILE: "fs:read-file",

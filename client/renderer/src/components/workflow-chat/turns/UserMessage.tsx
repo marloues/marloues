@@ -1,4 +1,5 @@
 import { WorkflowMarkdownLink } from "../content/MarkdownLink";
+import { WorkflowMarkdownContent } from "../content/MarkdownContent";
 import styles from "./UserMessage.module.css";
 import { useMemo, useState, type FocusEvent, type ReactNode } from "react";
 import { useCopyFeedback } from "../content/use-copy-feedback";
@@ -119,12 +120,12 @@ export function WorkflowUserMessage({
               tabIndex={0}
               onDoubleClick={onEdit}
             >
-              <span
+              <div
                 className={`workflow-user-message-text${expanded ? " is-expanded" : ""}`}
                 aria-hidden={!expanded && isLong}
               >
-                {presentation.text}
-              </span>
+                <WorkflowMarkdownContent content={presentation.text} />
+              </div>
               {!expanded && isLong ? (
                 <span className="sr-only">{presentation.text}</span>
               ) : null}

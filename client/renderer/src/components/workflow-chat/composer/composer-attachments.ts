@@ -1,12 +1,8 @@
 /**
  * Composer attachment helpers — shared by the input composer and tests.
  *
- * Supports two attachment kinds:
- *  - image: raster image read as a data URL (existing behaviour).
- *  - file:  text-based file (code, markdown, JSON, CSV, config, logs, ...)
- *           read as UTF-8 text and injected into the prompt as a labelled
- *           fenced block. Binary formats (PDF/Office) are rejected here with
- *           a clear notification; they can be added later via extraction.
+ * Attachment kinds are composer-facing semantics. Durable wire parts remain
+ * image/file/url/skill/mention/browser-comment so runtime adapters stay stable.
  */
 import type { UserMessageContent } from "../../../types";
 import type { WorkflowUserMessageContent } from "@shared/workflow-read-thread-contract";
@@ -28,6 +24,23 @@ export type ComposerAttachment =
       name: string;
       mimeType: string;
       text: string;
+      size: number;
+    }
+  | {
+      kind: "pasted-text";
+      id: string;
+      sequence: number;
+      name: string;
+      mimeType: string;
+      text: string;
+      size: number;
+    }
+  | {
+      kind: "appshot";
+      id: string;
+      name: string;
+      mimeType: string;
+      dataUrl: string;
       size: number;
     }
   | {
@@ -56,9 +69,16 @@ export type ComposerAttachment =
       pageId?: string;
       payload: Extract<WorkflowUserMessageContent, { type: "browserComment" }>;
     };
+
+export type BareUrlRange = {
+  url: string;
+  from: number;
+  to: number;
+};
 export const MAX_ATTACHMENTS = 6;
 export const MAX_IMAGE_ATTACHMENT_BYTES = 8 * 1024 * 1024;
 export const MAX_FILE_ATTACHMENT_BYTES = 256 * 1024;
+export const PASTED_TEXT_ATTACHMENT_THRESHOLD_BYTES = 4 * 1024;
 
 /** MIME types that are text-readable but don't start with "text/". */
 const TEXT_MIME_TYPES = new Set([
@@ -246,12 +266,135 @@ export async function fileToFileAttachment(
 /** Build the <input type=file accept=...> value from image + text extensions. */
 export const FILE_ACCEPT: string = ["image/*", ...TEXT_EXTENSIONS].join(",");
 
+const BARE_URL_PATTERN =
+  /\bhttps?:\/\/[^\s<>"'`，。；！？：、）》」』【】]+/giu;
+const TRAILING_URL_PUNCTUATION = /[.,;:!?)\]}>'"，。；！？：、）》」』【】]$/u;
+
+function trimTrailingUrlPunctuation(text: string): string {
+  let value = text;
+  while (TRAILING_URL_PUNCTUATION.test(value)) {
+    value = value.slice(0, -1);
+  }
+  return value;
+}
+
+/** Normalize a pasted or typed http(s) link without changing its spelling. */
+export function normalizeUrl(text: string): string | null {
+  const candidate = trimTrailingUrlPunctuation(text.trim());
+  if (!/^https?:\/\//iu.test(candidate)) return null;
+  try {
+    const url = new URL(candidate);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    return candidate;
+  } catch {
+    return null;
+  }
+}
+
 /** Quick check for http(s) URLs. */
 export function isUrl(text: string): boolean {
-  return /^https?:\/\/\S+$/i.test(text.trim());
+  return normalizeUrl(text) !== null;
+}
+
+function protectedUrlRanges(text: string): Array<[number, number]> {
+  const ranges: Array<[number, number]> = [];
+  const patterns = [
+    /```[\s\S]*?```/gu,
+    /`[^`\n]*`/gu,
+    /\[[^\]\n]*\]\(\s*https?:\/\/[^\s)]+(?:\s+["'][^"'\n]*["'])?\s*\)/gu,
+  ];
+  for (const pattern of patterns) {
+    for (const match of text.matchAll(pattern)) {
+      if (match.index !== undefined) {
+        ranges.push([match.index, match.index + match[0].length]);
+      }
+    }
+  }
+  return ranges;
+}
+
+function isProtectedRange(
+  ranges: Array<[number, number]>,
+  start: number,
+  end: number,
+): boolean {
+  return ranges.some(([from, to]) => start < to && end > from);
+}
+
+/** Extract bare http(s) links while leaving Markdown links and code intact. */
+export function findBareUrlRanges(text: string): BareUrlRange[] {
+  const protectedRanges = protectedUrlRanges(text);
+  const ranges: BareUrlRange[] = [];
+  for (const match of text.matchAll(BARE_URL_PATTERN)) {
+    if (match.index === undefined) continue;
+    const url = normalizeUrl(match[0]);
+    if (!url) continue;
+    const from = match.index;
+    const to = from + url.length;
+    if (isProtectedRange(protectedRanges, from, to)) continue;
+    ranges.push({ url, from, to });
+  }
+  return ranges;
+}
+
+/** Extract unique bare http(s) links while leaving protected text intact. */
+export function extractUrls(text: string): string[] {
+  const urls: string[] = [];
+  for (const { url } of findBareUrlRanges(text)) {
+    if (!urls.includes(url)) urls.push(url);
+  }
+  return urls;
+}
+
+/** Remove only the specified bare URLs, preserving trailing punctuation. */
+export function removeUrls(text: string, urls: string[] = []): string {
+  const targets = new Set(urls);
+  const ranges = protectedUrlRanges(text);
+  return text.replace(BARE_URL_PATTERN, (match, offset: number) => {
+    if (isProtectedRange(ranges, offset, offset + match.length)) return match;
+    const url = normalizeUrl(match);
+    if (!url || !targets.has(url)) return match;
+    return match.slice(url.length);
+  });
 }
 export function urlAttachment(url: string): ComposerAttachment {
-  return { kind: "url", id: crypto.randomUUID(), url: url.trim() };
+  return { kind: "url", id: crypto.randomUUID(), url: url };
+}
+
+export function shouldExternalizePastedText(text: string): boolean {
+  return (
+    new TextEncoder().encode(text).byteLength >=
+    PASTED_TEXT_ATTACHMENT_THRESHOLD_BYTES
+  );
+}
+
+export function pastedTextAttachment(
+  text: string,
+  sequence: number,
+): ComposerAttachment {
+  return {
+    kind: "pasted-text",
+    id: crypto.randomUUID(),
+    sequence,
+    name: `粘贴文本 ${sequence}`,
+    mimeType: "text/plain",
+    text,
+    size: new TextEncoder().encode(text).byteLength,
+  };
+}
+
+export function browserAppshotAttachment(dataUrl: string): ComposerAttachment {
+  const match = /^data:([^;,]+);base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl);
+  const base64 = match?.[2] ?? "";
+  const padding = base64.endsWith("==") ? 2 : base64.endsWith("=") ? 1 : 0;
+  return {
+    kind: "appshot",
+    id: crypto.randomUUID(),
+    name: "页面截图",
+    mimeType: match?.[1] ?? "image/png",
+    dataUrl,
+    size: Math.max(0, Math.floor((base64.length * 3) / 4) - padding),
+  };
 }
 
 /** Create a skill attachment from a slash-command selection. */

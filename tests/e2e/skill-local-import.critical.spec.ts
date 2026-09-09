@@ -307,15 +307,15 @@ test("directory, ZIP and dragged SKILL.md imports work through the desktop UI", 
     // to refresh immediately; requiring an app restart would make import only
     // superficially successful.
     await window.locator('[data-quick-access="new-conversation"]').click();
-    const textarea = window.locator(".composer textarea");
-    await textarea.click();
-    await textarea.pressSequentially("$local-import");
+    const richInput = window.locator(".composer-rich-input .cm-content");
+    await richInput.click();
+    await richInput.pressSequentially("$local-import");
     const option = window
       .getByRole("option")
       .filter({ hasText: "$local-import-e2e" });
     await expect(option).toHaveCount(1);
     await option.click();
-    await expect(window.locator(".composer-skill-token")).toHaveText(
+    await expect(window.locator(".composer-skill-mention")).toHaveText(
       "local-import-e2e",
     );
     expect(rendererErrors).toEqual([]);

@@ -1,4 +1,5 @@
 import type { WorkflowTurn } from "@shared/workflow-read-thread-contract";
+import type { WorkspaceProjectReview } from "@shared/types";
 import { projectToolItem } from "@shared/adapters/tool-item-projection";
 import { filePatchStats, patchForFile } from "@/components/diff/file-patch";
 
@@ -14,6 +15,25 @@ export interface SessionReviewFile {
   added: number;
   removed: number;
   revisions: ReviewRevision[];
+}
+
+export function projectReviewFiles(
+  review: WorkspaceProjectReview | null,
+): SessionReviewFile[] {
+  if (!review?.isRepository) return [];
+  return review.files.map((file) => ({
+    path: reviewFilePath(file.path, review.root),
+    added: file.added,
+    removed: file.removed,
+    revisions: [
+      {
+        id: `project:${file.path}`,
+        rawDiff: file.rawDiff,
+        kind: file.binary ? "binary" : "update",
+        truncated: false,
+      },
+    ],
+  }));
 }
 
 /** Normalize path identity only; never URL-decode filesystem paths. */

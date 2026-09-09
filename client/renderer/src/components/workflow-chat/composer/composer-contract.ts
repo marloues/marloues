@@ -64,6 +64,23 @@ export function composerAttachmentsToContent(
           text: attachment.text,
           size: attachment.size,
         };
+      case "pasted-text":
+        return {
+          type: "file",
+          name: attachment.name,
+          mimeType: attachment.mimeType,
+          text: attachment.text,
+          size: attachment.size,
+        };
+      case "appshot":
+        return {
+          type: "image",
+          url: attachment.dataUrl,
+          detail: "auto",
+          name: attachment.name,
+          mimeType: attachment.mimeType,
+          size: attachment.size,
+        };
       case "url":
         return { type: "url", url: attachment.url };
       case "mention":

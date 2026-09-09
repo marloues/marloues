@@ -1,11 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronDown, Settings2 } from "lucide-react";
+import { Check, Settings2 } from "lucide-react";
+import { notify } from "@/lib/notifications";
+import type { SkillDetail, SkillInfo } from "@shared/types";
+import { SkillDetailModal } from "../../skills/SkillDetailModal";
+import {
+  ComposerRichInput,
+  type ComposerRichInputHandle,
+} from "./ComposerRichInput";
+import { ComposerLinkPopover } from "./ComposerLinkPopover";
+import type { ComposerLinkSelection } from "./composer-link-tokens";
 import {
   attachmentsToUserContent,
+  browserAppshotAttachment,
   browserCommentAttachment,
   isMatchingBrowserCommentAttachment,
   MAX_ATTACHMENTS,
-  skillAttachment,
 } from "./composer-attachments";
 import type { SlashCommandItem } from "../../../types";
 import { WorkflowImageLightbox, type WorkflowImagePreview } from "../";
@@ -31,8 +40,12 @@ import {
   ComposerSuggestionPopover,
   type ComposerSuggestion,
 } from "./ComposerSuggestionPopover";
-import { replaceComposerSuggestion } from "./composer-contract";
+import {
+  replaceComposerSuggestion,
+  selectedSkillAttachment,
+} from "./composer-contract";
 import { useComposerSuggestions } from "./useComposerSuggestions";
+import { stripSkillTokenMarkers } from "./composer-skill-tokens";
 
 const COMPOSER_ICONS = CONVERSATION_ICONS.composer;
 
@@ -72,12 +85,14 @@ export function WorkflowComposerShell({
   onReorderPendingSteer,
 }: WorkflowComposerShellProps) {
   const dockRef = useComposerDockSafeArea();
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const richInputRef = useRef<ComposerRichInputHandle>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const securityMenuRef = useRef<HTMLDivElement>(null);
   const fallbackModelMenuRef = useRef<HTMLDivElement>(null);
   const slashPopoverRef = useRef<HTMLDivElement>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
+  const linkPopoverRef = useRef<HTMLDivElement>(null);
   const previousPermissionPanelRef = useRef(false);
   const submittedBrowserCommentEventRef = useRef<string | null>(null);
   const [modelOpen, setModelOpen] = useState(false);
@@ -88,25 +103,125 @@ export function WorkflowComposerShell({
   const [caret, setCaret] = useState(0);
   const [securityOpen, setSecurityOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
+  const [linkTarget, setLinkTarget] = useState<ComposerLinkSelection | null>(
+    null,
+  );
   const [previewImage, setPreviewImage] = useState<WorkflowImagePreview | null>(
     null,
   );
+  const [selectedSkill, setSelectedSkill] = useState<SkillInfo | null>(null);
+  const [selectedSkillDetail, setSelectedSkillDetail] =
+    useState<SkillDetail | null>(null);
+  const [skillDetailLoading, setSkillDetailLoading] = useState(false);
+  const skillDetailRequestRef = useRef(0);
+  const [skillAttachments, setSkillAttachments] = useState<SkillInfo[]>([]);
+  const [suggestionDismissedKey, setSuggestionDismissedKey] = useState<
+    string | null
+  >(null);
 
   const {
     attachments,
     setAttachments,
     removeAttachment,
     handleFileInputChange,
-    handlePaste,
-    handleInputChange,
-    handleDrop,
-    sendAttachments,
+    handlePaste: handleComposerPaste,
+    commitInputValue,
+    handleDrop: handleAttachmentDrop,
     fileAccept,
   } = useComposerAttachments(onInputChange);
 
+  const handlePaste = useCallback(
+    (event: Parameters<typeof handleComposerPaste>[0]) => {
+      handleComposerPaste(event);
+    },
+    [handleComposerPaste],
+  );
+
+  const handleDrop = useCallback(
+    (event: Parameters<typeof handleAttachmentDrop>[0]) => {
+      handleAttachmentDrop(event, {
+        insertText: (text) => {
+          const view = richInputRef.current;
+          if (/^https?:\/\//iu.test(text.trim())) {
+            view?.insertLink(text.trim());
+            return;
+          }
+          view?.insertText(text);
+        },
+      });
+    },
+    [handleAttachmentDrop],
+  );
+
+  const closeLinkPopover = useCallback(() => {
+    setLinkTarget(null);
+    window.requestAnimationFrame(() => richInputRef.current?.focus());
+  }, []);
+
+  const updateLinkTarget = useCallback(
+    (label: string, href: string | null) => {
+      if (!linkTarget) return;
+      richInputRef.current?.updateLink(linkTarget, { label, href });
+      setLinkTarget(null);
+    },
+    [linkTarget],
+  );
+
+  const handleSkillsChange = useCallback((nextSkills: SkillInfo[]) => {
+    setSkillAttachments((previous) => {
+      if (
+        previous.length === nextSkills.length &&
+        previous.every((skill, index) => skill.id === nextSkills[index]?.id)
+      ) {
+        return previous;
+      }
+      return nextSkills;
+    });
+  }, []);
+
+  const openSkillDetail = useCallback(async (skill: SkillInfo) => {
+    const request = ++skillDetailRequestRef.current;
+    setSelectedSkill(skill);
+    setSelectedSkillDetail(null);
+    setSkillDetailLoading(true);
+    try {
+      const detail = await window.marloues.skill.getDetail(skill.id);
+      if (request !== skillDetailRequestRef.current) return;
+      setSelectedSkillDetail(detail);
+    } catch (error) {
+      if (request !== skillDetailRequestRef.current) return;
+      notify({
+        title: "Skill 详情加载失败",
+        description: error instanceof Error ? error.message : undefined,
+        tone: "error",
+      });
+    } finally {
+      if (request === skillDetailRequestRef.current) {
+        setSkillDetailLoading(false);
+      }
+    }
+  }, []);
+
+  const handleSkillTokenClick = useCallback(
+    (skillId: string) => {
+      const skill = skills.find((item) => item.id === skillId);
+      if (skill) void openSkillDetail(skill);
+    },
+    [openSkillDetail, skills],
+  );
+
+  const closeSkillDetail = useCallback(() => {
+    skillDetailRequestRef.current += 1;
+    setSelectedSkill(null);
+    setSelectedSkillDetail(null);
+    setSkillDetailLoading(false);
+  }, []);
+
   useEffect(() => {
     setAttachments([]);
+    setSkillAttachments([]);
     setPreviewImage(null);
+    richInputRef.current?.clear({ focus: false });
   }, [conversationKey, setAttachments]);
 
   useEffect(() => {
@@ -129,7 +244,7 @@ export function WorkflowComposerShell({
         );
       return additions.length > 0 ? [...previous, ...additions] : previous;
     });
-    requestAnimationFrame(() => textareaRef.current?.focus());
+    requestAnimationFrame(() => richInputRef.current?.focus());
   }, [incomingBrowserComment, setAttachments]);
 
   useEffect(() => {
@@ -157,9 +272,26 @@ export function WorkflowComposerShell({
 
     // Keep the browser bar's send semantics identical to the primary submit
     // button: send current text + attachments, then clear transient chips.
-    onSend(attachmentsToUserContent(submittedAttachments));
+    const composerText =
+      richInputRef.current?.getPlainText() ?? stripSkillTokenMarkers(input);
+    onSend(
+      composerText.trim(),
+      attachmentsToUserContent([
+        ...submittedAttachments,
+        ...skillAttachments.map(selectedSkillAttachment),
+      ]),
+    );
     setAttachments([]);
-  }, [attachments, browserCommentSubmit, onSend, setAttachments]);
+    setSkillAttachments([]);
+    richInputRef.current?.clear();
+  }, [
+    attachments,
+    browserCommentSubmit,
+    input,
+    onSend,
+    setAttachments,
+    skillAttachments,
+  ]);
 
   useEffect(() => {
     if (!browserCommentRemoval) return;
@@ -192,16 +324,49 @@ export function WorkflowComposerShell({
     },
     [attachments, removeAttachment],
   );
+
+  const handleCapturePage = useCallback(async () => {
+    setContextOpen(false);
+    if (attachments.length >= MAX_ATTACHMENTS) {
+      notify({
+        title: "附件数量已达上限",
+        description: `最多一次发送 ${MAX_ATTACHMENTS} 个附件。`,
+        tone: "warning",
+      });
+      return;
+    }
+    try {
+      const dataUrl = await window.marloues.browser?.screenshot();
+      if (!dataUrl) throw new Error("当前没有可捕获的浏览器页面");
+      setAttachments((previous) => {
+        if (previous.length >= MAX_ATTACHMENTS) return previous;
+        return [...previous, browserAppshotAttachment(dataUrl)];
+      });
+    } catch (error) {
+      notify({
+        title: "页面截图失败",
+        description: error instanceof Error ? error.message : String(error),
+        tone: "error",
+      });
+    }
+  }, [attachments.length, setAttachments]);
   const {
     query: composerQuery,
     items: composerSuggestions,
     attachmentFor,
   } = useComposerSuggestions({ input, caret, skills });
 
-  useEffect(
-    () => setSuggestionSelectedIndex(0),
-    [composerQuery?.kind, composerQuery?.query],
-  );
+  const composerQueryKey = composerQuery
+    ? `${composerQuery.kind}:${composerQuery.query}:${composerQuery.start}:${composerQuery.end}`
+    : null;
+  const activeComposerQuery =
+    composerQuery && composerQueryKey !== suggestionDismissedKey
+      ? composerQuery
+      : null;
+
+  useEffect(() => {
+    setSuggestionSelectedIndex(0);
+  }, [composerQueryKey]);
 
   const {
     securityMode,
@@ -216,35 +381,23 @@ export function WorkflowComposerShell({
     securityModeOptions[0];
   const ActiveSecurityIcon = activeSecurityMode.icon;
   const hasPermissionPanel = Boolean(permissionPanel);
+  const otherAttachments = attachments;
   const textareaMinHeight =
-    attachments.length > 0
+    otherAttachments.length > 0
       ? COMPOSER_TEXTAREA_WITH_ATTACHMENTS_MIN_HEIGHT
       : COMPOSER_TEXTAREA_MIN_HEIGHT;
 
   useEffect(() => {
-    // Open slash menu when input starts with "/" and the first token has no space.
-    // The trailing `$` anchor is essential: after selecting a command the input
-    // becomes `/cmd ` (with a space). Without `$` the regex still matches the
-    // `/cmd` prefix and reopens the popover, making it look like selection failed.
-    const match = input.match(/^\/(\S*)$/);
-    if (match) {
+    const commandQuery =
+      activeComposerQuery?.kind === "command" ? activeComposerQuery : null;
+    if (commandQuery) {
       setSlashOpen(true);
-      setSlashFilter(match[1]);
+      setSlashFilter(commandQuery.query);
       setSlashSelectedIndex(0);
     } else {
       setSlashOpen(false);
     }
-  }, [input]);
-
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    textarea.style.height = "0px";
-    textarea.style.height = `${Math.min(
-      Math.max(textarea.scrollHeight, textareaMinHeight),
-      COMPOSER_TEXTAREA_MAX_HEIGHT,
-    )}px`;
-  }, [input, textareaMinHeight]);
+  }, [activeComposerQuery]);
 
   useEffect(() => {
     const wasShowingPermission = previousPermissionPanelRef.current;
@@ -252,18 +405,26 @@ export function WorkflowComposerShell({
     if (!wasShowingPermission || hasPermissionPanel) return;
 
     const frame = window.requestAnimationFrame(() =>
-      textareaRef.current?.focus(),
+      richInputRef.current?.focus(),
     );
     return () => window.cancelAnimationFrame(frame);
   }, [hasPermissionPanel]);
 
   useEffect(() => {
-    if (!securityOpen && !contextOpen && !modelOpen && !slashOpen) return;
+    if (
+      !securityOpen &&
+      !contextOpen &&
+      !modelOpen &&
+      !slashOpen &&
+      !linkTarget
+    )
+      return;
 
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
       if (securityMenuRef.current?.contains(target)) return;
       if (contextMenuRef.current?.contains(target)) return;
+      if (linkPopoverRef.current?.contains(target)) return;
       if (fallbackModelMenuRef.current?.contains(target)) return;
       if (slashPopoverRef.current?.contains(target)) return;
 
@@ -271,6 +432,7 @@ export function WorkflowComposerShell({
       setContextOpen(false);
       setModelOpen(false);
       setSlashOpen(false);
+      setLinkTarget(null);
     };
 
     const handleEscape = (event: KeyboardEvent) => {
@@ -280,7 +442,8 @@ export function WorkflowComposerShell({
       setContextOpen(false);
       setModelOpen(false);
       setSlashOpen(false);
-      textareaRef.current?.focus();
+      setLinkTarget(null);
+      richInputRef.current?.focus();
     };
     document.addEventListener("pointerdown", handlePointerDown);
     document.addEventListener("keydown", handleEscape);
@@ -288,7 +451,7 @@ export function WorkflowComposerShell({
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleEscape);
     };
-  }, [contextOpen, modelOpen, securityOpen, slashOpen]);
+  }, [contextOpen, linkTarget, modelOpen, securityOpen, slashOpen]);
 
   const filteredSlashCommands = useMemo<SlashCommandItem[]>(() => {
     const items = slashCommands ?? [];
@@ -314,20 +477,42 @@ export function WorkflowComposerShell({
     });
   }, [slashCommands, slashFilter]);
 
-  const canSubmit = input.trim().length > 0 || attachments.length > 0;
+  const composerPlainText = stripSkillTokenMarkers(input).trim();
+  const canSubmit =
+    composerPlainText.length > 0 ||
+    attachments.length > 0 ||
+    skillAttachments.length > 0;
+  const focusComposer = useCallback((offset?: number) => {
+    requestAnimationFrame(() => richInputRef.current?.focus(offset));
+  }, []);
 
   const submitComposer = useCallback(() => {
     if (!canSubmit) return;
-    const outgoingAttachments = sendAttachments();
-    onSend(outgoingAttachments);
+    const text =
+      richInputRef.current?.getPlainText() ??
+      stripSkillTokenMarkers(input).trim();
+    onSend(
+      text,
+      attachmentsToUserContent([
+        ...attachments,
+        ...skillAttachments.map(selectedSkillAttachment),
+      ]),
+    );
     setAttachments([]);
-  }, [canSubmit, onSend, sendAttachments, setAttachments]);
+    setSkillAttachments([]);
+    richInputRef.current?.clear();
+  }, [attachments, canSubmit, input, onSend, setAttachments, skillAttachments]);
 
   const activateContextTrigger = useCallback(
     (trigger: "$" | "@" | "/") => {
-      const textarea = textareaRef.current;
-      const start = textarea?.selectionStart ?? input.length;
-      const end = textarea?.selectionEnd ?? start;
+      const richInput = richInputRef.current;
+      const liveSelection = richInput?.getSelection() ?? {
+        start: -1,
+        end: -1,
+      };
+      const start =
+        liveSelection.start >= 0 ? liveSelection.start : input.length;
+      const end = liveSelection.end >= 0 ? liveSelection.end : start;
       const needsSpace = start > 0 && !/\s/u.test(input[start - 1] ?? "");
       const token = `${needsSpace ? " " : ""}${trigger}`;
       const value = `${input.slice(0, start)}${token}${input.slice(end)}`;
@@ -335,62 +520,100 @@ export function WorkflowComposerShell({
       onInputChange(value);
       setCaret(nextCaret);
       setContextOpen(false);
-      requestAnimationFrame(() => {
-        textareaRef.current?.focus();
-        textareaRef.current?.setSelectionRange(nextCaret, nextCaret);
-      });
+      focusComposer(nextCaret);
     },
-    [input, onInputChange],
+    [focusComposer, input, onInputChange],
   );
 
   const handleSlashSelect = useCallback(
     (item: SlashCommandItem) => {
       setSlashOpen(false);
+      const commandQuery =
+        activeComposerQuery?.kind === "command" ? activeComposerQuery : null;
       if (item.category === "skill") {
-        // Skills become solid chips in the composer, not text
-        setAttachments((prev) => {
-          if (prev.length >= MAX_ATTACHMENTS) return prev;
-          return [...prev, skillAttachment(item.label, item.command)];
-        });
-        onInputChange("");
-        requestAnimationFrame(() => textareaRef.current?.focus());
+        const selectedSkill = skills.find((skill) => skill.name === item.label);
+        if (!selectedSkill) return;
+        if (attachments.length + skillAttachments.length >= MAX_ATTACHMENTS)
+          return;
+        richInputRef.current?.insertSkill(
+          selectedSkill,
+          commandQuery
+            ? { from: commandQuery.start, to: commandQuery.end }
+            : {
+                from: 0,
+                to: richInputRef.current?.getSelection().end ?? input.length,
+              },
+        );
         return;
       }
-      // Builtin commands remain text-based
-      onInputChange(`${item.command} `);
-      requestAnimationFrame(() => {
-        const textarea = textareaRef.current;
-        if (!textarea) return;
-        textarea.focus();
-        textarea.setSelectionRange(
-          textarea.value.length,
-          textarea.value.length,
+      if (commandQuery) {
+        const next = replaceComposerSuggestion(
+          input,
+          commandQuery,
+          item.command,
         );
-      });
+        onInputChange(next.value);
+        setCaret(next.caret);
+        focusComposer(next.caret);
+        return;
+      }
+      onInputChange(`${item.command} `);
+      focusComposer();
     },
-    [onInputChange, setAttachments],
+    [
+      activeComposerQuery,
+      attachments.length,
+      focusComposer,
+      input,
+      onInputChange,
+      skillAttachments.length,
+      skills,
+    ],
   );
 
   const handleSuggestionSelect = useCallback(
     (suggestion: ComposerSuggestion) => {
-      if (!composerQuery) return;
+      if (!activeComposerQuery) return;
+      if (suggestion.kind === "skill") {
+        if (attachments.length + skillAttachments.length >= MAX_ATTACHMENTS)
+          return;
+        richInputRef.current?.insertSkill(suggestion.skill, {
+          from: activeComposerQuery.start,
+          to: activeComposerQuery.end,
+        });
+        return;
+      }
       setAttachments((previous) => {
         if (previous.length >= MAX_ATTACHMENTS) return previous;
         return [...previous, attachmentFor(suggestion)];
       });
-      const next = replaceComposerSuggestion(input, composerQuery, "");
+      const next = replaceComposerSuggestion(input, activeComposerQuery, "");
       onInputChange(next.value);
       setCaret(next.caret);
-      requestAnimationFrame(() => {
-        textareaRef.current?.focus();
-        textareaRef.current?.setSelectionRange(next.caret, next.caret);
-      });
+      focusComposer(next.caret);
     },
-    [attachmentFor, composerQuery, input, onInputChange, setAttachments],
+    [
+      attachmentFor,
+      activeComposerQuery,
+      attachments.length,
+      input,
+      onInputChange,
+      focusComposer,
+      setAttachments,
+      skillAttachments.length,
+    ],
   );
 
-  const handleTextareaKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleComposerBlurCapture = useCallback(
+    (event: React.FocusEvent<HTMLElement>) => {
+      if (event.defaultPrevented) return;
+      if (composerQueryKey) setSuggestionDismissedKey(composerQueryKey);
+    },
+    [composerQueryKey],
+  );
+
+  const handleComposerKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLElement>) => {
       // IME composition in progress (e.g. pinyin Enter to pick a candidate):
       // let the input method own the keystroke. Must run before slash-menu
       // handling, otherwise confirming a candidate triggers slash selection.
@@ -419,11 +642,12 @@ export function WorkflowComposerShell({
         }
         if (event.key === "Escape") {
           event.preventDefault();
+          setSuggestionDismissedKey(composerQueryKey);
           setSlashOpen(false);
           return;
         }
       }
-      if (composerQuery && composerSuggestions.length > 0) {
+      if (activeComposerQuery && composerSuggestions.length > 0) {
         if (event.key === "ArrowDown" || event.key === "ArrowUp") {
           event.preventDefault();
           const delta = event.key === "ArrowDown" ? 1 : -1;
@@ -441,14 +665,21 @@ export function WorkflowComposerShell({
         }
         if (event.key === "Escape") {
           event.preventDefault();
-          setCaret(-1);
+          setSuggestionDismissedKey(composerQueryKey);
           return;
         }
       }
-      // Plain Enter / Cmd+Enter → send with current attachments.
-      // 必须在这里处理而不是 page 层 keydown：page 不知道 composer 的 attachments，
-      // 纯附件场景下不传 attachments 会被 handleSend 里的 `!text && attachments.length === 0` 拦掉。
-      // page 仍然处理 Ctrl+Enter（换行）、Esc（中断）、Cmd+K（清空）等。
+      // Shift/Ctrl+Enter inserts a newline; plain Enter sends. Cmd+Enter is
+      // delegated to the page-level handler so existing shortcuts stay intact.
+      if (
+        event.key === "Enter" &&
+        (event.shiftKey || (event.ctrlKey && !event.metaKey))
+      ) {
+        event.preventDefault();
+        richInputRef.current?.insertText("\n");
+        return;
+      }
+
       if (event.key === "Enter" && !event.shiftKey && !event.ctrlKey) {
         if (canSubmit) {
           event.preventDefault();
@@ -463,7 +694,8 @@ export function WorkflowComposerShell({
       filteredSlashCommands,
       slashSelectedIndex,
       handleSlashSelect,
-      composerQuery,
+      activeComposerQuery,
+      composerQueryKey,
       composerSuggestions,
       suggestionSelectedIndex,
       handleSuggestionSelect,
@@ -508,6 +740,9 @@ export function WorkflowComposerShell({
                 if (
                   Array.from(event.dataTransfer.items ?? []).some(
                     (item) => item.kind === "file",
+                  ) ||
+                  Array.from(event.dataTransfer.types ?? []).includes(
+                    "text/uri-list",
                   )
                 ) {
                   event.preventDefault();
@@ -530,42 +765,50 @@ export function WorkflowComposerShell({
                 tabIndex={-1}
                 aria-hidden="true"
               />
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="composer-file-input"
+                onChange={handleFileInputChange}
+                tabIndex={-1}
+                aria-hidden="true"
+              />
               <div
-                className={`composer-input${attachments.length > 0 ? " has-chips" : ""}`}
+                className={`composer-input${otherAttachments.length > 0 ? " has-chips" : ""}`}
               >
                 <ComposerAttachmentChips
-                  attachments={attachments}
+                  attachments={otherAttachments}
                   onRemove={handleRemoveAttachment}
                   onPreviewImage={setPreviewImage}
                 />
-                <textarea
-                  ref={textareaRef}
-                  rows={2}
-                  value={input}
-                  onChange={(event) => {
-                    setCaret(event.currentTarget.selectionStart);
-                    handleInputChange(event);
-                  }}
-                  onClick={(event) =>
-                    setCaret(event.currentTarget.selectionStart)
-                  }
-                  onKeyUp={(event) => {
-                    if (event.key !== "Escape")
-                      setCaret(event.currentTarget.selectionStart);
-                  }}
-                  onKeyDown={handleTextareaKeyDown}
-                  onPaste={handlePaste}
-                  placeholder={placeholder}
-                  style={{ height: "auto" }}
-                  onInput={(event) => {
-                    const target = event.target as HTMLTextAreaElement;
-                    target.style.height = "0px";
-                    target.style.height = `${Math.min(
-                      Math.max(target.scrollHeight, textareaMinHeight),
-                      COMPOSER_TEXTAREA_MAX_HEIGHT,
-                    )}px`;
-                  }}
-                />
+                <div className="composer-input-field">
+                  <ComposerRichInput
+                    ref={richInputRef}
+                    value={input}
+                    placeholder={placeholder}
+                    skills={skills}
+                    minHeight={textareaMinHeight}
+                    maxHeight={COMPOSER_TEXTAREA_MAX_HEIGHT}
+                    onChange={commitInputValue}
+                    onCaretChange={setCaret}
+                    onSkillsChange={handleSkillsChange}
+                    onSkillClick={handleSkillTokenClick}
+                    onLinkClick={setLinkTarget}
+                    onBlurCapture={handleComposerBlurCapture}
+                    onKeyDownCapture={handleComposerKeyDown}
+                    onPasteCapture={handlePaste}
+                  />
+                  {linkTarget ? (
+                    <ComposerLinkPopover
+                      ref={linkPopoverRef}
+                      target={linkTarget}
+                      onClose={closeLinkPopover}
+                      onUpdate={updateLinkTarget}
+                    />
+                  ) : null}
+                </div>
               </div>
 
               <div className="composer-toolbar">
@@ -606,6 +849,35 @@ export function WorkflowComposerShell({
                           data-icon-contract="composer-upload-file"
                         />
                         <span>上传文件</span>
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setContextOpen(false);
+                          photoInputRef.current?.click();
+                        }}
+                      >
+                        <COMPOSER_ICONS.photo
+                          size={16}
+                          aria-hidden="true"
+                          data-icon-contract="composer-photo"
+                        />
+                        <span>添加照片</span>
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          void handleCapturePage();
+                        }}
+                      >
+                        <COMPOSER_ICONS.appshot
+                          size={16}
+                          aria-hidden="true"
+                          data-icon-contract="composer-appshot"
+                        />
+                        <span>捕获页面</span>
                       </button>
                       <button
                         type="button"
@@ -659,7 +931,6 @@ export function WorkflowComposerShell({
                   >
                     <ActiveSecurityIcon size={16} />
                     <span>{activeSecurityMode.label}</span>
-                    <ChevronDown size={14} />
                   </button>
                   {securityOpen && (
                     <div
@@ -731,7 +1002,6 @@ export function WorkflowComposerShell({
                       >
                         <span>custom</span>
                         <strong>{selectedProvider?.name ?? "默认模型"}</strong>
-                        <ChevronDown size={14} />
                       </button>
 
                       {modelOpen && (
@@ -815,7 +1085,7 @@ export function WorkflowComposerShell({
                   popoverRef={slashPopoverRef}
                 />
               )}
-              {composerQuery && composerSuggestions.length > 0 ? (
+              {activeComposerQuery && composerSuggestions.length > 0 ? (
                 <ComposerSuggestionPopover
                   items={composerSuggestions}
                   selectedIndex={suggestionSelectedIndex}
@@ -826,6 +1096,18 @@ export function WorkflowComposerShell({
                 image={previewImage}
                 onClose={() => setPreviewImage(null)}
               />
+              {selectedSkill ? (
+                <SkillDetailModal
+                  key={selectedSkill.id}
+                  kind="installed"
+                  detail={selectedSkillDetail}
+                  skill={selectedSkill}
+                  installingSlug={null}
+                  detailLoading={skillDetailLoading}
+                  onClose={closeSkillDetail}
+                  onInstall={() => undefined}
+                />
+              ) : null}
             </form>
           </div>
         </>

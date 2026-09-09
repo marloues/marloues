@@ -1,6 +1,5 @@
 import type { WorkflowReadThreadResponse } from "@shared/workflow-read-thread-contract";
 import type { InspectorFileSystem } from "./panels/FileExplorer";
-import { useReviewHistory } from "./use-review-history";
 import {
   type SetStateAction,
   useCallback,
@@ -214,10 +213,6 @@ export function AuxiliarySidebar({
   const readThread = source?.readThread ?? storeReadThread;
   const workspacePath =
     source?.workspacePath ?? readThread?.thread.cwd ?? workspace?.path;
-  const history = useReviewHistory(
-    activeSessionId,
-    !source && open && tabs.some((tab) => tab.type === "review"),
-  );
   const executionState = useUnifiedChatStore((state) =>
     activeSessionId
       ? (state.executionBySession[activeSessionId] ?? null)
@@ -729,7 +724,7 @@ export function AuxiliarySidebar({
                 reviewTarget={tab.reviewTarget ?? null}
                 readThread={readThread}
                 workspacePath={workspacePath ?? undefined}
-                history={history}
+                workspaceId={workspace?.id}
               />
             ) : tab.type === "terminal" ? (
               <TerminalPanel sessionId={tab.sessionId} />

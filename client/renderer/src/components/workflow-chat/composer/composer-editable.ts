@@ -1,196 +1,259 @@
-/**
- * Helpers for managing a contentEditable div that mixes inline skill
- * chips (non-editable spans) with editable text. The editable serves
- * as the composer's text input, replacing <textarea> so chips can flow
- * inline with the text rather than sitting in a separate column.
- */
+import type { ComposerAttachment } from "./composer-attachments";
 
-/** Minimal data needed to build a chip element. */
-export interface SkillChipData {
-  id: string;
-  name: string;
-}
+export type SkillAttachment = Extract<ComposerAttachment, { kind: "skill" }>;
 
-const WRENCH_SVG =
-  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>';
+const LAYERS_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>';
 
-const X_SVG =
-  '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
-
-/** Build a non-editable chip <span> for use inside the contentEditable. */
-export function buildChipElement(att: SkillChipData): HTMLSpanElement {
-  const chip = document.createElement("span");
-  chip.className = "composer-skill-token";
-  chip.setAttribute("contenteditable", "false");
-  chip.setAttribute("data-skill-chip", "");
-  chip.setAttribute("data-skill-id", att.id);
+function buildSkillLink(attachment: SkillAttachment): HTMLButtonElement {
+  const link = document.createElement("button");
+  link.type = "button";
+  link.className = "composer-skill-link";
+  link.contentEditable = "false";
+  link.dataset.skillAttachmentId = attachment.id;
+  link.dataset.skillId = attachment.skill.id;
+  link.title =
+    attachment.skill.description || `查看 ${attachment.skill.name} 详情`;
+  link.ariaLabel = `查看 Skill ${attachment.skill.name} 详情`;
 
   const icon = document.createElement("span");
-  icon.className = "composer-skill-token-icon";
-  icon.innerHTML = WRENCH_SVG;
-  chip.appendChild(icon);
+  icon.className = "composer-skill-link-icon";
+  icon.innerHTML = LAYERS_SVG;
+  link.appendChild(icon);
 
   const name = document.createElement("span");
-  name.className = "composer-skill-token-name";
-  name.textContent = att.name;
-  chip.appendChild(name);
+  name.className = "composer-skill-link-name";
+  name.textContent = attachment.skill.name;
+  link.appendChild(name);
 
-  const remove = document.createElement("button");
-  remove.type = "button";
-  remove.className = "composer-skill-token-remove";
-  remove.setAttribute("data-skill-remove", "");
-  remove.setAttribute("aria-label", "移除技能");
-  remove.setAttribute("title", "移除技能");
-  remove.innerHTML = X_SVG;
-  chip.appendChild(remove);
-
-  return chip;
+  return link;
 }
 
-/**
- * Extract editable text from the contentEditable, skipping chip
- * elements. Converts <br> and block boundaries to "\n".
- */
+function isSkillNode(node: Node): boolean {
+  return (
+    node.nodeType === Node.ELEMENT_NODE &&
+    (node as Element).hasAttribute("data-skill-attachment-id")
+  );
+}
+
 export function extractText(el: HTMLElement): string {
   let text = "";
-  function walk(node: Node): void {
+
+  const walk = (node: Node): void => {
+    if (isSkillNode(node)) return;
     if (node.nodeType === Node.TEXT_NODE) {
-      const parent = (node as Text).parentElement;
-      if (parent?.closest("[data-skill-chip]")) return;
       text += node.textContent ?? "";
       return;
     }
     if (node.nodeType !== Node.ELEMENT_NODE) return;
-    const e = node as Element;
-    if (e.hasAttribute("data-skill-chip")) return;
-    if (e.tagName === "BR") {
+
+    const element = node as Element;
+    if (element.tagName === "BR") {
       text += "\n";
       return;
     }
-    if (
-      (e.tagName === "DIV" || e.tagName === "P") &&
-      text.length > 0 &&
-      !text.endsWith("\n")
-    ) {
-      text += "\n";
-    }
-    for (const child of Array.from(e.childNodes)) {
-      walk(child);
-    }
-  }
+    for (const child of Array.from(element.childNodes)) walk(child);
+  };
+
   walk(el);
   return text;
 }
 
-/**
- * Replace all non-chip content in the editable with the given text,
- * preserving existing chip elements. Uses a single text node so that
- * white-space: pre-wrap renders "\n" as line breaks.
- */
 export function setTextInEditable(el: HTMLElement, text: string): void {
-  const toRemove: ChildNode[] = [];
   for (const child of Array.from(el.childNodes)) {
-    if (
-      child.nodeType === Node.ELEMENT_NODE &&
-      (child as Element).hasAttribute("data-skill-chip")
-    ) {
+    if (!isSkillNode(child)) child.remove();
+  }
+
+  if (text) el.appendChild(document.createTextNode(text));
+}
+
+export function syncSkillLinks(
+  el: HTMLElement,
+  attachments: SkillAttachment[],
+): void {
+  const links = Array.from(
+    el.querySelectorAll<HTMLButtonElement>("[data-skill-attachment-id]"),
+  );
+  const stateIds = new Set(attachments.map((attachment) => attachment.id));
+
+  for (const link of links) {
+    if (!stateIds.has(link.dataset.skillAttachmentId ?? "")) link.remove();
+  }
+
+  for (const attachment of attachments) {
+    if (links.some((link) => link.dataset.skillAttachmentId === attachment.id))
       continue;
-    }
-    toRemove.push(child);
-  }
-  for (const node of toRemove) {
-    node.remove();
-  }
-  if (text) {
-    el.appendChild(document.createTextNode(text));
+
+    const existing = Array.from(
+      el.querySelectorAll<HTMLButtonElement>("[data-skill-attachment-id]"),
+    );
+    const lastLink = existing.at(-1);
+    el.insertBefore(
+      buildSkillLink(attachment),
+      lastLink?.nextSibling ?? el.firstChild,
+    );
   }
 }
 
-/** Move the caret to the end of all content in the editable. */
+export function getSkillLinkIds(el: HTMLElement): Set<string> {
+  return new Set(
+    Array.from(
+      el.querySelectorAll<HTMLButtonElement>("[data-skill-attachment-id]"),
+    ).map((link) => link.dataset.skillAttachmentId ?? ""),
+  );
+}
+
+export function removeAdjacentSkillLink(
+  el: HTMLElement,
+  direction: "before" | "after",
+): string | null {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return null;
+
+  const range = selection.getRangeAt(0);
+  if (!range.collapsed || !el.contains(range.startContainer)) return null;
+
+  const container = range.startContainer;
+  const offset = range.startOffset;
+  let candidate: ChildNode | null = null;
+
+  if (container === el) {
+    candidate =
+      el.childNodes[direction === "before" ? offset - 1 : offset] ?? null;
+  } else if (container.nodeType === Node.TEXT_NODE) {
+    const length = container.textContent?.length ?? 0;
+    const isBoundary =
+      direction === "before" ? offset === 0 : offset === length;
+    if (isBoundary) {
+      candidate =
+        direction === "before"
+          ? container.previousSibling
+          : container.nextSibling;
+    }
+  }
+
+  if (
+    !candidate ||
+    candidate.nodeType !== Node.ELEMENT_NODE ||
+    !(candidate as Element).hasAttribute("data-skill-attachment-id")
+  ) {
+    return null;
+  }
+
+  const link = candidate as HTMLButtonElement;
+  const id = link.dataset.skillAttachmentId ?? "";
+  link.remove();
+  return id || null;
+}
+
+function textNodeOffset(el: HTMLElement, target: Node, offset: number): number {
+  let result = 0;
+  let found = false;
+
+  const walk = (node: Node): void => {
+    if (found || isSkillNode(node)) return;
+    if (node === target) {
+      result += offset;
+      found = true;
+      return;
+    }
+    if (node.nodeType === Node.TEXT_NODE) {
+      result += node.textContent?.length ?? 0;
+      return;
+    }
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      if (node === el) {
+        for (const child of Array.from(node.childNodes)) walk(child);
+        return;
+      }
+      const element = node as Element;
+      if (element.tagName === "BR") {
+        result += 1;
+        return;
+      }
+      for (const child of Array.from(node.childNodes)) walk(child);
+    }
+  };
+
+  walk(el);
+  return found ? result : -1;
+}
+
+export function getCaretOffset(el: HTMLElement): number {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return -1;
+
+  const range = selection.getRangeAt(0);
+  if (!el.contains(range.startContainer)) return -1;
+  return textNodeOffset(el, range.startContainer, range.startOffset);
+}
+
+export function setCaretOffset(el: HTMLElement, offset: number): void {
+  if (offset < 0) return;
+
+  let remaining = offset;
+  let target: Text | null = null;
+  let targetOffset = 0;
+  let applied = false;
+
+  const walk = (node: Node): void => {
+    if (target || isSkillNode(node)) return;
+    if (node.nodeType === Node.TEXT_NODE) {
+      const length = node.textContent?.length ?? 0;
+      if (remaining <= length) {
+        target = node as Text;
+        targetOffset = remaining;
+        return;
+      }
+      remaining -= length;
+      return;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+    const element = node as Element;
+    if (element.tagName === "BR") {
+      if (remaining === 0) {
+        const range = document.createRange();
+        range.setStartBefore(element);
+        range.collapse(true);
+        applyRange(range);
+        applied = true;
+      } else remaining -= 1;
+      return;
+    }
+    for (const child of Array.from(element.childNodes)) walk(child);
+  };
+
+  walk(el);
+  if (target) {
+    const range = document.createRange();
+    range.setStart(target, targetOffset);
+    range.collapse(true);
+    applyRange(range);
+  } else if (applied) {
+    return;
+  }
+}
+
+function applyRange(range: Range): void {
+  const selection = window.getSelection();
+  selection?.removeAllRanges();
+  selection?.addRange(range);
+}
+
 export function placeCursorAtEnd(el: HTMLElement): void {
   const range = document.createRange();
   range.selectNodeContents(el);
   range.collapse(false);
-  const sel = window.getSelection();
-  sel?.removeAllRanges();
-  sel?.addRange(range);
+  applyRange(range);
 }
 
-/**
- * Reconcile chip elements in the DOM with the skills array.
- * Adds missing chips (at the beginning, before any text) and removes
- * stale ones — without touching the editable text in between.
- */
-export function syncChips(el: HTMLElement, skills: SkillChipData[]): void {
-  const domChips = Array.from(
-    el.querySelectorAll("[data-skill-chip]"),
-  ) as HTMLElement[];
-  const domIds = new Set(
-    domChips.map((c) => c.getAttribute("data-skill-id") ?? ""),
-  );
-  const stateIds = new Set(skills.map((s) => s.id));
-
-  // Remove chips no longer present in state
-  for (const chip of domChips) {
-    const id = chip.getAttribute("data-skill-id") ?? "";
-    if (!stateIds.has(id)) {
-      const next = chip.nextSibling;
-      if (
-        next &&
-        next.nodeType === Node.TEXT_NODE &&
-        next.textContent === "\u00A0"
-      ) {
-        next.remove();
-      }
-      chip.remove();
-    }
-  }
-
-  // Add chips present in state but not yet in DOM
-  for (const att of skills) {
-    if (domIds.has(att.id)) continue;
-    const chip = buildChipElement(att);
-    const space = document.createTextNode("\u00A0");
-    // Find insertion point: after the last chip+space, before text
-    const existing = Array.from(
-      el.querySelectorAll("[data-skill-chip]"),
-    ) as HTMLElement[];
-    let insertBefore: Node | null;
-    if (existing.length > 0) {
-      const last = existing[existing.length - 1];
-      const after = last.nextSibling;
-      if (
-        after &&
-        after.nodeType === Node.TEXT_NODE &&
-        after.textContent === "\u00A0"
-      ) {
-        insertBefore = after.nextSibling;
-      } else {
-        insertBefore = after;
-      }
-    } else {
-      insertBefore = el.firstChild;
-    }
-    if (insertBefore) {
-      el.insertBefore(space, insertBefore);
-      el.insertBefore(chip, space);
-    } else {
-      el.appendChild(chip);
-      el.appendChild(space);
-    }
-  }
-}
-
-/** Auto-resize the editable to fit content, clamped to min/max height. */
 export function autoResize(el: HTMLElement, min: number, max: number): void {
   el.style.height = "0px";
   el.style.height = `${Math.min(Math.max(el.scrollHeight, min), max)}px`;
 }
 
-/** Insert plain text at the current caret position in the editable. */
 export function insertTextAtCaret(el: HTMLElement, text: string): void {
   el.focus();
-  // execCommand is deprecated but still the most reliable way to insert
-  // plain text at the caret in a contentEditable in Chromium (Electron).
   document.execCommand("insertText", false, text);
 }

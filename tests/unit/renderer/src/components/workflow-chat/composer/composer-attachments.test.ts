@@ -1,11 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  browserAppshotAttachment,
   MAX_ATTACHMENTS,
   attachmentsToUserContent,
   browserCommentAttachment,
+  extractUrls,
   isMatchingBrowserCommentAttachment,
   isTextFile,
   isUrl,
+  normalizeUrl,
+  pastedTextAttachment,
+  removeUrls,
+  shouldExternalizePastedText,
   skillAttachment,
   urlAttachment,
 } from "../../../../../../../client/renderer/src/components/workflow-chat/composer/composer-attachments";
@@ -138,6 +144,37 @@ describe("isUrl", () => {
   });
 });
 
+describe("bare URL extraction", () => {
+  it("extracts unique URLs and trims sentence punctuation", () => {
+    const text =
+      "看这个 https://example.com/docs?a=1，再看 http://localhost:3000/status。";
+    expect(extractUrls(text)).toEqual([
+      "https://example.com/docs?a=1",
+      "http://localhost:3000/status",
+    ]);
+  });
+
+  it("leaves Markdown links and code snippets in the message text", () => {
+    const text =
+      "文档是 [指南](https://example.com/guide)，代码是 `https://example.com/code`，裸链接是 https://example.com/bare";
+    expect(extractUrls(text)).toEqual(["https://example.com/bare"]);
+    expect(removeUrls(text, ["https://example.com/bare"])).toContain(
+      "[指南](https://example.com/guide)",
+    );
+    expect(removeUrls(text, ["https://example.com/bare"])).toContain(
+      "`https://example.com/code`",
+    );
+  });
+
+  it("normalizes only http and https links", () => {
+    expect(normalizeUrl(" https://example.com/a?b=1 ")).toBe(
+      "https://example.com/a?b=1",
+    );
+    expect(normalizeUrl("javascript:alert(1)")).toBeNull();
+    expect(normalizeUrl("https://")).toBeNull();
+  });
+});
+
 describe("isTextFile", () => {
   it("rejects images", () => {
     const file = new File([""], "test.png", { type: "image/png" });
@@ -152,5 +189,62 @@ describe("isTextFile", () => {
   it("accepts conventional extensionless config examples", () => {
     const file = new File(["API_URL=https://example.com"], ".env.example");
     expect(isTextFile(file)).toBe(true);
+  });
+});
+
+describe("pasted text attachments", () => {
+  it("externalizes only clipboard text above the threshold", () => {
+    expect(shouldExternalizePastedText("short note")).toBe(false);
+    expect(shouldExternalizePastedText("a".repeat(4095))).toBe(false);
+    expect(shouldExternalizePastedText("a".repeat(4096))).toBe(true);
+  });
+
+  it("keeps pasted text as a semantic attachment with stable naming", () => {
+    const attachment = pastedTextAttachment("hello".repeat(1024), 2);
+    if (attachment.kind !== "pasted-text") {
+      throw new Error("not a pasted-text attachment");
+    }
+    expect(attachment.name).toBe("粘贴文本 2");
+    expect(attachment.mimeType).toBe("text/plain");
+    expect(attachment.size).toBe(5120);
+    expect(attachment.text).toBe("hello".repeat(1024));
+  });
+
+  it("maps pasted text to the durable file content part", () => {
+    const attachment = pastedTextAttachment("hello".repeat(1024), 1);
+    expect(attachmentsToUserContent([attachment])).toEqual([
+      {
+        type: "file",
+        name: "粘贴文本 1",
+        mimeType: "text/plain",
+        text: "hello".repeat(1024),
+        size: 5120,
+      },
+    ]);
+  });
+});
+
+describe("browser appshot attachments", () => {
+  it("decodes metadata and maps the screenshot to an image part", () => {
+    const base64 = Buffer.from("png-bytes", "binary").toString("base64");
+    const attachment = browserAppshotAttachment(
+      `data:image/png;base64,${base64}`,
+    );
+    if (attachment.kind !== "appshot") {
+      throw new Error("not an appshot attachment");
+    }
+    expect(attachment.name).toBe("页面截图");
+    expect(attachment.mimeType).toBe("image/png");
+    expect(attachment.size).toBe(9);
+    expect(attachmentsToUserContent([attachment])).toEqual([
+      {
+        type: "image",
+        url: `data:image/png;base64,${base64}`,
+        detail: "auto",
+        name: "页面截图",
+        mimeType: "image/png",
+        size: 9,
+      },
+    ]);
   });
 });

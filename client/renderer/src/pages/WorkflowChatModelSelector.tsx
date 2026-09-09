@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useId, useRef, useState } from "react";
-import { ChevronDown, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { useSettingsStore } from "@/stores/settings-store";
 
 export function ModelSelector({
@@ -82,7 +82,6 @@ export function ModelSelector({
       >
         <span>{currentProviderLabel}</span>
         <strong>{currentLabel}</strong>
-        <ChevronDown size={14} />
       </button>
       {open && (
         <div

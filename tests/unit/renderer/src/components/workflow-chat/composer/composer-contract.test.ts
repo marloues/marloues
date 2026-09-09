@@ -19,6 +19,19 @@ describe("composer contract", () => {
     expect(composerSuggestionQuery("/compact", 8)?.kind).toBe("command");
   });
 
+  it("starts a new skill query after an inserted mention separator", () => {
+    const firstSkillToken = `${"\u2063"}${encodeURIComponent(
+      "skill:project-e2e",
+    )}${"\u2063"} `;
+    const value = `${firstSkillToken}$second`;
+    expect(composerSuggestionQuery(value, value.length)).toMatchObject({
+      kind: "skill",
+      query: "second",
+      start: firstSkillToken.length,
+      end: value.length,
+    });
+  });
+
   it("replaces only the active token and preserves surrounding text", () => {
     const query = composerSuggestionQuery("前文 $img 后文", 7)!;
     expect(replaceComposerSuggestion("前文 $img 后文", query, "")).toEqual({

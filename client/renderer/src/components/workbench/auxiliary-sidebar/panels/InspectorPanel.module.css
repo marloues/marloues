@@ -16,6 +16,52 @@
   border-bottom: 1px solid var(--border-subtle);
   min-height: 44px;
 }
+.scope {
+  position: relative;
+  flex-shrink: 0;
+}
+.scopeOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 190;
+  background: transparent;
+}
+.scopeMenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 200;
+  display: grid;
+  min-width: 132px;
+  gap: 2px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface-popover);
+  box-shadow: var(--shadow-lg);
+  padding: 5px;
+}
+.scopeMenu button {
+  display: flex;
+  width: 100%;
+  height: 30px;
+  align-items: center;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  padding: 0 var(--space-2);
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: normal;
+  text-align: left;
+}
+.scopeMenu button:hover {
+  background: var(--raised-2);
+  color: var(--text-1);
+}
+.scopeMenu button[aria-checked="true"] {
+  color: var(--text-1);
+  font-weight: 600;
+}
 .title {
   flex: 1;
   min-width: 0;
@@ -60,6 +106,120 @@
 .filter svg,
 .treeRow svg {
   flex-shrink: 0;
+}
+.reviewPane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.reviewList {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+}
+.reviewList ul {
+  list-style: none;
+  margin: 0 0 var(--space-3);
+  padding: 0 var(--space-2);
+}
+.reviewItem {
+  min-width: 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.reviewItem[data-open="true"] {
+  background: var(--surface-panel);
+}
+.reviewFileRow {
+  display: flex;
+  width: 100%;
+  min-height: 34px;
+  align-items: center;
+  gap: 2px;
+  padding: 0 var(--space-1) 0 var(--space-2);
+  color: var(--text-2);
+}
+.reviewFileRow:hover {
+  background: var(--hover);
+  color: var(--text-1);
+}
+.reviewFileButton {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  align-items: center;
+  gap: var(--space-2);
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  line-height: normal;
+  text-align: left;
+}
+.reviewFileButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.reviewFileButton[aria-current="true"] {
+  color: var(--text-1);
+}
+.reviewFileButton svg {
+  flex-shrink: 0;
+}
+.reviewFileActions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 2px;
+}
+.reviewFileAction {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-3);
+  padding: 0;
+  cursor: var(--cursor-control);
+}
+.reviewFileAction:hover {
+  background: var(--raised-2);
+  color: var(--text-1);
+}
+.reviewFileAction:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.reviewFileAction svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+.reviewFilePath {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-code);
+  font-size: var(--text-xs);
+}
+.reviewFilePath {
+  flex: 1;
+}
+.reviewContent {
+  min-width: 0;
+  overflow: visible;
+}
+.reviewDiff {
+  min-width: 0;
+}
+.reviewDiff + .reviewDiff {
+  border-top: 1px solid var(--border-subtle);
 }
 .treeScroll {
   overflow: auto;

@@ -59,6 +59,7 @@ import {
 } from "./WorkflowChatCards";
 import { useComposerCatalogs } from "./use-slash-commands";
 import { useModelChangeTracking } from "./use-model-change-tracking";
+import { stripSkillTokenMarkers } from "@/components/workflow-chat/composer/composer-skill-tokens";
 import {
   TaskContextPanel,
   type TaskContextMode,
@@ -249,9 +250,12 @@ export function WorkflowChatPage({
     currentWorkspace,
     workspaceSettings.workspaces,
   ]);
+  const shouldLoadSkillCatalog =
+    inputText.startsWith("/") || /(?:^|\s)\$/u.test(inputText);
   const { slashCommands, skills: composerSkills } = useComposerCatalogs(
     sessionInitInfo,
     workspace?.id,
+    shouldLoadSkillCatalog,
   );
   const composerEpoch = useUnifiedChatStore((s) => s.composerEpoch);
   // Keep this outside React state: a second click/Enter can arrive before a
@@ -574,14 +578,17 @@ export function WorkflowChatPage({
     }
   }, [activeSessionIsStreaming, loadSettings]);
 
-  const handleSend = async (attachments: UserMessageContent[] = []) => {
+  const handleSend = async (
+    text: string = inputText,
+    attachments: UserMessageContent[] = [],
+  ) => {
     // The form can receive Enter and a pointer submit before async IPC resolves.
     // Treat those as one submission, otherwise the same steer is queued once per
     // event with different message ids.
     if (sendInFlightRef.current) return;
 
-    const text = inputText.trim();
-    if (!text && attachments.length === 0) return;
+    const messageText = stripSkillTokenMarkers(text).trim();
+    if (!messageText && attachments.length === 0) return;
     const isSteer = activeSessionIsStreaming;
     if (!workspace?.path) {
       notify({
@@ -596,7 +603,7 @@ export function WorkflowChatPage({
     const BUILTIN_LOCAL_COMMANDS: Record<string, () => Promise<void> | void> = {
       compact: () => compactSession(activeSessionId ?? undefined),
     };
-    const localCommandName = text.match(/^\/(\w+)\b/)?.[1];
+    const localCommandName = messageText.match(/^\/(\w+)\b/)?.[1];
     const localHandler = localCommandName
       ? BUILTIN_LOCAL_COMMANDS[localCommandName]
       : undefined;
@@ -624,13 +631,18 @@ export function WorkflowChatPage({
         });
       }
       // 发送后由 contentSignal 变化驱动吸底（shouldStick 已在发送时重新武装）
-      const result = await sendMessage(text, attachments, clientMessageId, {
-        deliveryMode: isSteer ? "steer" : "normal",
-        workMode: isSteer
-          ? undefined
-          : (nextWorkModeOverride ??
-            inferSendWorkMode(text, settings?.workMode)),
-      });
+      const result = await sendMessage(
+        messageText,
+        attachments,
+        clientMessageId,
+        {
+          deliveryMode: isSteer ? "steer" : "normal",
+          workMode: isSteer
+            ? undefined
+            : (nextWorkModeOverride ??
+              inferSendWorkMode(messageText, settings?.workMode)),
+        },
+      );
       // 仅当消息被处理（ok）时清输入；失败时保留，供用户重发。
       // steer 不可用会在 sendMessage 内降级为新 turn（仍 ok），消息不丢。
       if (result.ok) setInputText("");
@@ -722,7 +734,7 @@ export function WorkflowChatPage({
     }
   };
 
-  const handleComposerKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleComposerKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     // IME composition in progress (e.g. typing pinyin then Enter to pick a
     // Chinese candidate): let the input method own the keystroke so confirming
     // a candidate does not also send the message.
@@ -756,6 +768,7 @@ export function WorkflowChatPage({
     if (isControlledNewline) {
       event.preventDefault();
       const target = event.currentTarget;
+      if (!(target instanceof HTMLTextAreaElement)) return;
       const start = target.selectionStart;
       const end = target.selectionEnd;
       const nextValue = `${inputText.slice(0, start)}\n${inputText.slice(end)}`;
@@ -873,8 +886,8 @@ export function WorkflowChatPage({
                     );
                     requestAnimationFrame(() =>
                       document
-                        .querySelector<HTMLTextAreaElement>(
-                          ".composer textarea",
+                        .querySelector<HTMLElement>(
+                          ".composer-rich-input .cm-content",
                         )
                         ?.focus(),
                     );
@@ -885,8 +898,8 @@ export function WorkflowChatPage({
                     setInputText(text);
                     requestAnimationFrame(() => {
                       document
-                        .querySelector<HTMLTextAreaElement>(
-                          ".composer textarea",
+                        .querySelector<HTMLElement>(
+                          ".composer-rich-input .cm-content",
                         )
                         ?.focus();
                     });

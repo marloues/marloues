@@ -78,14 +78,16 @@ try {
   });
   const input = page.locator('[data-kind="user-message"]');
   await input.scrollIntoViewIfNeeded();
+  await expect(input.locator("h1")).toBeAttached();
+  await expect(input.locator("strong").first()).toBeAttached();
   await capture("marloues-user-input");
   await answer.locator("h1").scrollIntoViewIfNeeded();
   await capture("marloues-headings");
   results.push({
     id: "user-markdown",
-    status: "difference",
+    status: "interaction-verified",
     detail:
-      "Codex 用户气泡解释传输 Markdown 的转义；Marloues 当前将这些反斜杠直接显示。",
+      "用户气泡渲染 Markdown 富文本，复制与回填仍使用解码后的原始文本。",
   });
   writeFileSync(
     join(out, "interaction-results.json"),

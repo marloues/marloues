@@ -291,13 +291,6 @@
   white-space: nowrap;
 }
 
-.model-chip > svg:last-child {
-  width: var(--select-control-icon-size);
-  height: var(--select-control-icon-size);
-  flex: 0 0 var(--select-control-icon-size);
-  color: var(--text-3);
-}
-
 .model-popover {
   right: 0;
   bottom: calc(100% + 6px);

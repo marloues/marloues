@@ -28,6 +28,20 @@ const check = async (name, action) => {
   checks.push(name);
   console.log(`PASS ${name}`);
 };
+const longReviewDiff = Array.from(
+  { length: 180 },
+  (_, index) => `+line-${index + 1}: var(--value-${index + 1});`,
+).join("\\n");
+await page.route("**/conversation-component-examples.ts*", async (route) => {
+  const response = await route.fetch();
+  const body = await response.text();
+  const original =
+    'text: "@@ -1 +1 @@\\n-color: #fff;\\n+color: var(--text-1);"';
+  const replacement = `text: "@@ -1 +1 @@\\n-color: #fff;\\n+color: var(--text-1);\\n${longReviewDiff}"`;
+  if (!body.includes(original))
+    throw new Error("review diff fixture not found");
+  await route.fulfill({ response, body: body.replace(original, replacement) });
+});
 const checkSplitPane = async (panel, label, toggleLabel) => {
   const split = panel.locator("[data-split-pane]");
   const separator = panel.getByRole("separator", { name: label });
@@ -169,7 +183,7 @@ try {
     },
   );
   await check(
-    "manual review launch aggregates the whole session before any card is clicked",
+    "manual review launch shows the latest round before any card is clicked",
     async () => {
       await page
         .getByRole("button", { name: "打开辅助区", exact: true })
@@ -186,16 +200,23 @@ try {
         .last()
         .click();
       await expect(
-        page.getByText("会话变更 · 3 个文件", { exact: true }),
+        page.getByText("上一轮变更 · 1 个文件", { exact: true }),
       ).toBeVisible();
-      await expect(
-        page.getByText("此文件共 2 次修改，按发生顺序展示。"),
-      ).toBeVisible();
+      await expect(page.getByText("第 1 次修改", { exact: true })).toHaveCount(
+        0,
+      );
     },
   );
   await check(
     "card reuses and activates the manually opened review tab",
     async () => {
+      const reviewPanel = page.getByRole("tabpanel", {
+        name: "审核",
+        exact: true,
+      });
+      const row = reviewPanel
+        .getByRole("list", { name: "审核文件列表" })
+        .getByRole("button", { name: "example.css", exact: true });
       await reviewButton.click();
       await expect(
         page.getByRole("tab", { name: "审核", exact: true }),
@@ -203,9 +224,7 @@ try {
       await expect(
         page.getByRole("tab", { name: "审核", exact: true }),
       ).toHaveAttribute("aria-selected", "true");
-      await expect(
-        page.getByRole("button", { name: "example.css", exact: true }),
-      ).toHaveAttribute("aria-current", "true");
+      await expect(row).toHaveAttribute("aria-current", "true");
       await expect(page.getByRole("dialog")).toHaveCount(0);
     },
   );
@@ -234,58 +253,115 @@ try {
     },
   );
   await check(
-    "review split resizes, protects content minimum, collapses past the tree minimum and reopens",
+    "review tree locates and the flat file row expands its diff inline",
     async () => {
-      await checkSplitPane(review, "调整审核目录宽度", "审核文件目录树");
-    },
-  );
-  await check(
-    "review directory selects a different file and shows its actual diff",
-    async () => {
-      await review
-        .getByRole("button", { name: "src/theme.ts", exact: true })
-        .click();
+      const row = review
+        .getByRole("list", { name: "审核文件列表" })
+        .getByRole("button", {
+          name: "example.css",
+          exact: true,
+        });
+      const item = row.locator("xpath=ancestor::li");
+      const treeFile = review
+        .getByRole("list", { name: "文件目录" })
+        .getByRole("button", {
+          name: "example.css",
+          exact: true,
+        });
+      await treeFile.click();
+      await expect(row).toHaveAttribute("aria-current", "true");
+      await row.click();
+      await expect(row).toHaveAttribute("aria-expanded", "false");
+      await row.click();
       await expect(
-        review.getByRole("button", { name: "src/theme.ts", exact: true }),
-      ).toHaveAttribute("aria-current", "true");
-      await review
-        .getByRole("button", { name: "复制差异", exact: true })
+        item.locator('[aria-label="审核差异：example.css"]'),
+      ).toBeVisible();
+      await expect(item).toContainText("color: var(--text-1)");
+      await expect(
+        review.getByText("第 1 次修改", { exact: true }),
+      ).toHaveCount(0);
+      await expect(
+        review.getByRole("button", { name: "复制差异", exact: true }),
+      ).toHaveCount(0);
+      await expect(
+        item.locator("diffs-container [data-code]").first(),
+      ).toHaveCSS("max-height", "none");
+      await expect(
+        item.locator("diffs-container [data-diffs-header]"),
+      ).toHaveCount(0);
+      await expect(
+        item
+          .getByRole("button", { name: "复制路径：example.css", exact: true })
+          .locator("svg"),
+      ).toHaveCSS("width", "12px");
+      await expect(
+        item.getByRole("button", {
+          name: "复制路径：example.css",
+          exact: true,
+        }),
+      ).toHaveCSS("width", "22px");
+      await expect(
+        item.getByRole("button", {
+          name: "复制路径：example.css",
+          exact: true,
+        }),
+      ).toHaveCSS("height", "22px");
+      const code = item.locator("diffs-container [data-code]").first();
+      const list = review.locator("[data-review-list]");
+      expect(await list.evaluate((el) => el.scrollHeight)).toBeGreaterThan(
+        await list.evaluate((el) => el.clientHeight),
+      );
+      await code.hover();
+      await page.mouse.wheel(0, 600);
+      await expect
+        .poll(() => list.evaluate((el) => el.scrollTop))
+        .toBeGreaterThan(100);
+      await item
+        .getByRole("button", { name: "复制路径：example.css", exact: true })
         .click();
-      expect(await page.evaluate(() => window.__copiedInspectorText)).toContain(
-        "+  text: 'var(--text-1)',",
+      expect(await page.evaluate(() => window.__copiedInspectorText)).toBe(
+        "/component-gallery/example.css",
       );
     },
   );
   await check(
-    "review filter preserves matched directory hierarchy",
+    "review filter narrows both the flat list and locator tree",
     async () => {
-      await review.getByRole("textbox", { name: "筛选文件" }).fill("ui/index");
+      await review.getByRole("textbox", { name: "筛选文件" }).fill("example");
       await expect(
-        review.getByRole("button", { name: "src/ui/index.ts", exact: true }),
+        review
+          .getByRole("list", { name: "审核文件列表" })
+          .getByRole("button", { name: "example.css", exact: true }),
       ).toBeVisible();
       await expect(
-        review.getByRole("button", { name: "example.css", exact: true }),
-      ).toHaveCount(0);
+        review
+          .getByRole("list", { name: "文件目录" })
+          .getByRole("button", { name: "example.css", exact: true }),
+      ).toBeVisible();
       await review.getByRole("textbox", { name: "筛选文件" }).fill("");
     },
   );
+  await check("review split pane keeps the flat list and locator", async () => {
+    await checkSplitPane(review, "调整审核目录宽度", "审核文件目录树");
+  });
   await check(
-    "review opens the selected file in the same auxiliary region",
+    "review file row opens the file in the auxiliary file view",
     async () => {
-      await review
-        .getByRole("button", { name: "打开此文件", exact: true })
+      const item = review
+        .getByRole("list", { name: "审核文件列表" })
+        .getByRole("button", { name: "example.css", exact: true })
+        .locator("xpath=ancestor::li");
+      await item
+        .getByRole("button", { name: "打开文件：example.css", exact: true })
         .click();
       await expect(
         page.getByRole("tab", { name: "文件", exact: true }),
       ).toHaveAttribute("aria-selected", "true");
       await expect(page.locator(".workflow-file-preview")).toContainText(
-        "组件展示页的示例文件",
+        "color: var(--text-1);",
       );
-      await expect(
-        page
-          .getByRole("tabpanel", { name: "文件" })
-          .getByRole("list", { name: "文件目录" }),
-      ).toBeVisible();
+      await page.getByRole("tab", { name: "审核", exact: true }).click();
+      await expect(review).toBeVisible();
     },
   );
   await check(

@@ -1,6 +1,14 @@
 import { execFile } from "node:child_process";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { promisify } from "node:util";
-import type { ChatRewindResult, WorkspaceGitContext } from "@shared/types";
+import type {
+  ChatRewindResult,
+  WorkspaceGitContext,
+  WorkspaceProjectReview,
+  WorkspaceProjectReviewFile,
+} from "@shared/types";
 import { logWarn } from "../core/logging/app-logger";
 import { getStateDb } from "../core/storage/state-db";
 import {
@@ -65,15 +73,7 @@ export async function readWorkspaceGitContext(
         .then(parseAheadBehind)
         .catch(() => ({ ahead: 0, behind: 0 }))
     : { ahead: 0, behind: 0 };
-  const lineStats = await runGit(workspacePath, [
-    "diff",
-    "--numstat",
-    "HEAD",
-    "--",
-    ".",
-  ])
-    .then(parseNumstat)
-    .catch(() => ({ insertions: 0, deletions: 0 }));
+  const lineStats = await readWorktreeLineStats(gitRoot);
 
   return {
     isRepository: true,
@@ -85,6 +85,94 @@ export async function readWorkspaceGitContext(
     insertions: lineStats.insertions,
     deletions: lineStats.deletions,
   };
+}
+
+export async function readWorkspaceProjectReview(
+  workspacePath: string,
+): Promise<WorkspaceProjectReview> {
+  const gitRoot = await runGit(workspacePath, ["rev-parse", "--show-toplevel"])
+    .then((value) => value.trim())
+    .catch(() => "");
+  if (!gitRoot) return emptyProjectReview();
+
+  const { numstat, diff } = await readWorktreeDiff(gitRoot);
+  const files = parseProjectReviewFiles(numstat, diff);
+  return {
+    isRepository: true,
+    root: gitRoot,
+    files,
+    insertions: files.reduce((sum, file) => sum + file.added, 0),
+    deletions: files.reduce((sum, file) => sum + file.removed, 0),
+  };
+}
+
+async function readWorktreeLineStats(
+  workspacePath: string,
+): Promise<{ insertions: number; deletions: number }> {
+  try {
+    const numstat = await withTemporaryWorktreeIndex(
+      workspacePath,
+      async (env) =>
+        runGit(workspacePath, ["diff", "--numstat", "HEAD", "--", "."], env),
+    );
+    return parseNumstat(numstat);
+  } catch {
+    return runGit(workspacePath, ["diff", "--numstat", "HEAD", "--", "."])
+      .then(parseNumstat)
+      .catch(() => ({ insertions: 0, deletions: 0 }));
+  }
+}
+
+async function readWorktreeDiff(workspacePath: string): Promise<{
+  numstat: string;
+  diff: string;
+}> {
+  try {
+    return await withTemporaryWorktreeIndex(workspacePath, async (env) => ({
+      numstat: await runGit(
+        workspacePath,
+        ["diff", "--numstat", "HEAD", "--", "."],
+        env,
+      ),
+      diff: await runGit(
+        workspacePath,
+        ["diff", "--no-ext-diff", "HEAD", "--", "."],
+        env,
+      ),
+    }));
+  } catch {
+    const [numstat, diff] = await Promise.all([
+      runGit(workspacePath, ["diff", "--numstat", "HEAD", "--", "."]).catch(
+        () => "",
+      ),
+      runGit(workspacePath, ["diff", "--no-ext-diff", "HEAD", "--", "."]).catch(
+        () => "",
+      ),
+    ]);
+    return { numstat, diff };
+  }
+}
+
+async function withTemporaryWorktreeIndex<T>(
+  workspacePath: string,
+  operation: (env: NodeJS.ProcessEnv) => Promise<T>,
+): Promise<T> {
+  const tempDir = await mkdtemp(join(tmpdir(), "marloues-diff-"));
+  try {
+    const indexPath = join(tempDir, "index");
+    await runGit(workspacePath, [
+      "read-tree",
+      `--index-output=${indexPath}`,
+      "HEAD",
+    ]);
+    const env = { GIT_INDEX_FILE: indexPath };
+    // Intent-to-add entries make `git diff HEAD` include untracked files,
+    // while the temporary index keeps the real repository index untouched.
+    await runGit(workspacePath, ["add", "-N", "--", "."], env);
+    return await operation(env);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
 }
 
 export async function captureWorkspaceCheckpoint(params: {
@@ -389,11 +477,16 @@ async function readGitSnapshot(workspacePath: string): Promise<{
   };
 }
 
-async function runGit(cwd: string, args: string[]): Promise<string> {
+async function runGit(
+  cwd: string,
+  args: string[],
+  env?: NodeJS.ProcessEnv,
+): Promise<string> {
   const { stdout } = await execFileAsync("git", ["-C", cwd, ...args], {
     encoding: "utf8",
     maxBuffer: 10 * 1024 * 1024,
     windowsHide: true,
+    ...(env ? { env: { ...process.env, ...env } } : {}),
   });
   return stdout;
 }
@@ -537,6 +630,78 @@ function parseNumstat(value: string): {
   return totals;
 }
 
+function parseProjectReviewFiles(
+  numstat: string,
+  diff: string,
+): WorkspaceProjectReviewFile[] {
+  const patches = splitFilePatches(diff);
+  const files: WorkspaceProjectReviewFile[] = [];
+  for (const line of numstat.split(/\r?\n/)) {
+    const match = line.match(/^(-|\d+)\s+(-|\d+)\s+(.+)$/);
+    if (!match) continue;
+    const path = parseNumstatPath(match[3]);
+    if (!path) continue;
+    const binary = match[1] === "-" || match[2] === "-";
+    files.push({
+      path,
+      added: parseNumstatCount(match[1]),
+      removed: parseNumstatCount(match[2]),
+      rawDiff: patches.get(path) ?? extractFilePatch(diff, path),
+      binary,
+    });
+  }
+  return files.sort((a, b) => a.path.localeCompare(b.path));
+}
+
+function parseNumstatCount(value: string): number {
+  return value === "-" ? 0 : Number.parseInt(value, 10) || 0;
+}
+
+function parseNumstatPath(value: string): string {
+  const path = unquoteGitPath(value.trim());
+  const rename = path.match(/^(.*)\{(.*) => (.*)\}(.*)$/);
+  if (!rename) return path;
+  return `${rename[1]}${rename[3]}${rename[4]}`;
+}
+
+function splitFilePatches(diff: string): Map<string, string> {
+  const patches = new Map<string, string>();
+  if (!diff.trim()) return patches;
+
+  const lines = diff.split("\n");
+  let paths: string[] = [];
+  let current: string[] = [];
+  const flush = () => {
+    if (paths.length && current.length) {
+      const patch = `${current.join("\n")}\n`;
+      for (const path of paths) patches.set(path, patch);
+    }
+  };
+
+  for (const line of lines) {
+    if (line.startsWith("diff --git ")) {
+      flush();
+      paths = diffHeaderPaths(line);
+      current = [line];
+      continue;
+    }
+    if (current.length) current.push(line);
+  }
+  flush();
+  return patches;
+}
+
+function diffHeaderPaths(header: string): string[] {
+  const match = header.match(/^diff --git a\/(.+) b\/(.+)$/);
+  if (!match) return [];
+  return [unquoteGitPath(match[1]), unquoteGitPath(match[2])].filter(Boolean);
+}
+
+function unquoteGitPath(value: string): string {
+  if (!value.startsWith('"') || !value.endsWith('"')) return value;
+  return value.slice(1, -1).replace(/\\(["\\])/g, "$1");
+}
+
 function parseAheadBehind(value: string): { ahead: number; behind: number } {
   const [ahead, behind] = value.trim().split(/\s+/, 2);
   return {
@@ -551,6 +716,16 @@ function emptyGitContext(isRepository: boolean): WorkspaceGitContext {
     ahead: 0,
     behind: 0,
     changedFiles: 0,
+    insertions: 0,
+    deletions: 0,
+  };
+}
+
+function emptyProjectReview(): WorkspaceProjectReview {
+  return {
+    isRepository: false,
+    root: "",
+    files: [],
     insertions: 0,
     deletions: 0,
   };

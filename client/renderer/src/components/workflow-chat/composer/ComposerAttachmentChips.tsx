@@ -1,9 +1,9 @@
 import {
   ChevronDown,
+  ClipboardPaste,
   FileText,
   Link,
   MessageSquareText,
-  Wrench,
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -27,6 +27,12 @@ function fileAttachmentMeta(
     attachment.mimeType.replace(/^text\//, "").toUpperCase() ||
     "文件";
   return `${type} · ${formatAttachmentSize(attachment.size)}`;
+}
+
+function pastedTextAttachmentMeta(
+  attachment: Extract<ComposerAttachment, { kind: "pasted-text" }>,
+): string {
+  return `粘贴文本 · ${formatAttachmentSize(attachment.size)}`;
 }
 
 function browserCommentTarget(
@@ -202,7 +208,11 @@ export function ComposerAttachmentChips({
   onRemove: (id: string) => void;
   onPreviewImage: (image: WorkflowImagePreview) => void;
 }) {
-  if (attachments.length === 0) return null;
+  if (!attachments.some((attachment) => attachment.kind !== "skill"))
+    return null;
+  const otherAttachments = attachments.filter(
+    (attachment) => attachment.kind !== "skill",
+  );
   const browserComments = attachments.filter(
     (
       attachment,
@@ -213,7 +223,40 @@ export function ComposerAttachmentChips({
 
   return (
     <div className="composer-attachments" aria-label="已添加的附件">
-      {attachments.map((attachment) => {
+      {otherAttachments.map((attachment) => {
+        if (attachment.kind === "appshot") {
+          return (
+            <span
+              className="composer-chip composer-chip-image composer-chip-appshot"
+              key={attachment.id}
+              title={attachment.name}
+            >
+              <button
+                type="button"
+                className="composer-chip-image-btn"
+                onClick={() =>
+                  onPreviewImage({
+                    src: attachment.dataUrl,
+                    name: attachment.name,
+                  })
+                }
+                aria-label={`预览${attachment.name}`}
+              >
+                <img src={attachment.dataUrl} alt={attachment.name} />
+              </button>
+              <button
+                type="button"
+                className="composer-chip-remove"
+                onClick={() => onRemove(attachment.id)}
+                aria-label={`移除${attachment.name}`}
+                title={`移除${attachment.name}`}
+              >
+                <X size={12} />
+              </button>
+            </span>
+          );
+        }
+
         if (attachment.kind === "image") {
           return (
             <span
@@ -311,16 +354,43 @@ export function ComposerAttachmentChips({
           );
         }
 
+        if (attachment.kind === "pasted-text") {
+          return (
+            <span
+              className="composer-chip composer-chip-file composer-chip-pasted-text"
+              key={attachment.id}
+              title={attachment.name}
+            >
+              <ClipboardPaste size={14} aria-hidden="true" />
+              <span className="composer-chip-copy">
+                <span className="composer-chip-name">{attachment.name}</span>
+                <span className="composer-chip-meta">
+                  {pastedTextAttachmentMeta(attachment)}
+                </span>
+              </span>
+              <button
+                type="button"
+                className="composer-chip-remove"
+                onClick={() => onRemove(attachment.id)}
+                aria-label={`移除${attachment.name}`}
+                title={`移除${attachment.name}`}
+              >
+                <X size={12} />
+              </button>
+            </span>
+          );
+        }
+
         if (attachment.kind === "mention") {
           return (
-            <span className="composer-skill-token" key={attachment.id}>
+            <span className="composer-mention-token" key={attachment.id}>
               <FileText size={14} aria-hidden="true" />
-              <span className="composer-skill-token-name">
+              <span className="composer-mention-token-name">
                 @{attachment.name}
               </span>
               <button
                 type="button"
-                className="composer-skill-token-remove"
+                className="composer-chip-remove"
                 onClick={() => onRemove(attachment.id)}
                 aria-label="移除文件引用"
                 title="移除文件引用"
@@ -343,23 +413,7 @@ export function ComposerAttachmentChips({
           );
         }
 
-        return (
-          <span className="composer-skill-token" key={attachment.id}>
-            <Wrench size={14} aria-hidden="true" />
-            <span className="composer-skill-token-name">
-              {attachment.skill.name}
-            </span>
-            <button
-              type="button"
-              className="composer-skill-token-remove"
-              onClick={() => onRemove(attachment.id)}
-              aria-label="移除技能"
-              title="移除技能"
-            >
-              <X size={12} />
-            </button>
-          </span>
-        );
+        return null;
       })}
     </div>
   );

@@ -44,10 +44,15 @@ describe("WorkflowComposerShell permission branch", () => {
       />,
     );
 
-    expect(markup).toContain('placeholder="随心输入"');
+    expect(markup).toContain('class="composer-rich-input"');
+    expect(markup).toContain('data-placeholder="随心输入"');
     expect(markup).toContain('data-composer-navigation-target="add-context"');
     expect(markup).toContain('aria-label="添加文件及更多内容"');
     expect(markup).toContain('data-icon-contract="add-context"');
+    expect(markup).toContain('accept="image/*"');
+    expect(markup).not.toContain("lucide-chevron-down");
+    expect(markup).not.toContain("添加链接");
+    expect(markup).not.toContain('data-composer-navigation-target="add-link"');
   });
 
   it("uses the Codex hand icon for the request permission mode", () => {
@@ -65,6 +70,42 @@ describe("WorkflowComposerShell permission branch", () => {
     );
 
     expect(markup).toContain("lucide-hand");
+  });
+
+  it("renders the composer with the rich input host instead of a source textarea", () => {
+    const markup = renderToStaticMarkup(
+      <WorkflowComposerShell
+        input={"# 草稿标题\n\n**粗体草稿**"}
+        isGenerating={false}
+        selectedProvider={null}
+        onInputChange={vi.fn()}
+        onKeyDown={vi.fn()}
+        onSend={vi.fn()}
+        onStop={vi.fn()}
+      />,
+    );
+
+    expect(markup).toContain('class="composer-rich-input"');
+    expect(markup).not.toContain("composer-markdown-preview");
+    expect(markup).not.toContain("<textarea");
+  });
+
+  it("keeps slash-command drafts in source mode", () => {
+    const markup = renderToStaticMarkup(
+      <WorkflowComposerShell
+        input={"/draft"}
+        isGenerating={false}
+        selectedProvider={null}
+        onInputChange={vi.fn()}
+        onKeyDown={vi.fn()}
+        onSend={vi.fn()}
+        onStop={vi.fn()}
+        slashCommands={[]}
+      />,
+    );
+
+    expect(markup).not.toContain("composer-markdown-preview");
+    expect(markup).not.toContain("<textarea");
   });
 
   it("keeps the stop action available while a running task has draft input", () => {

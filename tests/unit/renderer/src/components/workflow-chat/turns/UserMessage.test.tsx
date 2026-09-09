@@ -95,6 +95,24 @@ describe("WorkflowUserMessage", () => {
     expect(html).toContain("点击放大 · original");
   });
 
+  it("renders user Markdown as rich text instead of source syntax", () => {
+    const html = renderToStaticMarkup(
+      <WorkflowUserMessage
+        content={[
+          {
+            type: "text",
+            text: "# 用户标题\n\n**粗体正文**",
+            displayFormat: "markdown",
+          },
+        ]}
+      />,
+    );
+    expect(html).toContain("<h1>用户标题</h1>");
+    expect(html).toContain("<strong>粗体正文</strong>");
+    expect(html).not.toContain("# 用户标题");
+    expect(html).not.toContain("**粗体正文**");
+  });
+
   it("collapses likely-long user text to twenty accessible lines", () => {
     const text = Array.from({ length: 21 }, (_, index) => `line ${index}`).join(
       "\n",

@@ -191,7 +191,7 @@ function useCodexFixtureTheme() {
   }, []);
 }
 
-function noopKeyDown(_event: KeyboardEvent<HTMLTextAreaElement>) {}
+function noopKeyDown(_event: KeyboardEvent<HTMLElement>) {}
 
 const thinkingMessages: WorkflowMessageBlock[] = [
   {

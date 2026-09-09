@@ -3,9 +3,9 @@ import {
   FileText,
   Globe2,
   Image as ImageIcon,
+  Layers,
   MessageSquareText,
   TextCursorInput,
-  Wrench,
 } from "lucide-react";
 
 type IconProps = SVGProps<SVGSVGElement>;
@@ -109,7 +109,7 @@ export function ConversationEditIcon(props: IconProps) {
 }
 
 export const ConversationFileIcon = FileText;
-export const ConversationSkillIcon = Wrench;
+export const ConversationSkillIcon = Layers;
 export const ConversationCommentIcon = MessageSquareText;
 export const ConversationSelectedTextIcon = TextCursorInput;
 export const ConversationWebIcon = Globe2;

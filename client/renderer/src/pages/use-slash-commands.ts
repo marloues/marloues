@@ -29,10 +29,10 @@ export interface ComposerCatalogs {
 export function useComposerCatalogs(
   sessionInitInfo: SessionInitInfo | undefined,
   workspaceId?: string,
+  shouldLoadSkills = true,
 ): ComposerCatalogs {
-  // Fetch the workspace's effective inventory so custom project allowlists are
-  // reflected in both the slash menu and the Skill picker. Fall back to the
-  // global inventory for projectless sessions.
+  // Lazily fetch the effective inventory only after the composer enters a
+  // slash-command or skill-selection flow.
   const [installedSkills, setInstalledSkills] = useState<SkillInfo[]>([]);
   const [skillRevision, setSkillRevision] = useState(0);
   useEffect(() => {
@@ -41,6 +41,7 @@ export function useComposerCatalogs(
     return () => window.removeEventListener(SKILLS_CHANGED_EVENT, refresh);
   }, []);
   useEffect(() => {
+    if (!shouldLoadSkills) return;
     let cancelled = false;
     const request = workspaceId
       ? window.marloues.workspace.listSkills(workspaceId)
@@ -54,7 +55,7 @@ export function useComposerCatalogs(
     return () => {
       cancelled = true;
     };
-  }, [skillRevision, workspaceId]);
+  }, [shouldLoadSkills, skillRevision, workspaceId]);
 
   const slashCommands = useMemo<SlashCommandItem[]>(() => {
     const init = sessionInitInfo;

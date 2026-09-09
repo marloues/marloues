@@ -433,7 +433,6 @@ export async function boundaryChecks({
       await expect(page.locator(".composer-attachments")).toContainText(
         "qa-verify",
       );
-      await page.getByRole("button", { name: "移除技能" }).click();
       await input.fill("");
       await app.evaluate(({ clipboard }) =>
         clipboard.writeText("https://example.com/qa-attachment"),
