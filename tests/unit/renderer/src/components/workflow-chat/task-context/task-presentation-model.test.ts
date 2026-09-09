@@ -162,17 +162,27 @@ describe("buildTaskPresentationModel", () => {
           name: "每日摘要",
           instruction: "生成摘要",
           workspacePath: "C:/workspace/marloues",
+          sourceSessionId: "session-1",
           kind: "cron",
           enabled: true,
           nextRunAt: 2000,
+          metadata: {
+            tags: [],
+            schedule: {
+              mode: "cycle",
+              cycleType: "daily",
+              time: { hour: 9, minute: 0 },
+            },
+            notificationChannels: [],
+          },
           createdAt: 1,
           updatedAt: 2,
         },
         {
           id: "schedule-2",
-          name: "不相关任务",
-          instruction: "other",
-          workspacePath: "C:/other",
+          name: "运行记录关联任务",
+          instruction: "从执行记录关联",
+          workspacePath: "C:/workspace/marloues",
           kind: "cron",
           enabled: true,
           createdAt: 1,
@@ -180,10 +190,10 @@ describe("buildTaskPresentationModel", () => {
         },
       ],
       scheduledRuns: {
-        "schedule-1": [
+        "schedule-2": [
           {
             id: "run-1",
-            taskId: "schedule-1",
+            taskId: "schedule-2",
             sessionId: "session-1",
             status: "running",
             createdAt: 1,
@@ -219,9 +229,17 @@ describe("buildTaskPresentationModel", () => {
       {
         id: "schedule-1",
         name: "每日摘要",
-        status: "running",
-        detail: "生成摘要",
+        enabled: true,
+        status: "scheduled",
+        detail: "每天 09:00",
         nextRunAt: 2000,
+      },
+      {
+        id: "schedule-2",
+        name: "运行记录关联任务",
+        enabled: true,
+        status: "running",
+        detail: "从执行记录关联",
       },
     ]);
     expect(model.processes).toHaveLength(2);

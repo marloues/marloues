@@ -15,6 +15,7 @@ import type {
   WorkflowTurn,
   WorkflowTurnItem,
 } from "@shared/workflow-read-thread-contract";
+import { describeCron, describeScheduleConfig } from "@shared/schedule";
 import {
   firstWorkflowFileChangeTarget,
   summarizeWorkflowFileChanges,
@@ -27,6 +28,7 @@ export interface TaskPresentationModel {
   scheduled: Array<{
     id: string;
     name: string;
+    enabled: boolean;
     status: string;
     detail?: string;
     nextRunAt?: number;
@@ -331,19 +333,32 @@ function scheduledSummaries(
     const taskRuns = runs[task.id] ?? [];
     const run = taskRuns.find((item) => item.sessionId === sessionId);
     const fallbackSessionId = `scheduled-${task.id}`;
-    if (!run && fallbackSessionId !== sessionId) continue;
+    if (
+      task.sourceSessionId !== sessionId &&
+      !run &&
+      fallbackSessionId !== sessionId
+    ) {
+      continue;
+    }
     summaries.push({
       id: task.id,
       name: task.name,
+      enabled: task.enabled,
       status:
         run?.status ??
         task.lastRunStatus ??
         (task.enabled ? "scheduled" : "paused"),
-      detail: run?.error ?? task.instruction,
+      detail: scheduledSummary(task),
       nextRunAt: task.enabled ? task.nextRunAt : undefined,
     });
   }
   return summaries;
+}
+
+function scheduledSummary(task: ScheduledTaskRecord): string {
+  if (task.metadata) return describeScheduleConfig(task.metadata.schedule);
+  if (task.kind === "once") return "一次性执行";
+  return describeCron(task.cronExpr ?? "") || task.instruction;
 }
 
 function taskSources(

@@ -364,6 +364,8 @@ export interface ScheduledTaskRecord {
   name: string;
   instruction: string;
   workspacePath: string;
+  /** 创建该任务的来源会话，用于固定摘要按当前任务过滤 */
+  sourceSessionId?: string;
   kind: "once" | "cron";
   /** kind='once'：触发时间戳(ms)，执行后任务自动完成 */
   runAt?: number;
@@ -386,6 +388,7 @@ export interface ScheduledTaskInput {
   name: string;
   instruction: string;
   workspacePath: string;
+  sourceSessionId?: string;
   kind: "once" | "cron";
   runAt?: number;
   cronExpr?: string;

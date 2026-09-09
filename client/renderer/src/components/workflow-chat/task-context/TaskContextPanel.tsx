@@ -6,6 +6,7 @@ import type {
   TaskPresentationModel,
 } from "./task-presentation-model";
 import { openAuxiliaryTab } from "@/stores/auxiliary-tab-intent-store";
+import { useScheduleStore } from "@/stores/schedule-store";
 import {
   BackgroundProcessesSection,
   BrowserPagesSection,
@@ -28,6 +29,7 @@ export function TaskContextPanel({
   onRefresh,
   onCloseFloating,
   onOpenChanges,
+  onOpenScheduledTask,
 }: {
   model: TaskPresentationModel;
   mode: TaskContextMode;
@@ -35,7 +37,10 @@ export function TaskContextPanel({
   onRefresh: () => void;
   onCloseFloating: () => void;
   onOpenChanges?: () => void;
+  onOpenScheduledTask?: (taskId: string) => void;
 }) {
+  const toggleScheduledTask = useScheduleStore((state) => state.toggle);
+  const removeScheduledTask = useScheduleStore((state) => state.remove);
   const panelRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -105,6 +110,23 @@ export function TaskContextPanel({
                   key={sectionKey}
                   sessionId={sessionId}
                   scheduled={model.scheduled}
+                  onOpenScheduledTask={onOpenScheduledTask}
+                  onToggleScheduledTask={(taskId) => {
+                    void toggleScheduledTask(taskId).catch((error) => {
+                      console.error(
+                        "[task-context] toggle schedule failed",
+                        error,
+                      );
+                    });
+                  }}
+                  onRemoveScheduledTask={(taskId) => {
+                    void removeScheduledTask(taskId).catch((error) => {
+                      console.error(
+                        "[task-context] remove schedule failed",
+                        error,
+                      );
+                    });
+                  }}
                 />
               );
             case "environment":

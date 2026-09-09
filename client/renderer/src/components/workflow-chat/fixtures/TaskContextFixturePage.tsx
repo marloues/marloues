@@ -71,6 +71,7 @@ function fixtureModel(hasData: boolean): TaskPresentationModel {
           {
             id: "schedule-1",
             name: "每日构建摘要",
+            enabled: true,
             status: "success",
             nextRunAt: Date.now() + 3_600_000,
           },

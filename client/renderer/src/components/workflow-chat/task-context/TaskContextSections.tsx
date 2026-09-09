@@ -2,6 +2,7 @@ import type {
   OutputTarget,
   TaskPresentationModel,
 } from "./task-presentation-model";
+import { Pause, Play, Trash2 } from "lucide-react";
 import { CONVERSATION_ICONS } from "../conversation-icon-contract";
 import {
   ThreadSummaryExpandableList,
@@ -13,9 +14,15 @@ const SUMMARY_ICONS = CONVERSATION_ICONS.summary;
 export function ScheduledSection({
   sessionId,
   scheduled,
+  onOpenScheduledTask,
+  onToggleScheduledTask,
+  onRemoveScheduledTask,
 }: {
   sessionId: string | null;
   scheduled: TaskPresentationModel["scheduled"];
+  onOpenScheduledTask?: (taskId: string) => void;
+  onToggleScheduledTask?: (taskId: string) => void;
+  onRemoveScheduledTask?: (taskId: string) => void;
 }) {
   if (!scheduled.length) return null;
   return (
@@ -31,15 +38,51 @@ export function ScheduledSection({
         ariaLabel="定时任务"
         getKey={(task) => task.id}
         renderItem={(task) => (
-          <div className="task-context-row" title={task.detail ?? task.name}>
-            <SUMMARY_ICONS.scheduled
-              size={15}
-              data-icon-contract="summary-scheduled"
-            />
-            <span>{task.name}</span>
-            <small className="task-context-row-detail">
-              {scheduledStatus(task, scheduled.length)}
-            </small>
+          <div className="task-context-scheduled-row">
+            <button
+              type="button"
+              className="task-context-row task-context-scheduled-main"
+              onClick={() => onOpenScheduledTask?.(task.id)}
+              disabled={!onOpenScheduledTask}
+              title={scheduledTooltip(task, scheduled.length)}
+            >
+              <SUMMARY_ICONS.scheduled
+                size={15}
+                data-icon-contract="summary-scheduled"
+              />
+              <span>{task.name}</span>
+              <small className="task-context-row-detail">
+                {scheduledStatus(task, scheduled.length)}
+              </small>
+            </button>
+            <div
+              className="task-context-scheduled-actions"
+              role="group"
+              aria-label={`${task.name} 操作`}
+            >
+              <button
+                type="button"
+                className="thread-summary-icon-button"
+                onClick={() => onToggleScheduledTask?.(task.id)}
+                disabled={!onToggleScheduledTask}
+                aria-label={
+                  task.enabled ? `暂停 ${task.name}` : `恢复 ${task.name}`
+                }
+                title={task.enabled ? "暂停任务" : "恢复任务"}
+              >
+                {task.enabled ? <Pause size={14} /> : <Play size={14} />}
+              </button>
+              <button
+                type="button"
+                className="thread-summary-icon-button"
+                onClick={() => onRemoveScheduledTask?.(task.id)}
+                disabled={!onRemoveScheduledTask}
+                aria-label={`删除 ${task.name}`}
+                title="删除任务"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
           </div>
         )}
       />
@@ -515,6 +558,14 @@ function scheduledStatus(
   if (count > 1) return scheduledStatusLabel(task.status);
   if (task.nextRunAt) return `下次 ${formatTimestamp(task.nextRunAt)}`;
   return scheduledStatusLabel(task.status);
+}
+
+function scheduledTooltip(
+  task: TaskPresentationModel["scheduled"][number],
+  count: number,
+): string {
+  const lines = [task.name, task.detail, scheduledStatus(task, count)];
+  return lines.filter(Boolean).join("\n");
 }
 
 function scheduledStatusLabel(status: string): string {

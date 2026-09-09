@@ -16,6 +16,7 @@ interface ScheduledTaskRow {
   name: string;
   instruction: string;
   workspace_path: string;
+  source_session_id: string | null;
   kind: "once" | "cron";
   run_at: number | null;
   cron_expr: string | null;
@@ -58,6 +59,7 @@ function rowToTask(row: ScheduledTaskRow): ScheduledTaskRecord {
     name: row.name,
     instruction: row.instruction,
     workspacePath: row.workspace_path,
+    sourceSessionId: row.source_session_id ?? undefined,
     kind: row.kind,
     runAt: row.run_at ?? undefined,
     cronExpr: row.cron_expr ?? undefined,
@@ -152,6 +154,7 @@ export function createScheduledTask(
     name: normalized.name,
     instruction: normalized.instruction,
     workspacePath: normalized.workspacePath,
+    sourceSessionId: normalized.sourceSessionId,
     kind: normalized.kind,
     runAt: normalized.runAt,
     cronExpr: normalized.cronExpr,
@@ -166,12 +169,14 @@ export function createScheduledTask(
     .prepare(
       `
       INSERT INTO scheduled_tasks (
-        id, name, instruction, workspace_path, kind, run_at, cron_expr, enabled,
+        id, name, instruction, workspace_path, source_session_id, kind,
+        run_at, cron_expr, enabled,
         next_run_at, last_run_at, last_run_status, fail_count, metadata_json,
         created_at, updated_at
       )
       VALUES (
-        @id, @name, @instruction, @workspacePath, @kind, @runAt, @cronExpr, @enabled,
+        @id, @name, @instruction, @workspacePath, @sourceSessionId, @kind,
+        @runAt, @cronExpr, @enabled,
         @nextRunAt, @lastRunAt, @lastRunStatus, @failCount, @metadataJson,
         @createdAt, @updatedAt
       )
@@ -182,6 +187,7 @@ export function createScheduledTask(
       enabled: 1,
       runAt: record.runAt ?? null,
       cronExpr: record.cronExpr ?? null,
+      sourceSessionId: record.sourceSessionId ?? null,
       nextRunAt: record.nextRunAt ?? null,
       lastRunAt: null,
       lastRunStatus: null,
@@ -201,6 +207,7 @@ export function updateScheduledTask(
     name: input.name ?? existing.name,
     instruction: input.instruction ?? existing.instruction,
     workspacePath: input.workspacePath ?? existing.workspacePath,
+    sourceSessionId: input.sourceSessionId ?? existing.sourceSessionId,
     kind: input.kind ?? existing.kind,
     runAt: input.runAt ?? existing.runAt,
     cronExpr: input.cronExpr ?? existing.cronExpr,
@@ -221,6 +228,7 @@ export function updateScheduledTask(
       SET name = @name,
           instruction = @instruction,
           workspace_path = @workspacePath,
+          source_session_id = @sourceSessionId,
           kind = @kind,
           run_at = @runAt,
           cron_expr = @cronExpr,
@@ -235,6 +243,7 @@ export function updateScheduledTask(
       name: next.name,
       instruction: next.instruction,
       workspacePath: next.workspacePath,
+      sourceSessionId: next.sourceSessionId ?? null,
       kind: next.kind,
       runAt: next.runAt ?? null,
       cronExpr: next.cronExpr ?? null,

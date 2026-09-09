@@ -7,7 +7,13 @@
 //   - WorkbenchRegions.tsx (3 structural shells)
 //   - WorkbenchViewHost.tsx (page routing)
 
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+} from "react";
 import { SettingsPage } from "@/components/settings/SettingsPage";
 import { PluginsView, type PluginsTab } from "@/pages/PluginsPage";
 import { SchedulePage } from "@/pages/SchedulePage";
@@ -18,6 +24,7 @@ import {
 import { GlobalSearchOverlay } from "./overlays/GlobalSearchOverlay";
 import { PrimarySidebar } from "./primary-sidebar";
 import type { Page } from "./types";
+import { scheduleViewActions } from "@/stores/schedule-view-store";
 import { useSettingsPageStore } from "@/stores/settings-page-store";
 import { useUnifiedChatStore } from "@/stores/unified-chat-store";
 import type { ThemeMode } from "@/stores/theme-store";
@@ -93,6 +100,14 @@ export function WorkbenchRoot({
     setActiveSession(sessionId);
     onPage("chat");
   };
+  const openScheduledTask = useCallback(
+    (taskId: string) => {
+      scheduleViewActions.showList();
+      scheduleViewActions.selectTask(taskId);
+      onPage("schedules");
+    },
+    [onPage],
+  );
 
   // ---- OPEN_GLOBAL_SEARCH_EVENT (⌘K / Ctrl+K handler from anywhere) ----
   useEffect(() => {
@@ -302,6 +317,7 @@ export function WorkbenchRoot({
               auxiliaryObscuresMain={auxiliaryMode === "primary-overlay"}
               permissionRequest={permissionRequest}
               onPermissionRespond={onPermissionRespond}
+              onOpenScheduledTask={openScheduledTask}
             />
           </MainWorkspaceShell>
 
@@ -334,7 +350,10 @@ export function WorkbenchRoot({
             active={page === "schedules"}
             className="quick-page-overlay-host scheduled-tasks-page-host"
           >
-            <SchedulePage onOpenSession={openScheduledSession} />
+            <SchedulePage
+              onOpenSession={openScheduledSession}
+              sourceSessionId={activeSessionId}
+            />
           </KeepAliveWorkbenchView>
 
           <KeepAliveWorkbenchView

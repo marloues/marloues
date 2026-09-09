@@ -71,8 +71,22 @@ describe("thread summary sections", () => {
         <ScheduledSection
           sessionId="session-1"
           scheduled={[
-            { id: "schedule-1", name: "每日摘要", status: "running" },
+            {
+              id: "schedule-1",
+              name: "每日摘要",
+              enabled: true,
+              status: "running",
+            },
+            {
+              id: "schedule-2",
+              name: "每周报告",
+              enabled: false,
+              status: "paused",
+            },
           ]}
+          onOpenScheduledTask={vi.fn()}
+          onToggleScheduledTask={vi.fn()}
+          onRemoveScheduledTask={vi.fn()}
         />
         <PlanSection
           sessionId="session-1"
@@ -131,6 +145,9 @@ describe("thread summary sections", () => {
     ]) {
       expect(sections).toContain(label);
     }
+    expect(sections).toContain('aria-label="暂停 每日摘要"');
+    expect(sections).toContain('aria-label="恢复 每周报告"');
+    expect(sections).toContain('aria-label="删除 每日摘要"');
   });
 
   it("renders artifact output rows with Codex section wording", () => {

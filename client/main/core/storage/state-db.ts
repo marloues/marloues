@@ -496,6 +496,34 @@ function migrate(database: Database.Database): void {
     `);
     logInfo("stateDb.migrated", { version: 9, dbPath: getStateDbPath() });
   }
+
+  const afterTurnInputsVersion = database.pragma("user_version", {
+    simple: true,
+  }) as number;
+  if (afterTurnInputsVersion < 10) {
+    if (!tableHasColumn(database, "scheduled_tasks", "source_session_id")) {
+      database.exec(
+        "ALTER TABLE scheduled_tasks ADD COLUMN source_session_id TEXT",
+      );
+    }
+    database.exec(`
+      UPDATE scheduled_tasks
+      SET source_session_id = (
+        SELECT runs.session_id
+        FROM scheduled_task_runs AS runs
+        WHERE runs.task_id = scheduled_tasks.id
+          AND runs.session_id IS NOT NULL
+        ORDER BY runs.created_at DESC
+        LIMIT 1
+      )
+      WHERE source_session_id IS NULL;
+
+      CREATE INDEX IF NOT EXISTS idx_scheduled_tasks_source_session
+        ON scheduled_tasks(source_session_id, updated_at DESC);
+      PRAGMA user_version = 10;
+    `);
+    logInfo("stateDb.migrated", { version: 10, dbPath: getStateDbPath() });
+  }
 }
 
 function tableHasColumn(

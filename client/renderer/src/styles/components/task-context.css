@@ -192,6 +192,24 @@
   color: var(--text-1);
 }
 
+.task-context-scheduled-row {
+  display: flex;
+  min-width: 0;
+  min-height: 32px;
+  align-items: center;
+  gap: 3px;
+}
+
+.task-context-scheduled-main {
+  flex: 1;
+}
+
+.task-context-scheduled-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
 .task-context-row {
   display: flex;
   width: 100%;
