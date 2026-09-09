@@ -23,6 +23,7 @@ import { notify } from "@/lib/notifications";
 import { STRINGS } from "@shared/strings.zh";
 import { CONVERSATION_PAGE_CONTRACT } from "@shared/conversation-page-contract";
 import { PermissionRequestPanel } from "@/components/workbench/interaction";
+import { QuestionAskPanel } from "@/components/workflow-chat/activity/QuestionAskPanel";
 import {
   ComposerShell,
   ReadThreadTurnList,
@@ -433,6 +434,26 @@ export function WorkflowChatPage({
     planImplementationPrompt?.sessionId === activeSessionId
       ? planImplementationPrompt
       : null;
+  // 问阶段：从 read-thread 取当前 pending 的提问请求，浮在 composer 请求面板。
+  const activeQuestionRequest = useMemo(() => {
+    if (!displayReadThread) return undefined;
+    const turns =
+      displayReadThread.page.order === "newest_first"
+        ? [...displayReadThread.turns].reverse()
+        : displayReadThread.turns;
+    for (const turn of turns) {
+      for (const item of turn.items) {
+        if (
+          item.type === "permissionRequest" &&
+          item.question &&
+          (item.status === "running" || item.status === "pending")
+        ) {
+          return item.question;
+        }
+      }
+    }
+    return undefined;
+  }, [displayReadThread]);
   const activeTaskProgress = useMemo(() => {
     const turnId =
       activeRunningTurn?.id ??
@@ -964,7 +985,9 @@ export function WorkflowChatPage({
           isGenerating={activeSessionIsStreaming}
           securityMode={settings?.securityMode ?? "request"}
           permissionPanel={
-            permissionRequest ? (
+            activeQuestionRequest ? (
+              <QuestionAskPanel request={activeQuestionRequest} />
+            ) : permissionRequest ? (
               <PermissionRequestPanel
                 request={permissionRequest}
                 onRespond={onPermissionRespond}

@@ -1,4 +1,4 @@
-import { WorkflowQuestionCard } from "./QuestionCard";
+import { QuestionQaCard } from "./QuestionQaCard";
 import { useItemDisclosure } from "../content/conversation-ui-state";
 import { ShieldQuestion } from "lucide-react";
 import type { WorkflowTurnItem } from "../../../../../shared/adapters/workflow-messages-to-read-thread";
@@ -20,7 +20,12 @@ export function WorkflowPermissionRequestRow({
   item: PermissionRequestItem;
 }) {
   const [open, setOpen] = useItemDisclosure(item.id);
-  if (item.question) return <WorkflowQuestionCard request={item.question} />;
+  if (item.question) {
+    // 问阶段不走对话区：pending 提问由宿主转成 ConversationInputRequest，
+    // 浮在 composer 请求面板（与权限审批一致）；已解决的在此渲染问答卡。
+    if (workflowStatusIsRunning(item.status)) return null;
+    return <QuestionQaCard request={item.question} />;
+  }
   const pending = workflowStatusIsRunning(item.status);
   const timedOut = item.status === "timed_out";
   const cancelled = item.status === "cancelled";

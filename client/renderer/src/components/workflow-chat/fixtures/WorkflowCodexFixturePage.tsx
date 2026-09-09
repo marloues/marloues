@@ -345,6 +345,33 @@ const completedMessages: WorkflowMessageBlock[] = [
         ],
       },
       {
+        type: "dynamicToolCall",
+        id: "tool-plan-mode-history",
+        tool: "EnterPlanMode",
+        status: "completed",
+        success: true,
+        output: {
+          text: "Entered plan mode. You should now focus on exploring the codebase and designing an implementation approach.\n\nIn plan mode, you should:\n1. Thoroughly explore the codebase to understand existing patterns\n2. Identify similar features and architectural approaches\n3. Consider multiple approaches and their trade-offs\n4. Use AskUserQuestion if you need to clarify the approach\n5. Design a concrete implementation strategy\n6. When ready, use ExitPlanMode to present your plan for approval\n\nRemember: DO NOT write or edit any files yet. This is a read-only exploration and planning phase.",
+          truncated: false,
+        },
+      },
+      {
+        type: "dynamicToolCall",
+        id: "tool-ask-history",
+        tool: "AskUserQuestion",
+        status: "completed",
+        success: true,
+        arguments: {
+          questions: [
+            {
+              header: "计划模式用途",
+              question: "这次进入计划模式，你希望我规划什么？",
+            },
+          ],
+        },
+        output: { text: "升级演示目录为可运行示例", truncated: false },
+      },
+      {
         type: "agentMessage",
         id: "answer",
         text: "还有。现在补了 Codex 中间态里更细的运行状态：创建文件夹、等待批准、停止命令，以及动态 patch 增删统计。",

@@ -1,0 +1,51 @@
+.card {
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius);
+  background: var(--raised-1);
+  color: var(--text-1);
+  font: var(--text-base)/1.5 var(--font-ui);
+  overflow-wrap: anywhere;
+}
+.card.unavailable {
+  border-color: color-mix(in srgb, var(--danger) 34%, var(--border));
+  background: color-mix(in srgb, var(--danger) 6%, var(--raised-1));
+}
+.meta {
+  margin-top: var(--space-3);
+  color: var(--text-3);
+  font-size: var(--text-xs);
+}
+.metaInline {
+  margin-top: var(--space-3);
+  color: var(--text-3);
+  font-size: var(--text-xs);
+}
+.qaQuestion {
+  color: var(--text-1);
+  font-weight: 500;
+}
+.qaAnswer {
+  margin-top: var(--space-1);
+  color: var(--text-2);
+}
+.title {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 500;
+  line-height: 1.4;
+}
+.prompt {
+  margin: var(--space-2) 0 0;
+  color: var(--text-2);
+}
+.unavailableHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.warningIcon {
+  color: var(--danger);
+  flex-shrink: 0;
+}

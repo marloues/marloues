@@ -1,0 +1,22 @@
+.card {
+  min-width: 0;
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius);
+  background: var(--raised-1);
+  color: var(--text-1);
+  font: var(--text-base)/1.5 var(--font-ui);
+  overflow-wrap: anywhere;
+}
+.question {
+  font-weight: 500;
+}
+.answer {
+  margin-top: var(--space-1);
+  color: var(--text-2);
+}
+.meta {
+  margin-top: var(--space-3);
+  color: var(--text-3);
+  font-size: var(--text-xs);
+}

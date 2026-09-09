@@ -1,0 +1,28 @@
+.card {
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--card-radius);
+  background: color-mix(in srgb, var(--accent) 5%, var(--raised-1));
+  color: var(--text-1);
+  font: var(--text-base)/1.5 var(--font-ui);
+  overflow-wrap: anywhere;
+}
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.icon {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.title {
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+.body {
+  margin-top: var(--space-3);
+  color: var(--text-2);
+}

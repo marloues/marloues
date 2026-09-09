@@ -60,6 +60,13 @@ export function codexActivityGrouping(
       name === "wait"
     )
       return "hidden";
+    // EnterPlanMode / AskUserQuestion 语义独立（计划模式提示、提问交互），
+    // 不并入活动分组、也不随完成态折叠，始终单独可见。
+    if (
+      item.type === "dynamicToolCall" &&
+      (name === "enterplanmode" || name === "askuserquestion")
+    )
+      return "standalone";
     return "groupable";
   }
   if (

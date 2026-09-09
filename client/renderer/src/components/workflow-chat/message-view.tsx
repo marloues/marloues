@@ -30,6 +30,8 @@ import { useMarkdownContext } from "./content/MarkdownContext";
 import { fileReadPresentation } from "./activity/file-read-presentation";
 import { WorkflowFileReadRow } from "./activity/FileReadRow";
 import { useItemDisclosure } from "./content/conversation-ui-state";
+import { AskUserQuestionCard } from "./activity/AskUserQuestionCard";
+import { PlanModeCard } from "./activity/PlanModeCard";
 import { IoCard } from "./disclosure/IoCard";
 import { toolIconFor } from "./disclosure/tool-icon";
 import { itemInputText, itemOutputText } from "./adapter/item-text";
@@ -246,6 +248,14 @@ export const MessageItemView = memo(function MessageItemView({
     item.type === "mcpToolCall" ||
     item.type === "webSearch"
   ) {
+    if (item.type === "dynamicToolCall") {
+      // EnterPlanMode：计划模式提示卡（图标 + 标题 + LLM 原文）。AskUserQuestion
+      // 激活态已由宿主转成请求走悬浮面板，到达这里的是禁用/报错态 → 不可用卡。
+      if (item.tool === "EnterPlanMode") return <PlanModeCard item={item} />;
+      if (item.tool === "AskUserQuestion") {
+        return <AskUserQuestionCard item={item} />;
+      }
+    }
     const failed = itemFailed(item);
     const running = itemRunning(item);
     const detailItem = item as ToolDetailItem;

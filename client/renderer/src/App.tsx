@@ -6,6 +6,7 @@ import { SettingsPage } from "@/components/settings";
 import { WorkbenchRoot } from "@/components/workbench/WorkbenchRoot";
 import { ConversationDetailsFixturePage } from "@/components/workflow-chat/fixtures/ConversationDetailsFixturePage";
 import { ConversationComparisonPage } from "@/components/workflow-chat/fixtures/ConversationComparisonPage";
+import { ToolInteractionPreviewPage } from "@/components/workflow-chat/fixtures/ToolInteractionPreviewPage";
 import type { Page } from "@/components/workbench/types";
 import {
   WorkflowChatShellFixturePage,
@@ -64,6 +65,10 @@ export default function App() {
   if (import.meta.env.DEV && workflowFixture === "taskContext") {
     applyCodexFixtureTheme();
     return <TaskContextFixturePage />;
+  }
+  if (import.meta.env.DEV && workflowFixture === "toolPreview") {
+    applyCodexFixtureTheme();
+    return <ToolInteractionPreviewPage />;
   }
 
   return <MainApp />;

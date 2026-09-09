@@ -1,7 +1,10 @@
 import { createSdkMcpResultBridges } from "./sdk-mcp-result-bridge";
 import { workflowToolResult } from "@shared/workflow-tool-result";
 import { conversationInputBroker } from "./conversation-input";
-import { inputFieldsFromSchema } from "@shared/conversation-input";
+import {
+  inputFieldsFromSchema,
+  type ConversationInputField,
+} from "@shared/conversation-input";
 /**
  * Claude Runtime Adapter.
  *
@@ -1474,13 +1477,21 @@ export class ClaudeRuntime implements AgentRuntime {
               kind: "question",
               title: "需要你的回答",
               source: toolName,
-              fields: questions.map((question) => ({
-                id: question.question,
-                label: question.question,
-                type: question.multiSelect ? "multi" : "string",
-                options: question.options?.map((option) => option.label),
-                required: true,
-              })),
+              fields: [
+                ...questions.map((question): ConversationInputField => ({
+                  id: question.question,
+                  label: question.question,
+                  type: question.multiSelect ? "multi" : "string",
+                  options: question.options?.map((option) => option.label),
+                  required: true,
+                })),
+                {
+                  id: "__custom",
+                  label: "自定义回答（可选）",
+                  type: "string",
+                  required: false,
+                },
+              ],
             },
             emitQuestion,
             context.signal as AbortSignal | undefined,
