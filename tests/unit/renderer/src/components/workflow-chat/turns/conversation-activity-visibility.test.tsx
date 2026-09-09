@@ -144,9 +144,11 @@ describe("conversation activity visibility", () => {
       },
     };
     expect(workflowShouldShowProcessItem(item)).toBe(true);
-    expect(
-      renderToStaticMarkup(<WorkflowTurnItemRenderer item={item} />),
-    ).toContain("提供信息");
+    // 问阶段（pending 提问）不再内联渲染：host 把它转成 ConversationInputRequest
+    // 浮在请求面板（与权限审批一致），对话区渲染为空。
+    expect(renderToStaticMarkup(<WorkflowTurnItemRenderer item={item} />)).toBe(
+      "",
+    );
     const model = buildTurnPresentationModel(turn([item], true), {
       isLastStreaming: true,
     });
