@@ -39,6 +39,10 @@ import {
   AUXILIARY_VIEW_LABELS,
   AUXILIARY_VIEW_OPTIONS,
 } from "./catalog";
+import {
+  useAuxiliaryTabIntentStore,
+  type AuxiliaryTabIntent,
+} from "@/stores/auxiliary-tab-intent-store";
 import { AuxiliaryHeader } from "./AuxiliaryHeader";
 import {
   AuxiliaryEmptyLauncher,
@@ -453,6 +457,158 @@ export function AuxiliarySidebar({
     },
     [activeSessionId, addTab, setActiveTabId, setTabs, workspace?.path],
   );
+
+  const auxiliaryIntent = useAuxiliaryTabIntentStore((state) => state.intent);
+  const auxiliaryIntentSeq = useAuxiliaryTabIntentStore((state) => state.seq);
+  const clearAuxiliaryIntent = useAuxiliaryTabIntentStore(
+    (state) => state.clear,
+  );
+  const handledAuxiliaryIntentSeqRef = useRef(0);
+
+  useEffect(() => {
+    if (
+      !auxiliaryIntent ||
+      auxiliaryIntent.sessionId !== activeSessionId ||
+      handledAuxiliaryIntentSeqRef.current === auxiliaryIntentSeq
+    ) {
+      return;
+    }
+    handledAuxiliaryIntentSeqRef.current = auxiliaryIntentSeq;
+    clearAuxiliaryIntent(auxiliaryIntentSeq);
+    if (auxiliaryIntent.type === "review") {
+      useInspectorStore
+        .getState()
+        .openReview(auxiliaryIntent.path, auxiliaryIntent.diff, {
+          sessionId: activeSessionId ?? undefined,
+        });
+      return;
+    }
+    if (auxiliaryIntent.type === "file") {
+      useInspectorStore.getState().openFile(auxiliaryIntent.path, {
+        sessionId: activeSessionId ?? undefined,
+      });
+      return;
+    }
+
+    if (auxiliaryIntent.type === "outputs") {
+      addTab("outputs");
+      onEnsureOpen();
+      return;
+    }
+
+    if (auxiliaryIntent.type === "terminal") {
+      const terminalSessionId = auxiliaryIntent.terminalSessionId;
+      if (!terminalSessionId) {
+        handleOpenView("terminal");
+        return;
+      }
+      const existing = tabs.find(
+        (tab) => tab.type === "terminal" && tab.sessionId === terminalSessionId,
+      );
+      const id = existing?.id ?? makeTabId();
+      setTabs((previous) => [
+        ...previous,
+        ...(existing
+          ? []
+          : [{ id, type: "terminal" as const, sessionId: terminalSessionId }]),
+      ]);
+      setActiveTabId(id);
+      onEnsureOpen();
+      return;
+    }
+
+    if (auxiliaryIntent.type === "browser") {
+      const pageId = auxiliaryIntent.pageId;
+      if (!pageId && !auxiliaryIntent.url) {
+        handleOpenView("browser");
+        return;
+      }
+      if (pageId) {
+        const existing = tabs.find(
+          (tab) => tab.type === "browser" && tab.pageId === pageId,
+        );
+        const id = existing?.id ?? browserTabId(pageId);
+        setTabs((previous) => [
+          ...previous,
+          ...(existing
+            ? []
+            : [
+                {
+                  id,
+                  type: "browser" as const,
+                  pageId,
+                },
+              ]),
+        ]);
+        setActiveTabId(id);
+        onEnsureOpen();
+        return;
+      }
+
+      const url = auxiliaryIntent.url ?? "about:blank";
+      const id = makeTabId();
+      setTabs((previous) => [...previous, { id, type: "browser" as const }]);
+      setActiveTabId(id);
+      void window.marloues.browser
+        ?.newPage(url, activeSessionId ?? undefined)
+        .then((createdPageId) => {
+          setTabs((previous) =>
+            previous.map((tab) =>
+              tab.id === id ? { ...tab, pageId: createdPageId } : tab,
+            ),
+          );
+        })
+        .catch(() => {
+          setTabs((previous) => previous.filter((tab) => tab.id !== id));
+        });
+      onEnsureOpen();
+      return;
+    }
+
+    const intent: Extract<AuxiliaryTabIntent, { type: "subagent" }> =
+      auxiliaryIntent;
+    const subagent = subagentById.get(intent.subagentId);
+    if (!subagent) return;
+    setClosedSubagentTabs((previous) => {
+      if (!previous.has(intent.subagentId)) return previous;
+      const next = new Set(previous);
+      next.delete(intent.subagentId);
+      return next;
+    });
+    const existing = tabs.find(
+      (tab) => tab.type === "subagent" && tab.subagentId === intent.subagentId,
+    );
+    const id = existing?.id ?? subagentTabId(intent.subagentId);
+    setTabs((previous) => [
+      ...previous,
+      ...(existing
+        ? []
+        : [
+            {
+              id,
+              type: "subagent" as const,
+              subagentId: intent.subagentId,
+            },
+          ]),
+    ]);
+    setActiveTabId(id);
+    selectExecutionSubagent(intent.sessionId, intent.subagentId);
+    onEnsureOpen();
+  }, [
+    activeSessionId,
+    addTab,
+    auxiliaryIntent,
+    auxiliaryIntentSeq,
+    clearAuxiliaryIntent,
+    handleOpenView,
+    onEnsureOpen,
+    selectExecutionSubagent,
+    setActiveTabId,
+    setClosedSubagentTabs,
+    setTabs,
+    subagentById,
+    tabs,
+  ]);
 
   const focusTabAfterUpdate = useCallback((id: string | null) => {
     window.setTimeout(() => {

@@ -141,6 +141,7 @@ export function WorkflowChatPage({
   taskContextGitLoading = false,
   onTaskContextRefresh,
   onTaskContextCloseFloating,
+  onOpenScheduledTask,
   permissionRequest,
   onPermissionRespond,
 }: {
@@ -154,6 +155,7 @@ export function WorkflowChatPage({
   taskContextGitLoading?: boolean;
   onTaskContextRefresh: () => void;
   onTaskContextCloseFloating: () => void;
+  onOpenScheduledTask?: (taskId: string) => void;
   permissionRequest?: PermissionDialogRequest;
   onPermissionRespond: (
     approved: boolean,
@@ -855,6 +857,7 @@ export function WorkflowChatPage({
         gitLoading={taskContextGitLoading}
         onRefresh={onTaskContextRefresh}
         onCloseFloating={onTaskContextCloseFloating}
+        onOpenScheduledTask={onOpenScheduledTask}
         onOpenChanges={
           taskPresentation.changes?.reviewTarget
             ? () => {

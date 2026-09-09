@@ -27,7 +27,11 @@ const NOTIFICATION_OPTIONS: Array<{
   { value: "feishu", label: "飞书推送" },
 ];
 
-export function ScheduleFormDialog() {
+export function ScheduleFormDialog({
+  sourceSessionId,
+}: {
+  sourceSessionId?: string | null;
+}) {
   const mode = useScheduleViewStore((state) => state.form.mode);
   const sourceId = useScheduleViewStore((state) => state.form.sourceId);
   const tasks = useScheduleStore((state) => state.tasks);
@@ -80,7 +84,11 @@ export function ScheduleFormDialog() {
     setError("");
     try {
       if (isEdit && source) await update(source.id, result.input);
-      else await create(result.input);
+      else
+        await create({
+          ...result.input,
+          sourceSessionId: sourceSessionId ?? undefined,
+        });
       scheduleViewActions.closeForm();
     } catch (submitError) {
       setError(

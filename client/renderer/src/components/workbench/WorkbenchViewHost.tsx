@@ -23,6 +23,7 @@ export interface WorkbenchViewHostProps {
     scope?: "once" | "session",
     reason?: string,
   ) => void;
+  onOpenScheduledTask?: (taskId: string) => void;
 }
 
 interface KeepAliveViewProps {
@@ -70,6 +71,7 @@ interface PersistentChatWorkspaceProps {
   hideChatTitle: boolean;
   permissionRequest?: PermissionDialogRequest;
   onPermissionRespond: WorkbenchViewHostProps["onPermissionRespond"];
+  onOpenScheduledTask?: (taskId: string) => void;
 }
 
 /**
@@ -84,6 +86,7 @@ const PersistentChatWorkspace = memo(function PersistentChatWorkspace({
   hideChatTitle,
   permissionRequest,
   onPermissionRespond,
+  onOpenScheduledTask,
 }: PersistentChatWorkspaceProps) {
   const { model, gitLoading, refreshGitContext } = useTaskPresentationModel();
   const taskContext = useTaskContextLayout({
@@ -119,6 +122,7 @@ const PersistentChatWorkspace = memo(function PersistentChatWorkspace({
           taskContextGitLoading={gitLoading}
           onTaskContextRefresh={refreshGitContext}
           onTaskContextCloseFloating={taskContext.closeFloating}
+          onOpenScheduledTask={onOpenScheduledTask}
           permissionRequest={permissionRequest}
           onPermissionRespond={onPermissionRespond}
         />
@@ -136,6 +140,7 @@ export function WorkbenchViewHost({
   auxiliaryObscuresMain,
   permissionRequest,
   onPermissionRespond,
+  onOpenScheduledTask,
 }: WorkbenchViewHostProps) {
   const mountedViews = useRef(new Set<Page>(["chat", page]));
   mountedViews.current.add(page);
@@ -154,6 +159,7 @@ export function WorkbenchViewHost({
           hideChatTitle={hideChatTitle}
           permissionRequest={permissionRequest}
           onPermissionRespond={onPermissionRespond}
+          onOpenScheduledTask={onOpenScheduledTask}
         />
       </KeepAliveWorkbenchView>
 

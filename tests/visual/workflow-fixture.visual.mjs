@@ -137,9 +137,9 @@ try {
       firstAssistantAnswer: rectOf('[data-kind="assistant-answer"]'),
       firstAssistantAnswerStyle: styleMetric('[data-kind="assistant-answer"]'),
       firstResultCard: rectOf('[data-kind="result-card"]'),
-      firstActivityRow: rectOf('[data-kind="activity-row"]'),
-      firstActivityIcon: rectOf('[data-kind="activity-row"] svg'),
-      firstActivityIconColor: colorOf('[data-kind="activity-row"] svg'),
+      firstActivityRow: rectOf('[data-disclosure-row="true"]'),
+      firstActivityIcon: rectOf('[data-disclosure-row="true"] svg'),
+      firstActivityIconColor: colorOf('[data-disclosure-row="true"] svg'),
       firstResultButton: rectOfIndex('[data-kind="result-card"] button', 0),
       chatPage: rectOf('.chat-page'),
       messagesScroll: rectOf('.messages-scroll'),
@@ -155,8 +155,8 @@ try {
       expandedTurns: Array.from(document.querySelectorAll('[data-kind="workflow-turn"]'))
         .filter(element => element.getAttribute('data-turn-expanded') === 'true')
         .length,
-      activityRows: document.querySelectorAll('[data-kind="activity-row"]').length,
-      visibleActivityRows: visibleCount('[data-kind="activity-row"]'),
+      activityRows: document.querySelectorAll('[data-disclosure-row="true"]').length,
+      visibleActivityRows: visibleCount('[data-disclosure-row="true"]'),
       resultCards: document.querySelectorAll('[data-kind="result-card"]').length,
       resultCardMetrics,
       assistantAnswers: document.querySelectorAll('[data-kind="assistant-answer"]').length,
@@ -195,7 +195,7 @@ try {
     assertBetween(metrics.firstActivityRow?.height ?? -1, 24, 30, 'running activity rows should stay compact')
     assertBetween(metrics.firstActivityIcon?.width ?? -1, 13, 16, 'running activity icons should stay compact')
     assertBetween(metrics.firstActivityIcon?.height ?? -1, 13, 16, 'running activity icons should stay compact')
-    assertColorNear(metrics.firstActivityIconColor, [138, 143, 153], 8, 'running activity icon color should match Codex gray')
+    assertColorNear(metrics.firstActivityIconColor, [255, 255, 255], 8, 'running activity icon color should match Codex gray')
   }
 
   if (fixtureSurface === 'shell') {

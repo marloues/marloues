@@ -16,7 +16,7 @@ import type { WorkflowUserMessageContent } from "@shared/workflow-read-thread-co
 // Two 14px lines at 1.55 line-height plus the textarea's vertical padding.
 // Keeping two rows inside the minimum prevents the composer shell from
 // jumping when the user enters the first newline.
-export const COMPOSER_TEXTAREA_MIN_HEIGHT = 64;
+export const COMPOSER_TEXTAREA_MIN_HEIGHT = 56;
 export const COMPOSER_TEXTAREA_WITH_ATTACHMENTS_MIN_HEIGHT = 60;
 export const COMPOSER_TEXTAREA_MAX_HEIGHT = 150;
 

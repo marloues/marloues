@@ -10,6 +10,7 @@ import styles from "@/components/schedule/SchedulePage.module.css";
 
 interface SchedulePageProps {
   onOpenSession: (sessionId: string) => void;
+  sourceSessionId: string | null;
 }
 
 const TABS = [
@@ -23,7 +24,10 @@ const TABS = [
  *  - 中部：两个面板常驻，只切换可见性
  *  - 浮层：ScheduleFormDialog 接管 create / edit
  */
-export function SchedulePage({ onOpenSession }: SchedulePageProps) {
+export function SchedulePage({
+  onOpenSession,
+  sourceSessionId,
+}: SchedulePageProps) {
   const tab = useScheduleViewStore((s) => s.tab);
   const setTab = useScheduleViewStore((s) => s.setTab);
   const loaded = useScheduleStore((s) => s.loaded);
@@ -77,7 +81,7 @@ export function SchedulePage({ onOpenSession }: SchedulePageProps) {
         <ScheduleRecordsView onOpenSession={onOpenSession} />
       </div>
 
-      <ScheduleFormDialog />
+      <ScheduleFormDialog sourceSessionId={sourceSessionId} />
     </section>
   );
 }

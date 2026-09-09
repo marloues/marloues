@@ -1,13 +1,26 @@
 import { useEffect, useRef } from "react";
+import { CONVERSATION_PAGE_CONTRACT } from "@shared/conversation-page-contract";
 import type { TaskContextMode } from "./use-task-context-layout";
-import type { TaskPresentationModel } from "./task-presentation-model";
+import type {
+  OutputTarget,
+  TaskPresentationModel,
+} from "./task-presentation-model";
+import { openAuxiliaryTab } from "@/stores/auxiliary-tab-intent-store";
+import { useScheduleStore } from "@/stores/schedule-store";
 import {
   BackgroundProcessesSection,
+  BrowserPagesSection,
   OutputContentSection,
+  PlanSection,
+  ScheduledSection,
   SourcesSection,
+  SubagentsSection,
   TaskProgressSection,
+  UsageSection,
   WorkspaceContextSection,
 } from "./TaskContextSections";
+
+const SUMMARY_CONTRACT = CONVERSATION_PAGE_CONTRACT.threadSummary;
 
 export function TaskContextPanel({
   model,
@@ -16,6 +29,7 @@ export function TaskContextPanel({
   onRefresh,
   onCloseFloating,
   onOpenChanges,
+  onOpenScheduledTask,
 }: {
   model: TaskPresentationModel;
   mode: TaskContextMode;
@@ -23,7 +37,10 @@ export function TaskContextPanel({
   onRefresh: () => void;
   onCloseFloating: () => void;
   onOpenChanges?: () => void;
+  onOpenScheduledTask?: (taskId: string) => void;
 }) {
+  const toggleScheduledTask = useScheduleStore((state) => state.toggle);
+  const removeScheduledTask = useScheduleStore((state) => state.remove);
   const panelRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -51,6 +68,29 @@ export function TaskContextPanel({
 
   if (!model.hasData || mode === "hidden") return null;
   const workspace = model.workspace;
+  const sessionId = model.sessionId;
+  const sectionOrder = SUMMARY_CONTRACT.sectionOrder.filter(
+    (key) =>
+      !(SUMMARY_CONTRACT.deferredSections as readonly string[]).includes(key),
+  );
+
+  const openOutput = (target: OutputTarget) => {
+    if (!sessionId) return;
+    if (target.kind === "review") {
+      openAuxiliaryTab({
+        type: "review",
+        sessionId,
+        path: target.path,
+        diff: target.diff,
+      });
+    } else if (target.kind === "file") {
+      openAuxiliaryTab({ type: "file", sessionId, path: target.path });
+    } else if (target.kind === "browser") {
+      openAuxiliaryTab({ type: "browser", sessionId, url: target.url });
+    } else {
+      openAuxiliaryTab({ type: "outputs", sessionId });
+    }
+  };
 
   return (
     <aside
@@ -62,29 +102,145 @@ export function TaskContextPanel({
       role="complementary"
     >
       <div className="thread-summary-panel-scroll scrollbar-thin">
-        <WorkspaceContextSection
-          sessionId={model.sessionId}
-          model={model}
-          gitLoading={gitLoading}
-          onRefresh={onRefresh}
-          onOpenChanges={
-            model.changes?.reviewTarget ? onOpenChanges : undefined
+        {sectionOrder.map((sectionKey) => {
+          switch (sectionKey) {
+            case "scheduled":
+              return (
+                <ScheduledSection
+                  key={sectionKey}
+                  sessionId={sessionId}
+                  scheduled={model.scheduled}
+                  onOpenScheduledTask={onOpenScheduledTask}
+                  onToggleScheduledTask={(taskId) => {
+                    void toggleScheduledTask(taskId).catch((error) => {
+                      console.error(
+                        "[task-context] toggle schedule failed",
+                        error,
+                      );
+                    });
+                  }}
+                  onRemoveScheduledTask={(taskId) => {
+                    void removeScheduledTask(taskId).catch((error) => {
+                      console.error(
+                        "[task-context] remove schedule failed",
+                        error,
+                      );
+                    });
+                  }}
+                />
+              );
+            case "environment":
+              return (
+                <WorkspaceContextSection
+                  key={sectionKey}
+                  sessionId={sessionId}
+                  model={model}
+                  gitLoading={gitLoading}
+                  onRefresh={onRefresh}
+                  onOpenChanges={
+                    model.changes?.reviewTarget ? onOpenChanges : undefined
+                  }
+                  onOpenWorkspace={() => {
+                    if (workspace?.id)
+                      void window.marloues.workspace.openInExplorer(
+                        workspace.id,
+                      );
+                  }}
+                />
+              );
+            case "plan":
+              return (
+                <PlanSection
+                  key={sectionKey}
+                  sessionId={sessionId}
+                  plan={model.plan}
+                />
+              );
+            case "outputs":
+              return (
+                <OutputContentSection
+                  key={sectionKey}
+                  sessionId={sessionId}
+                  outputContent={model.outputContent}
+                  onOpenOutput={openOutput}
+                />
+              );
+            case "created-tasks":
+              return (
+                <TaskProgressSection
+                  key={sectionKey}
+                  sessionId={sessionId}
+                  tasks={model.tasks}
+                />
+              );
+            case "subagents":
+              return (
+                <SubagentsSection
+                  key={sectionKey}
+                  sessionId={sessionId}
+                  subagents={model.subagents}
+                  onOpenSubagent={(subagentId) => {
+                    if (sessionId)
+                      openAuxiliaryTab({
+                        type: "subagent",
+                        sessionId,
+                        subagentId,
+                      });
+                  }}
+                />
+              );
+            case "usage":
+              return (
+                <UsageSection
+                  key={sectionKey}
+                  sessionId={sessionId}
+                  usage={model.usage}
+                />
+              );
+            case "background-processes":
+              return (
+                <BackgroundProcessesSection
+                  key={sectionKey}
+                  sessionId={sessionId}
+                  processes={model.processes}
+                  onOpenTerminal={(terminalSessionId) => {
+                    if (sessionId)
+                      openAuxiliaryTab({
+                        type: "terminal",
+                        sessionId,
+                        terminalSessionId,
+                      });
+                  }}
+                />
+              );
+            case "browser":
+              return (
+                <BrowserPagesSection
+                  key={sectionKey}
+                  sessionId={sessionId}
+                  browserPages={model.browserPages}
+                  onOpenBrowserPage={(pageId) => {
+                    if (sessionId)
+                      openAuxiliaryTab({
+                        type: "browser",
+                        sessionId,
+                        pageId,
+                      });
+                  }}
+                />
+              );
+            case "sources":
+              return (
+                <SourcesSection
+                  key={sectionKey}
+                  sessionId={sessionId}
+                  sources={model.sources}
+                />
+              );
+            default:
+              return null;
           }
-          onOpenWorkspace={() => {
-            if (workspace?.id)
-              void window.marloues.workspace.openInExplorer(workspace.id);
-          }}
-        />
-        <TaskProgressSection sessionId={model.sessionId} tasks={model.tasks} />
-        <OutputContentSection
-          sessionId={model.sessionId}
-          outputContent={model.outputContent}
-        />
-        <BackgroundProcessesSection
-          sessionId={model.sessionId}
-          processes={model.processes}
-        />
-        <SourcesSection sessionId={model.sessionId} sources={model.sources} />
+        })}
       </div>
     </aside>
   );

@@ -49,9 +49,8 @@ export function TaskContextFixturePage() {
           </p>
           <h2>这次包含的内容</h2>
           <ul>
-            <li>工作区、分支、变更与运行权限</li>
-            <li>本轮 agent 回复对应的输出内容</li>
-            <li>当前任务进度和仍在运行的后台命令</li>
+            <li>定时任务、环境、计划、产出与用量</li>
+            <li>已创建任务、子代理、后台进程和浏览器页面</li>
             <li>网页搜索与 MCP 等本轮来源</li>
           </ul>
           {notice ? (
@@ -67,6 +66,17 @@ function fixtureModel(hasData: boolean): TaskPresentationModel {
   return {
     sessionId: hasData ? "fixture-session" : "empty-session",
     hasData: true,
+    scheduled: hasData
+      ? [
+          {
+            id: "schedule-1",
+            name: "每日构建摘要",
+            enabled: true,
+            status: "success",
+            nextRunAt: Date.now() + 3_600_000,
+          },
+        ]
+      : [],
     workspace: {
       id: "fixture-workspace",
       name: hasData ? "marloues" : "tmp",
@@ -102,13 +112,31 @@ function fixtureModel(hasData: boolean): TaskPresentationModel {
       : null,
     modelName: hasData ? "Marloues 5.6" : undefined,
     securityMode: hasData ? "full-access" : undefined,
+    plan: hasData
+      ? {
+          id: "plan-1",
+          text: "先扩展数据模型，再接入辅助栏跳转，最后完成视觉核验。",
+        }
+      : null,
     outputContent: hasData
       ? [
           {
-            id: "agent-reply",
-            label: "最终回复",
-            detail:
-              "已完成摘要按钮布局修正，并保留展开时辅助区按钮的原有逻辑。",
+            id: "file-change-1",
+            label: "文件变更",
+            detail: "client/renderer/src/App.tsx",
+            kind: "file-change",
+            target: {
+              kind: "review",
+              path: "client/renderer/src/App.tsx",
+              diff: "+fixture",
+            },
+          },
+          {
+            id: "image-1",
+            label: "生成图片",
+            detail: "fixture-output.png",
+            kind: "image",
+            target: { kind: "file", path: "fixture-output.png" },
           },
         ]
       : [],
@@ -132,12 +160,55 @@ function fixtureModel(hasData: boolean): TaskPresentationModel {
           },
         ]
       : [],
+    subagents: hasData
+      ? [
+          {
+            id: "subagent-1",
+            parentToolId: "tool-1",
+            ordinal: 1,
+            agentName: "验证代理",
+            iconSeed: "fixture",
+            status: "running",
+            createdAt: 1,
+            updatedAt: 2,
+            events: [],
+            timeline: [],
+            text: "正在执行验证",
+          },
+        ]
+      : [],
+    usage: hasData
+      ? {
+          inputTokens: 12_300,
+          outputTokens: 4_500,
+          cacheReadInputTokens: 2_000,
+          totalTokens: 16_800,
+        }
+      : null,
     processes: hasData
       ? [
           {
             id: "process-1",
             command: "npm run verify:workflow-visual",
             status: "running",
+            source: "command" as const,
+          },
+          {
+            id: "terminal:fixture-terminal",
+            command: "zsh",
+            cwd: "/workspace/marloues",
+            status: "running",
+            source: "terminal" as const,
+            terminalSessionId: "fixture-terminal",
+          },
+        ]
+      : [],
+    browserPages: hasData
+      ? [
+          {
+            pageId: "fixture-page",
+            title: "Marloues 文档",
+            url: "https://example.com/marloues",
           },
         ]
       : [],

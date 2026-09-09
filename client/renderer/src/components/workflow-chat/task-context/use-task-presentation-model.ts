@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useScheduleStore } from "@/stores/schedule-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useUnifiedChatStore } from "@/stores/unified-chat-store";
 import { useWorkspaceStore } from "@/stores/workspace-store";
@@ -14,6 +15,7 @@ import {
 } from "@shared/workspace-path";
 import {
   buildTaskPresentationModel,
+  type TerminalSessionSummary,
   taskFocusTurn,
 } from "./task-presentation-model";
 
@@ -40,6 +42,12 @@ export function useTaskPresentationModel() {
   const workspaceSettings = useWorkspaceStore((state) => state.settings);
   const currentWorkspace = useWorkspaceStore((state) => state.current);
   const settings = useSettingsStore((state) => state.settings);
+  const scheduleTasks = useScheduleStore((state) => state.tasks);
+  const scheduleRuns = useScheduleStore((state) => state.runs);
+  const scheduleLoaded = useScheduleStore((state) => state.loaded);
+  const scheduleLoad = useScheduleStore((state) => state.load);
+  const scheduleSubscribe = useScheduleStore((state) => state.subscribeChanged);
+  const scheduleLoadAllRuns = useScheduleStore((state) => state.loadAllRuns);
   const workspace = resolveTaskWorkspace({
     activeSession,
     workspaceSettings,
@@ -52,6 +60,80 @@ export function useTaskPresentationModel() {
     context: WorkspaceGitContext | null;
     loading: boolean;
   }>({ context: null, loading: false });
+  const [terminalSessions, setTerminalSessions] = useState<
+    TerminalSessionSummary[]
+  >([]);
+  const [browserPages, setBrowserPages] = useState<
+    Array<{ pageId: string; title: string; url: string }>
+  >([]);
+
+  useEffect(() => {
+    if (scheduleLoaded) return;
+    void scheduleLoad().catch(() => undefined);
+  }, [scheduleLoaded, scheduleLoad]);
+
+  useEffect(() => scheduleSubscribe(), [scheduleSubscribe]);
+
+  const scheduleTaskIdsKey = scheduleTasks.map((task) => task.id).join("|");
+  useEffect(() => {
+    if (!scheduleLoaded) return;
+    void scheduleLoadAllRuns().catch(() => undefined);
+  }, [scheduleLoaded, scheduleTaskIdsKey, scheduleLoadAllRuns]);
+
+  useEffect(() => {
+    if (!activeSessionId) {
+      setTerminalSessions([]);
+      setBrowserPages([]);
+      return undefined;
+    }
+    let cancelled = false;
+    setTerminalSessions([]);
+    setBrowserPages([]);
+    const loadTerminalSessions = async () => {
+      try {
+        const sessions = (await window.marloues.terminal?.list()) ?? [];
+        if (cancelled) return;
+        setTerminalSessions(
+          sessions
+            .filter((session) => session.threadId === activeSessionId)
+            .map((session) => ({
+              sessionId: session.sessionId,
+              threadId: session.threadId,
+              process: session.process,
+              cwd: session.cwd,
+            })),
+        );
+      } catch {
+        if (!cancelled) setTerminalSessions([]);
+      }
+    };
+    const loadBrowserPages = async () => {
+      try {
+        const pages =
+          (await window.marloues.browser?.listPages(activeSessionId)) ?? [];
+        if (cancelled) return;
+        setBrowserPages(
+          pages.map((page) => ({
+            pageId: page.pageId,
+            title: page.title || page.url,
+            url: page.url,
+          })),
+        );
+      } catch {
+        if (!cancelled) setBrowserPages([]);
+      }
+    };
+    void loadTerminalSessions();
+    void loadBrowserPages();
+    const timer = window.setInterval(() => {
+      void loadTerminalSessions();
+      void loadBrowserPages();
+    }, 5000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [activeSessionId, refreshKey]);
 
   const refreshGitContext = useCallback(async () => {
     if (!workspace?.id) {
@@ -89,16 +171,26 @@ export function useTaskPresentationModel() {
         gitContext:
           gitState.workspaceId === workspace?.id ? gitState.context : null,
         tasks: Object.values(execution?.tasks ?? {}),
+        subagents: Object.values(execution?.subagents ?? {}),
+        scheduledTasks: scheduleTasks,
+        scheduledRuns: scheduleRuns,
+        terminalSessions,
+        browserPages,
         securityMode: settings?.securityMode,
         fallbackModelName: settings?.defaultModel.modelId,
       }),
     [
       activeSessionId,
       execution?.tasks,
+      execution?.subagents,
       gitState,
       readThread,
+      scheduleRuns,
+      scheduleTasks,
       settings?.defaultModel.modelId,
       settings?.securityMode,
+      browserPages,
+      terminalSessions,
       workspace,
     ],
   );

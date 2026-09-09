@@ -115,7 +115,7 @@ export function scheduleCopyInputFromTask(
   if (!result.input) {
     throw new Error(result.error ?? "无法复制定时任务。");
   }
-  return result.input;
+  return { ...result.input, sourceSessionId: task.sourceSessionId };
 }
 
 function dateTime(dateKey: string, hour: number, minute: number): number {
