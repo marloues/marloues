@@ -1,6 +1,12 @@
-import type { ExecutionTaskRecord } from "@/stores/unified-chat-store";
+import type {
+  ExecutionSubagentRecord,
+  ExecutionTaskRecord,
+} from "@/stores/unified-chat-store";
 import type {
   AgentSecurityMode,
+  ScheduledTaskRecord,
+  ScheduledTaskRunRecord,
+  TokenUsage,
   WorkspaceGitContext,
   WorkspaceInfo,
 } from "@shared/types";
@@ -18,6 +24,13 @@ import {
 export interface TaskPresentationModel {
   sessionId: string | null;
   hasData: boolean;
+  scheduled: Array<{
+    id: string;
+    name: string;
+    status: string;
+    detail?: string;
+    nextRunAt?: number;
+  }>;
   workspace: (WorkspaceInfo & { git: WorkspaceGitContext | null }) | null;
   changes: {
     filesChanged: number;
@@ -29,15 +42,30 @@ export interface TaskPresentationModel {
     id: string;
     label: string;
     detail: string;
+    kind: "file-change" | "image" | "web-search" | "link";
+    target?: OutputTarget;
   }>;
+  plan: {
+    id: string;
+    text: string;
+  } | null;
   modelName?: string;
   securityMode?: AgentSecurityMode;
   tasks: ExecutionTaskRecord[];
+  subagents: ExecutionSubagentRecord[];
+  usage: TokenUsage | null;
   processes: Array<{
     id: string;
     command: string;
     cwd?: string;
     status: string;
+    source: "command" | "terminal";
+    terminalSessionId?: string;
+  }>;
+  browserPages: Array<{
+    pageId: string;
+    title: string;
+    url: string;
   }>;
   sources: Array<{
     id: string;
@@ -48,12 +76,30 @@ export interface TaskPresentationModel {
   }>;
 }
 
+export type OutputTarget =
+  | { kind: "review"; path: string; diff: string }
+  | { kind: "file"; path: string }
+  | { kind: "browser"; url: string }
+  | { kind: "outputs" };
+
+export interface TerminalSessionSummary {
+  sessionId: string;
+  threadId?: string;
+  process: string;
+  cwd: string;
+}
+
 export function buildTaskPresentationModel({
   sessionId,
   readThread,
   workspace,
   gitContext,
   tasks = [],
+  subagents = [],
+  scheduledTasks = [],
+  scheduledRuns = {},
+  terminalSessions = [],
+  browserPages = [],
   securityMode,
   fallbackModelName,
 }: {
@@ -62,6 +108,15 @@ export function buildTaskPresentationModel({
   workspace?: WorkspaceInfo | null;
   gitContext?: WorkspaceGitContext | null;
   tasks?: ExecutionTaskRecord[];
+  subagents?: ExecutionSubagentRecord[];
+  scheduledTasks?: ScheduledTaskRecord[];
+  scheduledRuns?: Record<string, ScheduledTaskRunRecord[]>;
+  terminalSessions?: TerminalSessionSummary[];
+  browserPages?: Array<{
+    pageId: string;
+    title: string;
+    url: string;
+  }>;
   securityMode?: AgentSecurityMode;
   fallbackModelName?: string;
 }): TaskPresentationModel {
@@ -70,21 +125,39 @@ export function buildTaskPresentationModel({
     .filter(
       (task) => !focusTurn || !task.turnId || task.turnId === focusTurn.id,
     )
-    .sort((left, right) => left.ordinal - right.ordinal);
+    .sort((left, right) => left.ordinal - right.ordinal)
+    .slice(0, 5);
   const hasData = Boolean(sessionId);
 
   return {
     sessionId,
     hasData,
+    scheduled: sessionId
+      ? scheduledSummaries(sessionId, scheduledTasks, scheduledRuns)
+      : [],
     workspace: workspace ? { ...workspace, git: gitContext ?? null } : null,
     changes:
       sessionId && focusTurn ? taskChangeSummary(focusTurn, gitContext) : null,
     outputContent:
       sessionId && focusTurn ? taskOutputContent(focusTurn.items) : [],
+    plan: sessionId && focusTurn ? taskPlan(focusTurn.items) : null,
     modelName: focusTurn?.modelName ?? focusTurn?.modelId ?? fallbackModelName,
     securityMode,
     tasks: sessionId ? scopedTasks : [],
-    processes: sessionId && focusTurn ? runningProcesses(focusTurn.items) : [],
+    subagents: sessionId
+      ? [...subagents]
+          .sort((left, right) => left.ordinal - right.ordinal)
+          .slice(0, 5)
+      : [],
+    usage: sessionId ? (focusTurn?.usage ?? null) : null,
+    processes: sessionId
+      ? mergeProcesses(
+          focusTurn ? runningProcesses(focusTurn.items) : [],
+          terminalSessions,
+          sessionId,
+        )
+      : [],
+    browserPages: sessionId ? browserPages.slice(0, 6) : [],
     sources: sessionId && focusTurn ? taskSources(focusTurn.items) : [],
   };
 }
@@ -123,28 +196,88 @@ function taskChangeSummary(
 function taskOutputContent(
   items: WorkflowTurnItem[],
 ): TaskPresentationModel["outputContent"] {
-  const text = finalAgentResponseText(items);
-  if (!text) return [];
-  return [
-    {
-      id: "agent-reply",
-      label: "最终回复",
-      detail: compactOutputContent(text),
-    },
-  ];
+  const outputs: TaskPresentationModel["outputContent"] = [];
+  for (const item of items) {
+    if (outputs.length >= 6) break;
+    if (item.type === "fileChange") {
+      item.changes.forEach((change, changeIndex) => {
+        if (outputs.length >= 6 || !change.path) return;
+        outputs.push({
+          id: `${item.id}:${changeIndex}`,
+          label: "文件变更",
+          detail: compactOutputContent(change.path),
+          kind: "file-change",
+          target: change.diff?.text
+            ? {
+                kind: "review",
+                path: change.path,
+                diff: change.diff.text,
+              }
+            : { kind: "file", path: change.path },
+        });
+      });
+    } else if (item.type === "imageGeneration") {
+      const path = item.savedPath;
+      outputs.push({
+        id: item.id,
+        label: "生成图片",
+        detail: compactOutputContent(path ?? item.revisedPrompt ?? "图片产物"),
+        kind: "image",
+        target: path ? { kind: "file", path } : { kind: "outputs" },
+      });
+    } else if (item.type === "imageView") {
+      outputs.push({
+        id: item.id,
+        label: "图片",
+        detail: compactOutputContent(item.path),
+        kind: "image",
+        target: { kind: "file", path: item.path },
+      });
+    } else if (item.type === "webSearch" && item.query?.trim()) {
+      outputs.push({
+        id: item.id,
+        label: "网页搜索",
+        detail: compactOutputContent(item.query),
+        kind: "web-search",
+        target: { kind: "outputs" },
+      });
+    }
+  }
+
+  for (const link of agentMessageLinks(items)) {
+    if (outputs.length >= 6) break;
+    outputs.push({
+      id: `link:${link}`,
+      label: "外部链接",
+      detail: compactOutputContent(link),
+      kind: "link",
+      target: { kind: "browser", url: link },
+    });
+  }
+  return outputs;
 }
 
-function finalAgentResponseText(items: WorkflowTurnItem[]): string {
+function taskPlan(items: WorkflowTurnItem[]): TaskPresentationModel["plan"] {
   for (let index = items.length - 1; index >= 0; index -= 1) {
     const item = items[index];
-    if (item?.type !== "agentMessage") continue;
+    if (item?.type !== "plan") continue;
     const text = item.text.trim();
-    if (!text) continue;
-    const phase = item.phase?.trim().toLowerCase();
-    if (phase === "final_answer" || phase === "final") return text;
-    if (phase === undefined) return text;
+    if (text) return { id: item.id, text };
   }
-  return "";
+  return null;
+}
+
+function agentMessageLinks(items: WorkflowTurnItem[]): string[] {
+  const links = new Set<string>();
+  const pattern = /https?:\/\/[^\s<>"')\]]+/gi;
+  for (const item of items) {
+    if (item?.type !== "agentMessage") continue;
+    for (const match of item.text.matchAll(pattern)) {
+      const link = match[0]?.replace(/[.,;:。]+$/, "");
+      if (link) links.add(link);
+    }
+  }
+  return [...links].slice(0, 6);
 }
 
 function compactOutputContent(text: string): string {
@@ -166,7 +299,51 @@ function runningProcesses(
       command: item.command.split(/\r?\n/, 1)[0]?.trim() || "命令",
       cwd: item.cwd,
       status: item.status,
+      source: "command" as const,
     }));
+}
+
+function mergeProcesses(
+  commandProcesses: TaskPresentationModel["processes"],
+  terminalSessions: TerminalSessionSummary[],
+  sessionId: string,
+): TaskPresentationModel["processes"] {
+  const terminalProcesses = terminalSessions
+    .filter((session) => !session.threadId || session.threadId === sessionId)
+    .map((session) => ({
+      id: `terminal:${session.sessionId}`,
+      command: session.process || "终端",
+      cwd: session.cwd,
+      status: "running",
+      source: "terminal" as const,
+      terminalSessionId: session.sessionId,
+    }));
+  return [...commandProcesses, ...terminalProcesses].slice(0, 6);
+}
+
+function scheduledSummaries(
+  sessionId: string,
+  tasks: ScheduledTaskRecord[],
+  runs: Record<string, ScheduledTaskRunRecord[]>,
+): TaskPresentationModel["scheduled"] {
+  const summaries: TaskPresentationModel["scheduled"] = [];
+  for (const task of tasks) {
+    const taskRuns = runs[task.id] ?? [];
+    const run = taskRuns.find((item) => item.sessionId === sessionId);
+    const fallbackSessionId = `scheduled-${task.id}`;
+    if (!run && fallbackSessionId !== sessionId) continue;
+    summaries.push({
+      id: task.id,
+      name: task.name,
+      status:
+        run?.status ??
+        task.lastRunStatus ??
+        (task.enabled ? "scheduled" : "paused"),
+      detail: run?.error ?? task.instruction,
+      nextRunAt: task.enabled ? task.nextRunAt : undefined,
+    });
+  }
+  return summaries;
 }
 
 function taskSources(
@@ -199,7 +376,7 @@ function taskSources(
   for (const [label, count] of mcpCounts) {
     sources.push({ id: `mcp:${label}`, kind: "mcp", label, count });
   }
-  return sources;
+  return sources.slice(0, 6);
 }
 
 function isRunning(status: string): boolean {

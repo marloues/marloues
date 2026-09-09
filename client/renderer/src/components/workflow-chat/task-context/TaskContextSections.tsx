@@ -1,4 +1,7 @@
-import type { TaskPresentationModel } from "./task-presentation-model";
+import type {
+  OutputTarget,
+  TaskPresentationModel,
+} from "./task-presentation-model";
 import { CONVERSATION_ICONS } from "../conversation-icon-contract";
 import {
   ThreadSummaryExpandableList,
@@ -6,6 +9,43 @@ import {
 } from "./ThreadSummaryPrimitives";
 
 const SUMMARY_ICONS = CONVERSATION_ICONS.summary;
+
+export function ScheduledSection({
+  sessionId,
+  scheduled,
+}: {
+  sessionId: string | null;
+  scheduled: TaskPresentationModel["scheduled"];
+}) {
+  if (!scheduled.length) return null;
+  return (
+    <ThreadSummarySection
+      sectionKey="scheduled"
+      sessionId={sessionId}
+      title="定时任务"
+      count={scheduled.length}
+    >
+      <ThreadSummaryExpandableList
+        items={scheduled}
+        scopeKey={`${sessionId ?? "none"}:scheduled`}
+        ariaLabel="定时任务"
+        getKey={(task) => task.id}
+        renderItem={(task) => (
+          <div className="task-context-row" title={task.detail ?? task.name}>
+            <SUMMARY_ICONS.scheduled
+              size={15}
+              data-icon-contract="summary-scheduled"
+            />
+            <span>{task.name}</span>
+            <small className="task-context-row-detail">
+              {scheduledStatus(task, scheduled.length)}
+            </small>
+          </div>
+        )}
+      />
+    </ThreadSummarySection>
+  );
+}
 
 export function WorkspaceContextSection({
   sessionId,
@@ -38,11 +78,16 @@ export function WorkspaceContextSection({
         }${git.behind ? `↓${git.behind}` : ""}`
       : undefined;
   const showChanges = Boolean(model.changes || git?.isRepository);
+  const hasEnvironmentRows = Boolean(
+    workspace || showChanges || model.modelName || model.securityMode,
+  );
+  if (!hasEnvironmentRows) return null;
+
   return (
     <ThreadSummarySection
-      sectionKey="workspace"
+      sectionKey="environment"
       sessionId={sessionId}
-      title={workspace?.name ?? "工作区"}
+      title="环境"
       after={
         <button
           type="button"
@@ -126,6 +171,78 @@ export function WorkspaceContextSection({
   );
 }
 
+export function PlanSection({
+  sessionId,
+  plan,
+}: {
+  sessionId: string | null;
+  plan: TaskPresentationModel["plan"];
+}) {
+  if (!plan) return null;
+  return (
+    <ThreadSummarySection sectionKey="plan" sessionId={sessionId} title="计划">
+      <div className="task-context-row" title={plan.text}>
+        <SUMMARY_ICONS.plan size={15} data-icon-contract="summary-plan" />
+        <span>当前计划</span>
+        <small className="task-context-row-detail">
+          {compactSummaryText(plan.text)}
+        </small>
+      </div>
+    </ThreadSummarySection>
+  );
+}
+
+export function OutputContentSection({
+  sessionId,
+  outputContent,
+  onOpenOutput,
+}: {
+  sessionId: string | null;
+  outputContent: TaskPresentationModel["outputContent"];
+  onOpenOutput?: (target: OutputTarget) => void;
+}) {
+  if (!outputContent.length) return null;
+  return (
+    <ThreadSummarySection
+      sectionKey="outputs"
+      sessionId={sessionId}
+      title="产出"
+      count={outputContent.length}
+    >
+      <ThreadSummaryExpandableList
+        items={outputContent}
+        scopeKey={`${sessionId ?? "none"}:outputs`}
+        ariaLabel="产出"
+        getKey={(item) => item.id}
+        renderItem={(item) => {
+          const Icon =
+            item.kind === "image"
+              ? SUMMARY_ICONS.imageOutput
+              : item.kind === "link"
+                ? SUMMARY_ICONS.linkOutput
+                : SUMMARY_ICONS.outputContent;
+          return (
+            <button
+              type="button"
+              className="task-context-row"
+              title={item.detail}
+              onClick={() => onOpenOutput?.(item.target ?? { kind: "outputs" })}
+              disabled={!item.target || !onOpenOutput}
+            >
+              <Icon
+                size={15}
+                data-icon-contract={`summary-output-${item.kind}`}
+              />
+              <span>{item.label}</span>
+              <small className="task-context-row-detail">{item.detail}</small>
+            </button>
+          );
+        }}
+      />
+    </ThreadSummarySection>
+  );
+}
+
 export function TaskProgressSection({
   sessionId,
   tasks,
@@ -137,16 +254,16 @@ export function TaskProgressSection({
   const complete = tasks.every((task) => task.status === "completed");
   return (
     <ThreadSummarySection
-      sectionKey="tasks"
+      sectionKey="created-tasks"
       sessionId={sessionId}
-      title="任务进度"
+      title="已创建任务"
       count={tasks.length}
       autoCollapse={complete}
     >
       <ThreadSummaryExpandableList
         items={tasks}
-        scopeKey={`${sessionId ?? "none"}:tasks`}
-        ariaLabel="任务进度"
+        scopeKey={`${sessionId ?? "none"}:created-tasks`}
+        ariaLabel="已创建任务"
         getKey={(task) => task.id}
         renderItem={(task) => {
           const completed = task.status === "completed";
@@ -171,37 +288,75 @@ export function TaskProgressSection({
   );
 }
 
-export function OutputContentSection({
+export function SubagentsSection({
   sessionId,
-  outputContent,
+  subagents,
+  onOpenSubagent,
 }: {
   sessionId: string | null;
-  outputContent: TaskPresentationModel["outputContent"];
+  subagents: TaskPresentationModel["subagents"];
+  onOpenSubagent?: (subagentId: string) => void;
 }) {
-  if (!outputContent.length) return null;
+  if (!subagents.length) return null;
   return (
     <ThreadSummarySection
-      sectionKey="output-content"
+      sectionKey="subagents"
       sessionId={sessionId}
-      title="输出内容"
-      count={outputContent.length}
+      title="子代理"
+      count={subagents.length}
     >
       <ThreadSummaryExpandableList
-        items={outputContent}
-        scopeKey={`${sessionId ?? "none"}:output-content`}
-        ariaLabel="输出内容"
-        getKey={(item) => item.id}
-        renderItem={(item) => (
-          <div className="task-context-row" title={item.detail}>
-            <SUMMARY_ICONS.outputContent
+        items={subagents}
+        scopeKey={`${sessionId ?? "none"}:subagents`}
+        ariaLabel="子代理"
+        getKey={(subagent) => subagent.id}
+        renderItem={(subagent) => (
+          <button
+            type="button"
+            className={`task-context-row task-status-${subagent.status}`}
+            onClick={() => onOpenSubagent?.(subagent.id)}
+            disabled={!onOpenSubagent}
+            title={subagent.description ?? subagent.prompt}
+          >
+            <SUMMARY_ICONS.subagent
               size={15}
-              data-icon-contract="summary-output-content"
+              data-icon-contract="summary-subagent"
             />
-            <span>{item.label}</span>
-            <small className="task-context-row-detail">{item.detail}</small>
-          </div>
+            <span>
+              {subagent.agentName ??
+                subagent.agentType ??
+                subagent.description ??
+                `#${subagent.ordinal}`}
+            </span>
+          </button>
         )}
       />
+    </ThreadSummarySection>
+  );
+}
+
+export function UsageSection({
+  sessionId,
+  usage,
+}: {
+  sessionId: string | null;
+  usage: TaskPresentationModel["usage"];
+}) {
+  if (!usage) return null;
+  const input = usage.inputTokens ?? 0;
+  const output = usage.outputTokens ?? 0;
+  const total = usage.totalTokens ?? input + output;
+  if (!input && !output && !total && !usage.cacheReadInputTokens) return null;
+  return (
+    <ThreadSummarySection sectionKey="usage" sessionId={sessionId} title="用量">
+      <div className="task-context-row" title="本轮 token 用量">
+        <SUMMARY_ICONS.usage size={15} data-icon-contract="summary-usage" />
+        <span>Token</span>
+        <small className="task-context-row-detail">
+          输入 {formatToken(input)} · 输出 {formatToken(output)} · 总计{" "}
+          {formatToken(total)}
+        </small>
+      </div>
     </ThreadSummarySection>
   );
 }
@@ -209,31 +364,95 @@ export function OutputContentSection({
 export function BackgroundProcessesSection({
   sessionId,
   processes,
+  onOpenTerminal,
 }: {
   sessionId: string | null;
   processes: TaskPresentationModel["processes"];
+  onOpenTerminal?: (terminalSessionId?: string) => void;
 }) {
   if (!processes.length) return null;
   return (
     <ThreadSummarySection
-      sectionKey="processes"
+      sectionKey="background-processes"
       sessionId={sessionId}
       title="后台进程"
       count={processes.length}
     >
       <ThreadSummaryExpandableList
         items={processes}
-        scopeKey={`${sessionId ?? "none"}:processes`}
+        scopeKey={`${sessionId ?? "none"}:background-processes`}
         ariaLabel="后台进程"
         getKey={(process) => process.id}
-        renderItem={(process) => (
-          <div className="task-context-row is-running">
-            <SUMMARY_ICONS.process
+        renderItem={(process) =>
+          process.source === "terminal" ? (
+            <button
+              type="button"
+              className="task-context-row is-running"
+              title={process.cwd ?? process.command}
+              onClick={() => onOpenTerminal?.(process.terminalSessionId)}
+              disabled={!onOpenTerminal}
+            >
+              <SUMMARY_ICONS.process
+                size={15}
+                data-icon-contract="summary-process"
+              />
+              <span>{process.command}</span>
+              <small className="task-context-row-detail">终端</small>
+            </button>
+          ) : (
+            <div
+              className="task-context-row is-running"
+              title={process.command}
+            >
+              <SUMMARY_ICONS.process
+                size={15}
+                data-icon-contract="summary-process"
+              />
+              <span>{process.command}</span>
+            </div>
+          )
+        }
+      />
+    </ThreadSummarySection>
+  );
+}
+
+export function BrowserPagesSection({
+  sessionId,
+  browserPages,
+  onOpenBrowserPage,
+}: {
+  sessionId: string | null;
+  browserPages: TaskPresentationModel["browserPages"];
+  onOpenBrowserPage?: (pageId: string) => void;
+}) {
+  if (!browserPages.length) return null;
+  return (
+    <ThreadSummarySection
+      sectionKey="browser"
+      sessionId={sessionId}
+      title="浏览器"
+      count={browserPages.length}
+    >
+      <ThreadSummaryExpandableList
+        items={browserPages}
+        scopeKey={`${sessionId ?? "none"}:browser`}
+        ariaLabel="浏览器页面"
+        getKey={(page) => page.pageId}
+        renderItem={(page) => (
+          <button
+            type="button"
+            className="task-context-row"
+            title={page.url}
+            onClick={() => onOpenBrowserPage?.(page.pageId)}
+            disabled={!onOpenBrowserPage}
+          >
+            <SUMMARY_ICONS.browser
               size={15}
-              data-icon-contract="summary-process"
+              data-icon-contract="summary-browser"
             />
-            <span title={process.command}>{process.command}</span>
-          </div>
+            <span>{page.title || page.url}</span>
+          </button>
         )}
       />
     </ThreadSummarySection>
@@ -287,6 +506,45 @@ export function SourcesSection({
       />
     </ThreadSummarySection>
   );
+}
+
+function scheduledStatus(
+  task: TaskPresentationModel["scheduled"][number],
+  count: number,
+): string {
+  if (count > 1) return scheduledStatusLabel(task.status);
+  if (task.nextRunAt) return `下次 ${formatTimestamp(task.nextRunAt)}`;
+  return scheduledStatusLabel(task.status);
+}
+
+function scheduledStatusLabel(status: string): string {
+  if (status === "running") return "运行中";
+  if (status === "success") return "已完成";
+  if (status === "failed") return "失败";
+  if (status === "missed") return "已错过";
+  if (status === "no_window") return "无窗口";
+  if (status === "paused" || status === "disabled") return "已暂停";
+  return "已启用";
+}
+
+function compactSummaryText(text: string): string {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  return normalized.length > 96 ? `${normalized.slice(0, 95)}…` : normalized;
+}
+
+function formatTimestamp(value: number): string {
+  return new Date(value).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatToken(value: number): string {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
+  return String(value);
 }
 
 function ChangeStats({

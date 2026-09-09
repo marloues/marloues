@@ -38,7 +38,7 @@
 .workflow-result-preview-card {
   display: grid;
   box-sizing: border-box;
-  min-height: 48px;
+  min-height: 56px;
   grid-template-columns: 20px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
@@ -46,7 +46,7 @@
 }
 
 .workflow-result-card > .workflow-result-card-head {
-  min-height: 46px;
+  min-height: 56px;
 }
 
 .workflow-result-card-icon {

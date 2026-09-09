@@ -113,7 +113,7 @@
 .composer textarea,
 .composer .composer-editable {
   width: 100%;
-  min-height: 64px;
+  min-height: 56px;
   max-height: 150px;
   resize: none;
   overflow-y: auto;
@@ -136,7 +136,7 @@
 
 .composer .composer-rich-input {
   display: flex;
-  min-height: 64px;
+  min-height: 56px;
   max-height: 150px;
   flex-direction: column;
   color: var(--text-1);
