@@ -164,7 +164,7 @@ describe("auxiliary sidebar components", () => {
 
   it("keeps an inactive view mounted but hidden", () => {
     const markup = renderToStaticMarkup(
-      <AuxiliaryViewPanel tabId="outputs-1" active={false}>
+      <AuxiliaryViewPanel tabId="outputs-1" active={false} viewType="outputs">
         <span>preserved-output-state</span>
       </AuxiliaryViewPanel>,
     );
@@ -172,6 +172,16 @@ describe("auxiliary sidebar components", () => {
     expect(markup).toContain('role="tabpanel"');
     expect(markup).toContain("hidden");
     expect(markup).toContain("preserved-output-state");
+  });
+
+  it("marks panels with their auxiliary view type", () => {
+    const markup = renderToStaticMarkup(
+      <AuxiliaryViewPanel tabId="files-1" active viewType="files">
+        <span>file-state</span>
+      </AuxiliaryViewPanel>,
+    );
+
+    expect(markup).toContain('data-view-type="files"');
   });
 
   it("renders the four lightweight launcher rows", () => {

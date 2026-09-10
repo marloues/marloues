@@ -852,6 +852,7 @@ export function AuxiliarySidebar({
             key={`${sessionScope}:${tab.id}`}
             tabId={tab.id}
             active={activeTab?.id === tab.id}
+            viewType={tab.type}
           >
             {tab.type === "files" ? (
               <FileExplorer

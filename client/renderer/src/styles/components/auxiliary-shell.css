@@ -389,6 +389,13 @@
     margin: 0 auto;
   }
 
+  .auxiliary-sidebar.is-primary-overlay
+    .auxiliary-view-panel[data-view-type="files"],
+  .auxiliary-sidebar.is-primary-overlay
+    .auxiliary-view-panel[data-view-type="review"] {
+    max-width: none;
+  }
+
   .auxiliary-view-panel[hidden] {
     display: none;
   }
