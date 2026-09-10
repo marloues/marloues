@@ -839,6 +839,11 @@ export function WorkflowChatPage({
     setInputText("继续完善这个计划：");
   };
 
+  const showScrollToBottomControl = !isEmpty && !isAtBottom;
+  const scrollToBottomControl = showScrollToBottomControl ? (
+    <ScrollToBottomButton visible onClick={() => scrollToBottom("smooth")} />
+  ) : null;
+
   return (
     <section
       className={`chat-page ${isEmpty ? "chat-page-empty" : ""} ${leftCollapsed ? "left-collapsed" : ""} ${titleHidden ? "chat-title-hidden" : ""} ${showHeader ? "has-inline-header" : ""} ${taskContextMode === "docked" ? "task-context-docked" : ""}`}
@@ -952,23 +957,23 @@ export function WorkflowChatPage({
           ) : null}
         </div>
       </div>
-      <ScrollToBottomButton
-        visible={!isEmpty && !isAtBottom}
-        onClick={() => scrollToBottom("smooth")}
-      />
       {activeReadThreadSnapshot?.replay ? (
-        <section
-          className={styles.replayNotice}
-          aria-label="真实会话回放"
-          data-replay-line={activeReadThreadSnapshot.replay.throughLine}
-        >
-          <strong>真实会话回放 · 只读</strong>
-          <p>
-            当前显示记录中的一个时点。可以展开、复制和预览；不会执行历史命令。
-          </p>
-        </section>
+        <div className="chat-replay-bottom-stack">
+          {scrollToBottomControl}
+          <section
+            className={styles.replayNotice}
+            aria-label="真实会话回放"
+            data-replay-line={activeReadThreadSnapshot.replay.throughLine}
+          >
+            <strong>真实会话回放 · 只读</strong>
+            <p>
+              当前显示记录中的一个时点。可以展开、复制和预览；不会执行历史命令。
+            </p>
+          </section>
+        </div>
       ) : (
         <ComposerShell
+          aboveComposer={scrollToBottomControl}
           planPrompt={
             activePlanImplementationPrompt && !activeSessionIsStreaming ? (
               <PlanImplementationPromptCard

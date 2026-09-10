@@ -169,6 +169,10 @@
   scrollbar-width: auto;
 }
 
+.messages-scroll:focus {
+  outline: 0;
+}
+
 @supports not (scrollbar-gutter: stable) {
   .messages-scroll {
     overflow-y: scroll;
@@ -186,14 +190,30 @@
 
 .chat-page.task-context-docked .messages-inner,
 .chat-page.task-context-docked .composer-steer-stack,
+.chat-page.task-context-docked .composer-floating-controls,
 .chat-page.task-context-docked .composer-task-progress-anchor,
 .chat-page.task-context-docked .composer-permission-slot {
   transform: translateX(var(--task-context-shift));
   transition: transform var(--motion-normal) var(--ease);
 }
 
-.chat-page.task-context-docked .scroll-to-bottom-button {
-  left: calc(50% + var(--task-context-shift));
+.chat-replay-bottom-stack {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--interaction-content-gap);
+  padding: var(--interaction-dock-fade-inset) var(--space-8)
+    var(--interaction-dock-bottom-gap);
+  pointer-events: none;
+}
+
+.chat-replay-bottom-stack > * {
+  pointer-events: auto;
 }
 
 .viewport-culling-container {

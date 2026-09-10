@@ -837,10 +837,8 @@ button.workflow-turn-header-button:focus-visible {
 }
 
 .scroll-to-bottom-button {
-  position: absolute;
-  z-index: 32;
-  bottom: 146px;
-  left: 50%;
+  position: relative;
+  z-index: 3;
   display: grid;
   width: 38px;
   height: 38px;
@@ -853,7 +851,7 @@ button.workflow-turn-header-button:focus-visible {
   box-shadow: var(--shadow-md);
   color: var(--text-2);
   cursor: pointer;
-  transform: translateX(-50%);
+  transform: none;
   transition:
     border-color var(--motion-fast) var(--ease),
     background var(--motion-fast) var(--ease),
@@ -866,7 +864,7 @@ button.workflow-turn-header-button:focus-visible {
   border-color: var(--border-strong);
   background: var(--raised-2);
   color: var(--text-1);
-  transform: translate(-50%, -1px);
+  transform: translateY(-1px);
 }
 
 .workflow-fixture-page {
@@ -922,10 +920,6 @@ button.workflow-turn-header-button:focus-visible {
 
   .message-model {
     max-width: 70%;
-  }
-
-  .scroll-to-bottom-button {
-    bottom: 142px;
   }
 }
 

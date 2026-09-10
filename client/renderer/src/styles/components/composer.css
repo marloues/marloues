@@ -55,6 +55,21 @@
   pointer-events: none;
 }
 
+.composer-floating-controls {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  width: min(100%, var(--chat-max-width));
+  min-height: 0;
+  justify-content: center;
+  margin: 0 auto var(--interaction-content-gap);
+  pointer-events: none;
+}
+
+.composer-floating-controls > * {
+  pointer-events: auto;
+}
+
 .composer-steer-stack {
   width: 100%;
   pointer-events: none;
@@ -192,6 +207,10 @@
 
 .composer .composer-rich-input .cm-composer-emphasis {
   font-style: italic;
+}
+
+.composer .composer-rich-input .cm-composer-strikethrough {
+  text-decoration: line-through;
 }
 
 .composer .composer-rich-input .cm-composer-code {

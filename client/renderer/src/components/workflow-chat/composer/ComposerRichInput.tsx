@@ -23,6 +23,7 @@ import {
   type ViewUpdate,
 } from "@codemirror/view";
 import { markdown } from "@codemirror/lang-markdown";
+import { GFM } from "@lezer/markdown";
 import { syntaxTree } from "@codemirror/language";
 import { htmlToMarkdown } from "./html-to-markdown";
 import { findBareUrlRanges } from "./composer-attachments";
@@ -94,6 +95,7 @@ function richMarkdownDecorations(state: EditorState): DecorationSet {
       switch (node.name) {
         case "HeaderMark":
         case "EmphasisMark":
+        case "StrikethroughMark":
         case "CodeMark":
           ranges.push(
             Decoration.mark({ class: "cm-composer-hidden" }).range(
@@ -116,6 +118,14 @@ function richMarkdownDecorations(state: EditorState): DecorationSet {
         case "Emphasis":
           ranges.push(
             Decoration.mark({ class: "cm-composer-emphasis" }).range(
+              node.from,
+              node.to,
+            ),
+          );
+          break;
+        case "Strikethrough":
+          ranges.push(
+            Decoration.mark({ class: "cm-composer-strikethrough" }).range(
               node.from,
               node.to,
             ),
@@ -220,7 +230,7 @@ function ComposerRichInputImpl(
 
   const extensions = useMemo(
     () => [
-      markdown({ addKeymap: false }),
+      markdown({ addKeymap: false, extensions: GFM }),
       EditorView.lineWrapping,
       placeholderCompartment.current.of(codeMirrorPlaceholder(placeholder)),
       richMarkdownPlugin,

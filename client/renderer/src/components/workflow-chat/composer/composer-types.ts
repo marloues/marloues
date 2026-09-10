@@ -80,6 +80,8 @@ export interface WorkflowComposerShellProps {
   permissionPanel?: ReactNode;
   planPrompt?: ReactNode;
   emptyHeader?: ReactNode;
+  /** Floating control rendered above the permission or task-progress stack. */
+  aboveComposer?: ReactNode;
   modelControl?: ReactNode;
   placeholder?: string;
   slashCommands?: SlashCommandItem[];

@@ -67,6 +67,7 @@ export function WorkflowComposerShell({
   permissionPanel,
   planPrompt,
   emptyHeader,
+  aboveComposer,
   modelControl,
   placeholder = CONVERSATION_PAGE_CONTRACT.composer.placeholder,
   slashCommands,
@@ -710,6 +711,9 @@ export function WorkflowComposerShell({
       {planPrompt}
       {emptyHeader ? (
         <div className="composer-empty-header">{emptyHeader}</div>
+      ) : null}
+      {aboveComposer ? (
+        <div className="composer-floating-controls">{aboveComposer}</div>
       ) : null}
       {hasPermissionPanel ? (
         <div className="composer-permission-slot">{permissionPanel}</div>

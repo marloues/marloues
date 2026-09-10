@@ -98,12 +98,37 @@ export async function verifyNativeAlignment(page, caseId, capture) {
     await expect(
       composerContent.locator(".cm-composer-hidden").first(),
     ).toBeHidden();
-    expect(
-      await composerContent.evaluate((node) => node.innerText),
-    ).not.toContain("#");
-    expect(
-      await composerContent.evaluate((node) => node.innerText),
-    ).not.toContain("**");
+    await composerContent.evaluate((element) => {
+      const clipboardData = new DataTransfer();
+      clipboardData.setData(
+        "text/html",
+        '<p><span style="font-weight:700">样式粗体</span><span style="font-style:italic">样式斜体</span><span style="text-decoration:line-through">样式删除线</span></p>',
+      );
+      clipboardData.setData("text/plain", "样式粗体样式斜体样式删除线");
+      element.dispatchEvent(
+        new ClipboardEvent("paste", {
+          clipboardData,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+    await expect(composerContent.locator(".cm-composer-strong")).toContainText(
+      "样式粗体",
+    );
+    await expect(
+      composerContent.locator(".cm-composer-emphasis"),
+    ).toContainText("样式斜体");
+    await expect(
+      composerContent.locator(".cm-composer-strikethrough"),
+    ).toContainText("样式删除线");
+    const composerText = await composerContent.evaluate(
+      (node) => node.innerText,
+    );
+    expect(composerText).not.toContain("#");
+    expect(composerText).not.toContain("**");
+    expect(composerText).not.toContain("*");
+    expect(composerText).not.toContain("~~");
     await composerInput.scrollIntoViewIfNeeded();
     images.push(await capture("aligned-composer-rich-input"));
     await composerContent.click();
