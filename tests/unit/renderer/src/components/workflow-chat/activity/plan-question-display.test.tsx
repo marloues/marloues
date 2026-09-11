@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { PlanModeCard } from "../../../../../../../client/renderer/src/components/workflow-chat/activity/PlanModeCard";
+import { WorkflowModeUpdateMarker } from "../../../../../../../client/renderer/src/components/workflow-chat/activity/MarkerRows";
 import { AskUserQuestionCard } from "../../../../../../../client/renderer/src/components/workflow-chat/activity/AskUserQuestionCard";
 import { QuestionAskPanel } from "../../../../../../../client/renderer/src/components/workflow-chat/activity/QuestionAskPanel";
 import { QuestionQaCard } from "../../../../../../../client/renderer/src/components/workflow-chat/activity/QuestionQaCard";
@@ -116,6 +117,41 @@ describe("EnterPlanMode / PlanModeCard", () => {
       <PlanModeCard item={{ ...planModeItem, status: "running" as const }} />,
     ) as string;
     expect(html).toContain("进入计划模式中");
+  });
+});
+
+describe("WorkflowModeUpdateMarker", () => {
+  it("prefers semantic plan/default labels over provider labels", () => {
+    const planItem = {
+      type: "modeUpdate" as const,
+      id: "mode-plan",
+      modeId: "plan",
+      modeKind: "plan" as const,
+      label: "Plan",
+      raw: {},
+      settled: true,
+    };
+    const defaultItem = {
+      type: "modeUpdate" as const,
+      id: "mode-default",
+      modeId: "default",
+      modeKind: "default" as const,
+      label: "Default",
+      raw: {},
+      settled: true,
+    };
+
+    const planHtml = renderToStaticMarkup(
+      <WorkflowModeUpdateMarker item={planItem} />,
+    ) as string;
+    const defaultHtml = renderToStaticMarkup(
+      <WorkflowModeUpdateMarker item={defaultItem} />,
+    ) as string;
+
+    expect(planHtml).toContain("已进入计划模式");
+    expect(defaultHtml).toContain("已退出计划模式");
+    expect(planHtml).not.toContain(">Plan<");
+    expect(defaultHtml).not.toContain(">Default<");
   });
 });
 

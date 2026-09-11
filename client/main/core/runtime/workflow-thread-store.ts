@@ -34,6 +34,7 @@ import {
 import { compressToolResult } from "../context/token-economy";
 import { textOutputFromUnknown } from "../../../shared/adapters/runtime-event-to-turn-item";
 import { createCanonicalUserContent } from "../../../shared/agent-input";
+import { isPlanModeTransitionToolName } from "../../../shared/execution-tools";
 
 /** Minimal shape needed to rehydrate turns from persisted session messages. */
 interface RehydratableMessage {
@@ -92,10 +93,19 @@ function textOutput(text: string): WorkflowTextOutput {
   return { text, truncated: false };
 }
 
+function planModeToolKey(
+  threadId: string,
+  turnId: string,
+  toolId: string,
+): string {
+  return `${threadId}:${turnId}:${toolId}`;
+}
+
 export class WorkflowThreadStore {
   private threads = new Map<string, WorkflowThreadStoreThread>();
   private listeners = new Set<ThreadListener>();
   private acpState: UIEventToACPState = createUIEventToACPState();
+  private planModeToolIds = new Set<string>();
 
   listThreads(): Thread[] {
     return [...this.threads.values()]
@@ -417,6 +427,18 @@ export class WorkflowThreadStore {
       !event.payload.parentToolId
     ) {
       const payload = event.payload;
+      const planToolKey = planModeToolKey(
+        threadId,
+        displayTurnId,
+        payload.toolId,
+      );
+      const isPlanModeTool = isPlanModeTransitionToolName(payload.toolName);
+      if (isPlanModeTool) this.planModeToolIds.add(planToolKey);
+      if (isPlanModeTool || this.planModeToolIds.has(planToolKey)) {
+        thread.updatedAt = timestamp;
+        this.emit(threadId);
+        return;
+      }
       const existing = turn.items.get(payload.toolId)?.item;
       // A runtime may echo its tool start after sending the result. The same
       // invocation keeps its terminal status; a retry must have a new tool ID.
@@ -447,6 +469,17 @@ export class WorkflowThreadStore {
         existing?.type === "mcpToolCall" ? { ...existing, ...item } : item,
       );
     } else if (event.kind === "tool-complete" && !event.payload.parentToolId) {
+      const planToolKey = planModeToolKey(
+        threadId,
+        displayTurnId,
+        event.payload.toolId,
+      );
+      if (this.planModeToolIds.has(planToolKey)) {
+        this.planModeToolIds.delete(planToolKey);
+        thread.updatedAt = timestamp;
+        this.emit(threadId);
+        return;
+      }
       const existing = turn.items.get(event.payload.toolId)?.item;
       const economy = compressToolResult(
         textOutputFromUnknown(event.payload.output)?.text ?? "",

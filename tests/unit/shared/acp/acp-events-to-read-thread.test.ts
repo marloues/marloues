@@ -180,6 +180,65 @@ describe("ACP read-thread projection", () => {
     });
   });
 
+  it("projects plan-mode transitions as mode and plan items, not tool rows", () => {
+    const events = acpEvents([
+      {
+        type: "tool.start",
+        sessionId: SESSION_ID,
+        turnId: TURN_ID,
+        toolId: "plan-enter",
+        toolName: "EnterPlanMode",
+        input: {},
+      },
+      {
+        type: "mode.update",
+        sessionId: SESSION_ID,
+        turnId: TURN_ID,
+        modeId: "plan",
+        label: "Plan",
+      },
+      {
+        type: "plan.item",
+        sessionId: SESSION_ID,
+        turnId: TURN_ID,
+        itemId: "plan-1",
+        content: "- [ ] 调研",
+      },
+      {
+        type: "tool.complete",
+        sessionId: SESSION_ID,
+        turnId: TURN_ID,
+        toolId: "plan-enter",
+        output: "entered",
+        isError: false,
+      },
+    ]);
+    const fallback: WorkflowTurnItem = {
+      type: "unknown",
+      id: "fallback",
+      raw: "fallback",
+    };
+
+    const projected = projectACPEventsToReadThread(
+      makeSnapshot([fallback], executionEvents(events)),
+    );
+    const items = projected.turns[0].items;
+
+    expect(items.map((item) => item.type)).toEqual(["modeUpdate", "plan"]);
+    expect(items[0]).toMatchObject({
+      type: "modeUpdate",
+      modeId: "plan",
+      modeKind: "plan",
+      label: "Plan",
+      settled: true,
+    });
+    expect(items[1]).toMatchObject({
+      type: "plan",
+      text: "- [ ] 调研",
+      settled: true,
+    });
+  });
+
   it("keeps host item snapshots when the event log is bounded", () => {
     const fallback: WorkflowTurnItem = {
       type: "unknown",

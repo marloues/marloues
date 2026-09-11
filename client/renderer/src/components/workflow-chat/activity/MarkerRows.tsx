@@ -68,12 +68,11 @@ export function WorkflowModeUpdateMarker({
   item: Extract<WorkflowTurnItem, { type: "modeUpdate" }>;
 }) {
   const label =
-    item.label ??
-    (item.modeKind === "plan"
+    item.modeKind === "plan"
       ? "已进入计划模式"
       : item.modeKind === "default"
         ? "已退出计划模式"
-        : `模式已切换：${item.label ?? item.modeId}`);
+        : (item.label ?? `模式已切换：${item.label ?? item.modeId}`);
 
   return (
     <ExpandableMarkerRow

@@ -13,6 +13,12 @@ export function isSubagentDelegationToolName(toolName: string): boolean {
   return normalized === "agent" || normalized === "task";
 }
 
+/** Claude plan-mode transitions are mode semantics, not ordinary tools. */
+export function isPlanModeTransitionToolName(toolName: string): boolean {
+  const normalized = normalizedToolName(toolName);
+  return normalized === "enterplanmode" || normalized === "exitplanmode";
+}
+
 /** SDK task-management tools whose state belongs in the task list. */
 export function isTaskManagementToolName(toolName: string): boolean {
   const normalized = normalizedToolName(toolName);

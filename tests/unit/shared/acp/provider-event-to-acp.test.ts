@@ -124,6 +124,46 @@ describe("UIEvent 到 ACP canonical 事件", () => {
     });
   });
 
+  it("plan-mode transition tools are not projected as ordinary tool calls", () => {
+    const adapter = createUIEventToACPAdapter({ source: "claude" });
+    const events = [
+      ...adapter.translate(
+        withIds({
+          type: "tool.start",
+          toolId: "plan-enter",
+          toolName: "EnterPlanMode",
+          input: {},
+        }) as UIEvent,
+      ),
+      ...adapter.translate(
+        withIds({
+          type: "tool.complete",
+          toolId: "plan-enter",
+          output: "entered",
+          isError: false,
+        }) as UIEvent,
+      ),
+      ...adapter.translate(
+        withIds({
+          type: "tool.start",
+          toolId: "plan-exit",
+          toolName: "ExitPlanMode",
+          input: { plan: "1. do" },
+        }) as UIEvent,
+      ),
+      ...adapter.translate(
+        withIds({
+          type: "tool.complete",
+          toolId: "plan-exit",
+          output: "approved",
+          isError: false,
+        }) as UIEvent,
+      ),
+    ];
+
+    expect(events).toHaveLength(0);
+  });
+
   it("累积 plan delta 并输出完整 ACP plan", () => {
     const adapter = createUIEventToACPAdapter({ source: "codex" });
     adapter.translate(

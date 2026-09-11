@@ -12,6 +12,7 @@ import type {
 } from "@agentclientprotocol/sdk";
 import type { UIEvent } from "../ui-protocol";
 import type { TokenUsage } from "../types";
+import { isPlanModeTransitionToolName } from "../execution-tools";
 import {
   MARLOUES_ACP_EXTENSION_NAMES,
   MARLOUES_ACP_EXTENSION_NAMESPACE,
@@ -319,6 +320,9 @@ export function providerEventToACPEvents(
     const existing = state.toolStates.get(toolStateKey);
     const title = "toolName" in event ? event.toolName : existing?.title;
     const name = "toolName" in event ? event.toolName : existing?.name;
+    const isPlanModeTransition = name
+      ? isPlanModeTransitionToolName(name)
+      : false;
     const kind = name ? toolNameToKind(name) : existing?.kind;
     let nextToolStates = state.toolStates;
     if (title) {
@@ -334,6 +338,10 @@ export function providerEventToACPEvents(
       });
     }
     const nextState = { ...state, toolStates: nextToolStates };
+
+    if (isPlanModeTransition) {
+      return { events: [], state: nextState };
+    }
 
     if (!existing) {
       const toolCall: ToolCall = {
