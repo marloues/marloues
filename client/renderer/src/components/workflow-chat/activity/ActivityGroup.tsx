@@ -15,7 +15,7 @@ import { WorkflowActivityRow, WorkflowInlineDots } from "./ActivityRow";
 import {
   workflowActivityGroupViewState,
   type WorkflowActivityGroup as WorkflowActivityGroupModel,
-} from "../";
+} from "../turns/turn-layout";
 import {
   codexActivityGroupDisplayLabel,
   codexActivityIsBrowserTool,

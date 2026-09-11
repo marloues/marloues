@@ -1,5 +1,5 @@
 .replayNotice {
-  margin: var(--space-4) var(--space-6);
+  margin: 0 var(--space-6);
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);

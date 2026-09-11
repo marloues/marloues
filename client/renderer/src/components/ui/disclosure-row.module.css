@@ -16,21 +16,25 @@
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  padding: calc(var(--space-1) / 2) 0;
+  padding: 0;
   overflow: hidden;
   border-radius: var(--radius-md);
   border: 0;
   background: transparent;
   color: var(--text-1);
-  font: var(--text-md)/1.7 var(--font-ui);
+  font: var(--text-md)/20px var(--font-ui);
   text-align: left;
-  transition: background var(--motion-fast) var(--ease);
+  transition: color var(--motion-fast) var(--ease);
 }
 .row[aria-expanded] {
+  color: var(--text-2);
   cursor: var(--cursor-control);
 }
 .row[aria-expanded]:hover {
-  background: var(--raised-1);
+  color: var(--text-1);
+}
+.row[aria-expanded]:focus-visible {
+  color: var(--text-1);
 }
 .row:focus-visible {
   outline: 2px solid var(--accent);
@@ -95,6 +99,7 @@
   margin-left: auto;
   overflow: hidden;
   color: var(--text-3);
+  transition: color var(--motion-fast) var(--ease);
   font: var(--text-xs)/1.6 var(--font-code);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -118,6 +123,15 @@
 .summary {
   flex: 1;
   color: var(--text-3);
+  transition: color var(--motion-fast) var(--ease);
+}
+
+.row[aria-expanded]:is(:hover, :focus-visible) .summary {
+  color: var(--text-2);
+}
+
+.row[aria-expanded]:is(:hover, :focus-visible) .meta {
+  color: var(--text-2);
 }
 .summary[data-tone="danger"] {
   color: var(--danger);

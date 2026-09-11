@@ -1,7 +1,8 @@
 import { useItemDisclosure } from "../content/conversation-ui-state";
 import { Search } from "lucide-react";
 import type { WorkflowTurnItem } from "../../../../../shared/adapters/workflow-messages-to-read-thread";
-import { itemInputText, itemOutputText, workflowStatusIsRunning } from "../";
+import { itemInputText, itemOutputText } from "../adapter/item-text";
+import { workflowStatusIsRunning } from "../turns/turn-collapse-rules";
 import {
   WorkflowActivityRow,
   WorkflowActivityStatusBadge,

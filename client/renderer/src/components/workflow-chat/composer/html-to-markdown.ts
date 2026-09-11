@@ -81,6 +81,46 @@ function fenceCode(code: string, language = ""): string {
   return `${ticks}${language}\n${normalized}\n${ticks}`;
 }
 
+function styleMarkdownDecorations(style: string): {
+  strong: boolean;
+  emphasis: boolean;
+  strikethrough: boolean;
+} {
+  const declarations = new Map(
+    style
+      .split(";")
+      .map((entry) => {
+        const separator = entry.indexOf(":");
+        if (separator < 0) return null;
+        return [
+          entry.slice(0, separator).trim().toLowerCase(),
+          entry
+            .slice(separator + 1)
+            .trim()
+            .toLowerCase(),
+        ] as const;
+      })
+      .filter((entry): entry is readonly [string, string] => Boolean(entry)),
+  );
+
+  const fontWeight = declarations.get("font-weight") ?? "";
+  const fontWeightNumber = Number.parseInt(fontWeight, 10);
+  const fontStyle = declarations.get("font-style") ?? "";
+  const decoration =
+    declarations.get("text-decoration") ??
+    declarations.get("text-decoration-line") ??
+    "";
+
+  return {
+    strong:
+      fontWeight === "bold" ||
+      fontWeight === "bolder" ||
+      (Number.isFinite(fontWeightNumber) && fontWeightNumber >= 600),
+    emphasis: fontStyle === "italic" || fontStyle === "oblique",
+    strikethrough: decoration.includes("line-through"),
+  };
+}
+
 function inlineNodes(children: Array<ChildNode>): string {
   let result = "";
   let pendingWhitespace = false;
@@ -151,8 +191,19 @@ function inlineElement(element: HTMLElement): string {
       const alt = normalizeText(element.getAttribute("alt") ?? "").trim();
       return isSafeUrl(src) ? `![${alt || "image"}](${src})` : alt;
     }
-    default:
-      return inlineNodes(children);
+    default: {
+      const value = inlineNodes(children).trim();
+      if (!value) return "";
+
+      const { strong, emphasis, strikethrough } = styleMarkdownDecorations(
+        element.getAttribute("style") ?? "",
+      );
+      let result = value;
+      if (strikethrough) result = `~~${result}~~`;
+      if (strong) result = `**${result}**`;
+      if (emphasis) result = `*${result}*`;
+      return result;
+    }
   }
 }
 

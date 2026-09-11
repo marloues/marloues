@@ -9,10 +9,12 @@ export function AuxiliaryViewHost({ children }: { children: ReactNode }) {
 export function AuxiliaryViewPanel({
   tabId,
   active,
+  viewType,
   children,
 }: {
   tabId: string;
   active: boolean;
+  viewType: AuxiliaryViewOption["type"] | "subagent";
   children: ReactNode;
 }) {
   const setPanelRef = useCallback(
@@ -29,6 +31,7 @@ export function AuxiliaryViewPanel({
       className="auxiliary-view-panel"
       role="tabpanel"
       aria-labelledby={auxiliaryTabDomId(tabId)}
+      data-view-type={viewType}
       hidden={!active}
     >
       {children}

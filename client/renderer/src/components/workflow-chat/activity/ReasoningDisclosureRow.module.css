@@ -1,0 +1,9 @@
+.body {
+  margin-left: var(--space-2);
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-4);
+  border-left: 1px solid var(--border);
+  color: var(--text-2);
+  font: var(--text-md)/1.7 var(--font-ui);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

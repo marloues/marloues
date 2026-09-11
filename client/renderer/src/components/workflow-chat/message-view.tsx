@@ -1,31 +1,16 @@
-/**
- * 消息区渲染组件。
- *
- * 消息区渲染结构：
- *   - 用户消息：右对齐 22px 圆角气泡 + hover 时间戳/复制
- *   - assistant 内容：按 items 顺序渲染（agentMessage→markdown、reasoning→思考、
- *     tool→单行工具行），16px/28px 文字流
- *   - 工具行：按工具类型的图标 + 工具名 + · + 摘要，错误红，展开 OUT 卡，
- *     running 扫光，hover 图标→chevron
- *   - turn 尾：复制/分支 + 时间 · Ran for · tok/s（hover 显示）
- *
- * 配色跟随 mar loues 主题变量（深色/亮色主题自动适配）。
- */
+/** Legacy single-item entry kept for the frozen comparison fixture. */
 
-import { memo, useEffect, useState } from "react";
-import { Brain, Check, Copy } from "lucide-react";
+import { memo } from "react";
+import { Brain } from "lucide-react";
 import type { WorkflowTurnItem } from "@shared/adapters/workflow-messages-to-read-thread";
-import type { TokenUsage } from "@shared/types";
-import { WorkflowMarkdownContent } from "./content/MarkdownContent";
+import { DisclosureRow } from "@/components/ui";
+import { WorkflowAgentMessageView } from "./turns/AgentMessageView";
+import { WorkflowMessageStatusRow } from "./turns/MessageStatusRow";
+import { WorkflowMessageTurnTail } from "./turns/MessageTurnTail";
+import { WorkflowMessageUserRow } from "./turns/MessageUserRow";
+import { WorkflowReasoningDisclosureRow } from "./activity/ReasoningDisclosureRow";
+import { WorkflowToolDisclosureRow } from "./activity/ToolDisclosureRow";
 import { ToolDetail } from "./activity/ToolCallRowDetails";
-import { toolDisplayName } from "./activity/ToolCallRowDetails/labels";
-import {
-  Button,
-  DisclosureRow,
-  StateDot,
-  type DisclosureRowProps,
-} from "@/components/ui";
-import { WorkflowUserMessage } from "./turns/UserMessage";
 import { useMarkdownContext } from "./content/MarkdownContext";
 import { fileReadPresentation } from "./activity/file-read-presentation";
 import { WorkflowFileReadRow } from "./activity/FileReadRow";
@@ -33,115 +18,18 @@ import { useItemDisclosure } from "./content/conversation-ui-state";
 import { AskUserQuestionCard } from "./activity/AskUserQuestionCard";
 import { PlanModeCard } from "./activity/PlanModeCard";
 import { IoCard } from "./disclosure/IoCard";
-import { toolIconFor } from "./disclosure/tool-icon";
 import { itemInputText, itemOutputText } from "./adapter/item-text";
-import styles from "./message-view.module.css";
-import "./message-view.css";
 
-// —— 状态点（共享原语别名，保持既有导出面） ——
-
-export { StateDot as MessageStateDot };
-
-// —— 工具函数 ——
-
-export function formatDuration(ms: number | null | undefined): string {
-  if (ms == null) return "";
-  if (ms < 1000) return `${ms}ms`;
-  if (ms < 60_000) return `${(ms / 1000).toFixed(1)}s`;
-  const m = Math.floor(ms / 60_000);
-  const s = Math.round((ms % 60_000) / 1000);
-  return `${m}m ${s}s`;
-}
-
-export function formatClock(ts?: number): string {
-  if (!ts) return "";
-  const d = new Date(ts);
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-}
-
-// —— 用户消息 ——
-
-export function MessageUserRow({
-  text,
-  startedAt,
-}: {
-  text: string;
-  startedAt?: number;
-}) {
-  if (!text.trim()) return null;
-  return <WorkflowUserMessage text={text} createdAt={startedAt} />;
-}
-
-// —— 思考行 ——
-
-/** 思考行（Think 折叠行）：Brain 图标 + 摘要，展开全文。内容有就显示，不依赖 settled。 */
-export function MessageThinkRow({
-  text,
-  ...disclosure
-}: { text: string } & Pick<
-  DisclosureRowProps,
-  "open" | "defaultOpen" | "onOpenChange"
->) {
-  if (!text.trim()) return null;
-  const summary = text.replace(/\s+/g, " ").trim();
-  const clipped =
-    summary.length > 80 ? `${summary.slice(0, 79).trimEnd()}…` : summary;
-  return (
-    <DisclosureRow
-      {...disclosure}
-      icon={<Brain />}
-      title="思考"
-      summary={clipped}
-      hideSummaryWhenOpen
-      data-activity-kind="reasoning"
-    >
-      <div className={styles.thinkBody} data-kind="message-think-body">
-        {text}
-      </div>
-    </DisclosureRow>
-  );
-}
-
-// —— 工具行 ——
-
-export function MessageToolRow({
-  name,
-  summary,
-  failed,
-  running,
-  errorSummary,
-  detail,
-  activityKind,
-  ...disclosure
-}: {
-  name: string;
-  summary: string;
-  failed: boolean;
-  running: boolean;
-  errorSummary?: string;
-  /** 展开内容：接入 mar loues 现有渲染（ToolDetail / IN-OUT 卡）。无内容则不可展开。 */
-  detail?: React.ReactNode;
-  activityKind?: string;
-} & Pick<DisclosureRowProps, "open" | "onOpenChange">) {
-  const summaryText = failed && errorSummary ? errorSummary : summary;
-  return (
-    <DisclosureRow
-      {...disclosure}
-      icon={failed ? <StateDot state="error" /> : toolIconFor(name)}
-      title={toolDisplayName(name)}
-      summary={summaryText || undefined}
-      summaryTone={failed ? "danger" : "subtle"}
-      state={failed ? "error" : running ? "running" : "ok"}
-      data-tool={name}
-      data-activity-kind={activityKind}
-      expandable={Boolean(detail)}
-    >
-      {detail}
-    </DisclosureRow>
-  );
-}
-
-// —— WorkflowTurnItem → 渲染元素 ——
+export { StateDot as MessageStateDot } from "@/components/ui";
+export {
+  formatMessageDuration as formatDuration,
+  formatMessageClock as formatClock,
+} from "./turns/message-view-format";
+export { WorkflowMessageUserRow as MessageUserRow };
+export { WorkflowReasoningDisclosureRow as MessageThinkRow };
+export { WorkflowToolDisclosureRow as MessageToolRow };
+export { WorkflowMessageTurnTail as MessageTurnTail };
+export { WorkflowMessageStatusRow as MessageStatusRow };
 
 function itemName(item: WorkflowTurnItem): string {
   switch (item.type) {
@@ -178,7 +66,6 @@ function itemRunning(item: WorkflowTurnItem): boolean {
   );
 }
 
-/** ToolCallRowDetails 支持的类型（展开接 ToolDetail）。 */
 type ToolDetailItem = Extract<
   WorkflowTurnItem,
   {
@@ -191,7 +78,7 @@ type ToolDetailItem = Extract<
   }
 >;
 
-/** 单条 item 渲染：item 引用稳定时跳过重渲染（防止 markdown 组件反复挂载）。 */
+/** @deprecated Production rendering routes through WorkflowTurnItemRenderer. */
 export const MessageItemView = memo(function MessageItemView({
   item,
 }: {
@@ -209,17 +96,9 @@ export const MessageItemView = memo(function MessageItemView({
       />
     );
   if (item.type === "agentMessage") {
-    // 不要用 item.text?.trim() 跳过空文本：流式早期 text 为空，若据此不渲染，
-    // text 一旦非空会从其他分支切换回来，MarkdownContent 反复 remount（流式
-    // 缓冲 timer 被 unmount 清理），文本不渐进显示。
-    return (
-      <div className={styles.assistant} data-kind="message-assistant-md">
-        <WorkflowMarkdownContent
-          content={item.text}
-          streaming={item.settled === false}
-        />
-      </div>
-    );
+    // Keep empty streaming text mounted so MarkdownContent does not remount
+    // when the first buffered chunk arrives.
+    return <WorkflowAgentMessageView item={item} />;
   }
   if (item.type === "reasoning") {
     const text =
@@ -230,7 +109,6 @@ export const MessageItemView = memo(function MessageItemView({
       item.summary ||
       "";
     if (item.encrypted && !text.trim()) {
-      // 加密且无内容：静态一行（dsh 风格）
       return (
         <DisclosureRow
           icon={<Brain />}
@@ -241,7 +119,13 @@ export const MessageItemView = memo(function MessageItemView({
         />
       );
     }
-    return <MessageThinkRow text={text} open={open} onOpenChange={setOpen} />;
+    return (
+      <WorkflowReasoningDisclosureRow
+        text={text}
+        open={open}
+        onOpenChange={setOpen}
+      />
+    );
   }
   if (
     item.type === "dynamicToolCall" ||
@@ -249,8 +133,6 @@ export const MessageItemView = memo(function MessageItemView({
     item.type === "webSearch"
   ) {
     if (item.type === "dynamicToolCall") {
-      // EnterPlanMode：计划模式提示卡（图标 + 标题 + LLM 原文）。AskUserQuestion
-      // 激活态已由宿主转成请求走悬浮面板，到达这里的是禁用/报错态 → 不可用卡。
       if (item.tool === "EnterPlanMode") return <PlanModeCard item={item} />;
       if (item.tool === "AskUserQuestion") {
         return <AskUserQuestionCard item={item} />;
@@ -272,7 +154,7 @@ export const MessageItemView = memo(function MessageItemView({
       />
     );
     return (
-      <MessageToolRow
+      <WorkflowToolDisclosureRow
         open={open}
         onOpenChange={setOpen}
         activityKind={item.type}
@@ -294,7 +176,7 @@ export const MessageItemView = memo(function MessageItemView({
     const input = itemInputText(item);
     const output = itemOutputText(item);
     return (
-      <MessageToolRow
+      <WorkflowToolDisclosureRow
         open={open}
         onOpenChange={setOpen}
         activityKind={item.type}
@@ -313,129 +195,3 @@ export const MessageItemView = memo(function MessageItemView({
   }
   return null;
 });
-
-// —— turn 尾 ——
-
-/** 中文耗时（与分支耗时格式一致：N秒 / N分钟 M秒 / N分钟）。 */
-function chineseDuration(ms: number): string {
-  const seconds = Math.max(1, Math.round(ms / 1000));
-  if (seconds < 60) return `${seconds}秒`;
-  const minutes = Math.floor(seconds / 60);
-  const remaining = seconds % 60;
-  return remaining > 0 ? `${minutes}分钟 ${remaining}秒` : `${minutes}分钟`;
-}
-
-export function MessageTurnTail({
-  start,
-  end,
-  model,
-  usage,
-  timeLabel,
-  onCopy,
-  onFork,
-}: {
-  start?: number;
-  end?: number;
-  model?: string;
-  usage?: TokenUsage;
-  /** 外部传入的时间标签（如 formatAssistantMessageTime）；缺省用 HH:MM。 */
-  timeLabel?: string;
-  onCopy?: () => void | Promise<void>;
-  onFork?: () => void | Promise<void>;
-}) {
-  const readings: string[] = [];
-  if (start) readings.push(timeLabel ?? formatClock(start));
-  if (end && start) readings.push(chineseDuration(end - start));
-  if (usage) {
-    const input = usage.inputTokens ?? usage.totalTokens;
-    const output = usage.outputTokens;
-    if (input !== undefined || output !== undefined)
-      readings.push(`${input ?? 0} tok`);
-  }
-  return (
-    <div
-      className={styles.actions}
-      data-time-hover-root
-      data-kind="message-tail"
-    >
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        title="复制回复"
-        aria-label="复制回复"
-        onClick={onCopy}
-      >
-        <Copy />
-      </Button>
-      {onFork ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          title="创建对话分支"
-          aria-label="创建对话分支"
-          onClick={onFork}
-        >
-          <Check />
-        </Button>
-      ) : null}
-      {readings.length > 0 ? (
-        <span data-time-hover-label className={styles.readings}>
-          {readings.map((r, i) => (
-            <span key={i} className={styles.reading}>
-              {i > 0 ? <span aria-hidden>·</span> : null}
-              {r}
-            </span>
-          ))}
-          {model ? (
-            <span className={styles.reading}>
-              <span aria-hidden>·</span>
-              {model}
-            </span>
-          ) : null}
-        </span>
-      ) : null}
-    </div>
-  );
-}
-
-// —— 流式状态行 ——
-
-export function MessageStatusRow({
-  startedAt,
-  extra,
-}: {
-  /** 状态开始时间戳；提供时显示动态经过时间（每秒更新）。 */
-  startedAt?: number;
-  extra?: string;
-}) {
-  // tick 只作为「重渲染信号」；elapsed 在渲染时用 Date.now() 实时计算，
-  // 这样即使 interval 回调被主线程（流式解析/高亮）延迟，恢复渲染时显示的
-  // 就是当前准确值，不会出现"时间停住然后跳一大截"。
-  const [, setTick] = useState(0);
-  useEffect(() => {
-    if (startedAt === undefined) return;
-    const timer = setInterval(() => setTick((n) => n + 1), 1000);
-    return () => clearInterval(timer);
-  }, [startedAt]);
-  const elapsed =
-    startedAt === undefined
-      ? null
-      : chineseDuration(Math.max(0, Date.now() - startedAt));
-  return (
-    <div
-      className={styles.status}
-      role="status"
-      aria-live="polite"
-      data-kind="message-status"
-    >
-      <StateDot state="running" />
-      <span className={`message-status-shimmer ${styles.statusLabel}`}>
-        正在思考
-      </span>
-      {elapsed ? <span className={styles.elapsed}>{elapsed}</span> : null}
-      {extra ? <span className={styles.statusExtra}>{extra}</span> : null}
-    </div>
-  );
-}

@@ -1,7 +1,7 @@
 import { useItemDisclosure } from "../content/conversation-ui-state";
 import { Brain } from "lucide-react";
 import { DisclosureRow, StateDot } from "@/components/ui";
-import { MessageThinkRow } from "../message-view";
+import { WorkflowReasoningDisclosureRow } from "./ReasoningDisclosureRow";
 import type { WorkflowTurnItem } from "../../../../../shared/adapters/workflow-messages-to-read-thread";
 
 type ReasoningItemModel = Extract<WorkflowTurnItem, { type: "reasoning" }>;
@@ -21,7 +21,13 @@ export function WorkflowReasoningRow({ item, defaultOpen = false }: Props) {
     item.summary ||
     "";
   if (text.trim()) {
-    return <MessageThinkRow text={text} open={open} onOpenChange={setOpen} />;
+    return (
+      <WorkflowReasoningDisclosureRow
+        text={text}
+        open={open}
+        onOpenChange={setOpen}
+      />
+    );
   }
   const thinking = !item.encrypted && !item.settled;
   return (

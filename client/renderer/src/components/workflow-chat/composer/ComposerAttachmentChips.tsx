@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { ComposerAttachment } from "./composer-attachments";
-import type { WorkflowImagePreview } from "../";
+import type { WorkflowImagePreview } from "../activity/ImageLightbox";
 
 function formatAttachmentSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;

@@ -96,6 +96,41 @@ export async function boundaryChecks({
     });
     await snapshot("task-progress-failed-step");
   });
+  await check("scroll-button-stays-above-task-progress", async () => {
+    await page
+      .locator(".session-title-text")
+      .filter({ hasText: "长历史虚拟化" })
+      .click();
+    await expect(page.locator('[data-message-id="history-159"]')).toBeVisible();
+    await event({
+      type: "execution.task.update",
+      sessionId: "qa-history",
+      turnId: "history-159",
+      taskId: "scroll-overlap-step",
+      title: "滚动重叠回归",
+      status: "running",
+      timestamp: Date.now(),
+      ordinal: 0,
+    });
+    const progress = page.getByRole("button", { name: "第 1 / 1 步" });
+    await expect(progress).toBeVisible();
+    const viewport = page.locator(".messages-scroll");
+    await viewport.evaluate((element) => {
+      element.scrollTop = Math.floor(
+        (element.scrollHeight - element.clientHeight) / 2,
+      );
+    });
+    const scrollToBottom = page.getByRole("button", {
+      name: "滚动到底部",
+      exact: true,
+    });
+    await expect(scrollToBottom).toBeVisible();
+    const scrollBox = await scrollToBottom.boundingBox();
+    const progressBox = await progress.boundingBox();
+    expect(
+      progressBox.y - (scrollBox.y + scrollBox.height),
+    ).toBeGreaterThanOrEqual(8);
+  });
   await check("host-context-action-dismiss-source-isolation", async () => {
     await choose("child");
     await event({

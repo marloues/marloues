@@ -1,4 +1,5 @@
 import { useItemDisclosure } from "../content/conversation-ui-state";
+import { useMarkdownContext } from "../content/MarkdownContext";
 import {
   Check,
   FileText,
@@ -6,6 +7,8 @@ import {
   Search,
   SquareTerminal,
 } from "lucide-react";
+import { fileReadPresentation } from "./file-read-presentation";
+import { WorkflowFileReadRow } from "./FileReadRow";
 import { WorkflowActivityRow, WorkflowInlineDots } from "./ActivityRow";
 import { WorkflowCommandDetail } from "./CommandDetailCard";
 import {
@@ -20,6 +23,17 @@ interface Props {
 
 export function WorkflowCommandExecutionRow({ item }: Props) {
   const [open, setOpen] = useItemDisclosure(item.id);
+  const { cwd } = useMarkdownContext();
+  const fileRead = fileReadPresentation(item, cwd);
+  if (fileRead) {
+    return (
+      <WorkflowFileReadRow
+        presentation={fileRead}
+        name="exec_command"
+        activityKind="commandExecution"
+      />
+    );
+  }
   const presentation = commandPresentation(item);
 
   return (
