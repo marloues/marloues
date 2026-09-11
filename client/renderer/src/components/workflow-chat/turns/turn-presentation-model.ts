@@ -12,6 +12,7 @@ import {
   finalDocumentEntries,
   finiteNumber,
   isProcessItem,
+  planItemsForPresentation,
   presentationMessage,
   resultItemsForPresentation,
   runtimeKind,
@@ -72,6 +73,7 @@ export function buildTurnPresentationModel(
     layout.resultItems,
     showFileChanges,
   );
+  const planItems = planItemsForPresentation(renderedMessage.items);
   const blocks: TurnPresentationBlock[] = [];
 
   appendProcessBlock(
@@ -79,6 +81,14 @@ export function buildTurnPresentationModel(
     "leading",
     withoutFinalDocument(layout.leadingFlow),
   );
+  if (planItems.length > 0) {
+    blocks.push({
+      kind: "plan",
+      id: planItems[0].id,
+      text: planItems[0].text,
+      streaming: running && isLastStreaming && planItems[0].settled !== true,
+    });
+  }
   if (layout.finalText.trim()) {
     blocks.push({
       kind: "document",

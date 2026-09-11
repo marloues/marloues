@@ -12,6 +12,12 @@ export type TurnPresentationBlock =
       entries: WorkflowFlowEntry[];
     }
   | {
+      kind: "plan";
+      id: string;
+      text: string;
+      streaming: boolean;
+    }
+  | {
       kind: "document";
       id: string;
       itemIds: string[];

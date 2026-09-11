@@ -3,6 +3,7 @@ import { WorkflowResultCards } from "../activity/ResultCards";
 import { WorkflowAssistantAnswer } from "./AssistantAnswer";
 import { WorkflowTurnErrorCard } from "./TurnErrorCard";
 import { WorkflowTurnFlowSection } from "./TurnFlowSection";
+import { WorkflowTurnPlanCard } from "./TurnPlanCard";
 import type {
   TurnPresentationBlock,
   TurnPresentationModel,
@@ -97,6 +98,12 @@ function TurnPresentationBlockView({
         plainText={plainTextAnswers}
         streaming={block.streaming}
       />
+    );
+  }
+
+  if (block.kind === "plan") {
+    return (
+      <WorkflowTurnPlanCard text={block.text} streaming={block.streaming} />
     );
   }
 

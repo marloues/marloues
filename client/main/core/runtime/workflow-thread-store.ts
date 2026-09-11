@@ -108,6 +108,30 @@ function isPlanModeTransitionItem(item: WorkflowTurnItem): boolean {
   );
 }
 
+function planTextFromLegacyPlanModeExit(item: WorkflowTurnItem): string | null {
+  if (
+    (item.type !== "mcpToolCall" && item.type !== "dynamicToolCall") ||
+    item.tool.toLowerCase() !== "exitplanmode"
+  ) {
+    return null;
+  }
+
+  const args = item.arguments;
+  if (args && typeof args === "object" && !Array.isArray(args)) {
+    const plan = (args as Record<string, unknown>).plan;
+    if (typeof plan === "string" && plan.trim()) return plan;
+  }
+
+  const output = item.output?.text ?? "";
+  const marker = "## Approved Plan:";
+  const markerIndex = output.indexOf(marker);
+  if (markerIndex >= 0) {
+    const plan = output.slice(markerIndex + marker.length).trim();
+    if (plan) return plan;
+  }
+  return null;
+}
+
 export class WorkflowThreadStore {
   private threads = new Map<string, WorkflowThreadStoreThread>();
   private listeners = new Set<ThreadListener>();
@@ -733,8 +757,28 @@ export class WorkflowThreadStore {
         currentTurn.modelId = message.modelId ?? currentTurn.modelId;
         currentTurn.modelName = message.modelName ?? currentTurn.modelName;
         currentTurn.usage = message.usage ?? currentTurn.usage;
+        const hasPersistedPlanItem = message.items.some(
+          (item) => item.type === "plan" && item.text.trim(),
+        );
         for (const item of message.items) {
-          if (isPlanModeTransitionItem(item)) continue;
+          if (isPlanModeTransitionItem(item)) {
+            const planText = hasPersistedPlanItem
+              ? null
+              : planTextFromLegacyPlanModeExit(item);
+            if (planText) {
+              const planId = `plan-${item.id}`;
+              currentTurn.itemOrder.push(planId);
+              currentTurn.items.set(planId, {
+                item: {
+                  type: "plan",
+                  id: planId,
+                  text: planText,
+                  settled: true,
+                },
+              });
+            }
+            continue;
+          }
           if (!currentTurn.items.has(item.id)) {
             currentTurn.itemOrder.push(item.id);
           }

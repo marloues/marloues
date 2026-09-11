@@ -340,4 +340,80 @@ describe("WorkflowThreadStore.rehydrateFromStoredMessages", () => {
       ),
     ).toBe(false);
   });
+
+  it("restores the plan output from a legacy ExitPlanMode tool call", () => {
+    const plan = "# 完整计划\n\n1. 先恢复协议数据\n2. 再渲染完整计划";
+    const messages: StoredMessage[] = [
+      makeUserMessage("u1", "请进入计划模式", 1000),
+      makeAssistantMessage("a1", "计划已提交。", 2000, {
+        items: [
+          {
+            type: "mcpToolCall",
+            id: "exit-plan",
+            tool: "ExitPlanMode",
+            arguments: { plan },
+            status: "completed",
+          },
+          {
+            type: "modeUpdate",
+            id: "mode-default",
+            modeKind: "default",
+            modeId: "default",
+            label: "Default",
+          },
+        ],
+      }),
+    ];
+
+    workflowThreadStore.rehydrateFromStoredMessages(TEST_THREAD, messages);
+
+    const snapshot = workflowThreadStore.readThread({
+      threadId: TEST_THREAD,
+      limit: 100,
+    });
+    const items = snapshot.turns[0].items;
+    expect(items).toContainEqual({
+      type: "plan",
+      id: "plan-exit-plan",
+      text: plan,
+      settled: true,
+    });
+    expect(items.some((item) => item.id === "exit-plan")).toBe(false);
+  });
+
+  it("does not restore a duplicate plan when persisted plan data exists", () => {
+    const plan = "# 已持久化计划\n\n- 保留唯一计划";
+    const messages: StoredMessage[] = [
+      makeUserMessage("u1", "请进入计划模式", 1000),
+      makeAssistantMessage("a1", "计划已提交。", 2000, {
+        items: [
+          {
+            type: "dynamicToolCall",
+            id: "exit-plan",
+            tool: "ExitPlanMode",
+            arguments: { plan },
+            status: "completed",
+          },
+          {
+            type: "plan",
+            id: "plan-call-1",
+            text: plan,
+            settled: true,
+          },
+        ],
+      }),
+    ];
+
+    workflowThreadStore.rehydrateFromStoredMessages(TEST_THREAD, messages);
+
+    const snapshot = workflowThreadStore.readThread({
+      threadId: TEST_THREAD,
+      limit: 100,
+    });
+    const planItems = snapshot.turns[0].items.filter(
+      (item) => item.type === "plan",
+    );
+    expect(planItems).toHaveLength(1);
+    expect(planItems[0]).toMatchObject({ id: "plan-call-1", text: plan });
+  });
 });

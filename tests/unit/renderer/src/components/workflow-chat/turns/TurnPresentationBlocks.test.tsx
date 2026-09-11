@@ -96,6 +96,12 @@ describe("TurnPresentationBlocks", () => {
             status: "completed",
           },
           {
+            type: "plan",
+            id: "plan",
+            text: "# 完整计划\n\n1. 保留计划内容\n2. 保留模式标记",
+            settled: true,
+          },
+          {
             type: "modeUpdate",
             id: "mode-default",
             modeId: "default",
@@ -112,6 +118,9 @@ describe("TurnPresentationBlocks", () => {
 
     expect(html).toContain("已进入计划模式");
     expect(html).toContain("已退出计划模式");
+    expect(html).toContain('data-block-kind="plan"');
+    expect(html).toContain("完整计划");
+    expect(html).toContain("保留计划内容");
     expect(html).not.toContain('data-activity-kind="commandExecution"');
   });
 

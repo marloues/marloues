@@ -80,7 +80,14 @@ describe("conversation activity visibility", () => {
       const model = buildTurnPresentationModel(message, {
         isLastStreaming: running,
       });
-      expect(model.blocks).toEqual([]);
+      expect(model.blocks).toEqual([
+        {
+          kind: "plan",
+          id: "plan",
+          text: "- [ ] 检查组件",
+          streaming: false,
+        },
+      ]);
       expect(model.process).toMatchObject({
         hasActivityItems: false,
         stepCount: 0,
@@ -118,6 +125,7 @@ describe("conversation activity visibility", () => {
     expect(model.documentText).toBe("检查完成。");
     expect(model.blocks.map((block) => block.kind)).toEqual([
       "process",
+      "plan",
       "document",
     ]);
     const process = model.blocks[0];

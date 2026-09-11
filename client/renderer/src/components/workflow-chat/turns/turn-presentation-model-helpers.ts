@@ -114,6 +114,17 @@ export function resultItemsForPresentation(
   });
 }
 
+export function planItemsForPresentation(
+  items: WorkflowTurnItem[],
+): Array<Extract<WorkflowTurnItem, { type: "plan" }>> {
+  const planItems = items.filter(
+    (item): item is Extract<WorkflowTurnItem, { type: "plan" }> =>
+      item.type === "plan" && item.text.trim().length > 0,
+  );
+  const latest = planItems.at(-1);
+  return latest ? [latest] : [];
+}
+
 export function finiteNumber(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
