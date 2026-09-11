@@ -25,7 +25,8 @@ import { WorkflowMarkdownProvider } from "../content/MarkdownContext";
 import { WorkflowMarkdownContent } from "../content/MarkdownContent";
 import { copyConversationContent } from "../content/clipboard";
 import { IoCard } from "../disclosure/IoCard";
-import { MessageThinkRow, MessageToolRow } from "../message-view";
+import { WorkflowReasoningDisclosureRow } from "../activity/ReasoningDisclosureRow";
+import { WorkflowToolDisclosureRow } from "../activity/ToolDisclosureRow";
 import { WorkflowTurnView } from "../turns/TurnView";
 import {
   componentActivityExamples,
@@ -276,9 +277,9 @@ function ActivityExamples() {
           detail={<p>颜色、字号、间距均来自统一设计 token。</p>}
         />
       </Example>
-      <Example title="MessageThinkRow / MessageToolRow / IoCard · 消息行组合">
-        <MessageThinkRow text="先检查公共样式，再查看组件在不同主题中的表现。" />
-        <MessageToolRow
+      <Example title="ReasoningDisclosureRow / ToolDisclosureRow / IoCard · 消息行组合">
+        <WorkflowReasoningDisclosureRow text="先检查公共样式，再查看组件在不同主题中的表现。" />
+        <WorkflowToolDisclosureRow
           name="exec_command"
           summary="npm run typecheck:web"
           failed={false}

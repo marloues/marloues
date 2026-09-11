@@ -1,8 +1,11 @@
 import { useItemDisclosure } from "../content/conversation-ui-state";
 import { useMarkdownContext } from "../content/MarkdownContext";
 import { useState, useRef } from "react";
+import { AskUserQuestionCard } from "./AskUserQuestionCard";
 import type { WorkflowTurnItem } from "../../../../../shared/adapters/workflow-messages-to-read-thread";
-import { itemInputText, itemOutputText } from "../";
+import { fileReadPresentation } from "./file-read-presentation";
+import { WorkflowFileReadRow } from "./FileReadRow";
+import { itemInputText, itemOutputText } from "../adapter/item-text";
 import {
   WorkflowActivityRow,
   WorkflowActivityStatusBadge,
@@ -14,12 +17,13 @@ import {
   itemStatus,
   toolLabel,
 } from "./ToolCallRowDetails";
-import { workflowStatusIsRunning } from "../";
+import { workflowStatusIsRunning } from "../turns/turn-collapse-rules";
 import { useUnifiedChatStore } from "@/stores/unified-chat-store";
 import {
   isSubagentDelegationToolName,
   isTaskManagementToolName,
 } from "../../../../../shared/execution-tools";
+import { PlanModeCard } from "./PlanModeCard";
 
 type ToolCallRowItem = Extract<
   WorkflowTurnItem,
@@ -53,6 +57,23 @@ export function WorkflowToolCallRow({ item }: Props) {
   const revealExecutionSubagent = useUnifiedChatStore(
     (state) => state.revealExecutionSubagent,
   );
+  const fileRead = fileReadPresentation(item, context.cwd);
+  if (fileRead) {
+    const name = "tool" in item ? item.tool : item.type;
+    return (
+      <WorkflowFileReadRow
+        presentation={fileRead}
+        name={name}
+        activityKind={item.type}
+      />
+    );
+  }
+  if (item.type === "dynamicToolCall" && item.tool === "EnterPlanMode") {
+    return <PlanModeCard item={item} />;
+  }
+  if (item.type === "dynamicToolCall" && item.tool === "AskUserQuestion") {
+    return <AskUserQuestionCard item={item} />;
+  }
   const input = itemInputText(item);
   const output = itemOutputText(item);
   const status = itemStatus(item);

@@ -17,7 +17,7 @@ import {
   normalizePatchForDiffs,
 } from "@/components/diff/patch-helpers";
 import type { WorkflowTurnItem } from "../../../../../shared/adapters/workflow-messages-to-read-thread";
-import { itemInputText, itemOutputText } from "../";
+import { itemInputText, itemOutputText } from "../adapter/item-text";
 import {
   WorkflowImageLightbox,
   type WorkflowImagePreview,

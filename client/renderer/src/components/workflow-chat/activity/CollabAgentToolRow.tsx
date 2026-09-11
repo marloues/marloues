@@ -7,7 +7,7 @@ import {
   WorkflowActivityDetailStack,
 } from "./ActivityDetail";
 import { WorkflowActivityRow, WorkflowInlineDots } from "./ActivityRow";
-import { workflowStatusIsRunning } from "../";
+import { workflowStatusIsRunning } from "../turns/turn-collapse-rules";
 import { useUnifiedChatStore } from "@/stores/unified-chat-store";
 
 type CollabAgentItemModel = Extract<

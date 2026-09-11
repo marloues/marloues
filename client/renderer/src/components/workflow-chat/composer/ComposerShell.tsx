@@ -17,10 +17,13 @@ import {
   MAX_ATTACHMENTS,
 } from "./composer-attachments";
 import type { SlashCommandItem } from "../../../types";
-import { WorkflowImageLightbox, type WorkflowImagePreview } from "../";
+import {
+  WorkflowImageLightbox,
+  type WorkflowImagePreview,
+} from "../activity/ImageLightbox";
 import { SlashCommandPopover } from "./SlashCommandPopover";
-import { QueuedSteersPanel } from "../";
-import { ContextUsageRing } from "../";
+import { QueuedSteersPanel } from "../turns/QueuedSteersPanel";
+import { ContextUsageRing } from "./ContextUsageRing";
 import { FullAccessConfirmDialog } from "./SandboxInstallBanner";
 import {
   type WorkflowComposerShellProps,

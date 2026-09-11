@@ -1,11 +1,11 @@
 import { WorkflowActivityGroup } from "./ActivityGroup";
 import { WorkflowImageViewGroup } from "./ImageViewGroup";
 import type { WorkflowActivityGroupEntry } from "./ActivityGroup";
-import { WorkflowAssistantAnswer } from "../";
-import { MessageItemView } from "../message-view";
+import { WorkflowAssistantAnswer } from "../turns/AssistantAnswer";
+import { WorkflowCommandExecutionRow } from "./CommandExecutionRow";
 import { WorkflowTurnItemRenderer } from "./TurnItemRenderer";
 import type { WorkflowTurnItem } from "../../../../../shared/adapters/workflow-messages-to-read-thread";
-import type { WorkflowActivityGroup as WorkflowActivityGroupModel } from "../";
+import type { WorkflowActivityGroup as WorkflowActivityGroupModel } from "../turns/turn-layout";
 import type { ProcessItem } from "../turns/turn-layout";
 
 type AgentMessageItem = Extract<WorkflowTurnItem, { type: "agentMessage" }>;
@@ -79,7 +79,7 @@ function ActivityGroupBridge({
       renderCommandGroup={(id, items) => (
         <div key={id} className="workflow-command-group">
           {items.map((item) => (
-            <MessageItemView key={item.id} item={item} />
+            <WorkflowCommandExecutionRow key={item.id} item={item} />
           ))}
         </div>
       )}

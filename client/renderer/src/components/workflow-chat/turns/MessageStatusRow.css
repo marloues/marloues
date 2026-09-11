@@ -1,0 +1,27 @@
+.message-status-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--text-3) 20%,
+    var(--text-1) 50%,
+    var(--text-3) 80%
+  );
+  background-size: 220% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: message-status-shimmer 1.8s linear infinite;
+}
+
+@keyframes message-status-shimmer {
+  to {
+    background-position: -220% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .message-status-shimmer {
+    animation: none;
+    background: none;
+    color: inherit;
+  }
+}

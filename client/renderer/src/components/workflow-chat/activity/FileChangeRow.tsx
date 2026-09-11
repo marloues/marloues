@@ -11,7 +11,7 @@ import {
   normalizePatchForDiffs,
 } from "../../diff/patch-helpers";
 import { WorkflowActivityRow, WorkflowInlineDots } from "./ActivityRow";
-import { workflowStatusIsRunning } from "../";
+import { workflowStatusIsRunning } from "../turns/turn-collapse-rules";
 
 type FileChangeItemModel = Extract<WorkflowTurnItem, { type: "fileChange" }>;
 type DiffLine = {

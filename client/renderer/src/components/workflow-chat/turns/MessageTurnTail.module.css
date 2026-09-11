@@ -1,0 +1,18 @@
+.actions,
+.readings,
+.reading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.actions {
+  min-height: 28px;
+}
+
+.readings {
+  padding-left: var(--space-3);
+  color: var(--text-3);
+  font: var(--text-md)/1.7 var(--font-ui);
+  white-space: nowrap;
+}

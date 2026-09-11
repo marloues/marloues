@@ -1,0 +1,15 @@
+[data-time-hover-root] [data-time-hover-label] {
+  opacity: 0;
+  transition: opacity var(--motion-fast) var(--ease);
+}
+
+[data-time-hover-root]:hover [data-time-hover-label],
+[data-time-hover-root]:focus-within [data-time-hover-label] {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  [data-time-hover-root] [data-time-hover-label] {
+    opacity: 1;
+  }
+}

@@ -670,7 +670,6 @@ button.workflow-turn-header-button:focus-visible {
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
-  padding-top: 4px;
   color: var(--text-1);
   font-size: var(--text-md);
   line-height: 24px;
@@ -945,7 +944,7 @@ button.workflow-turn-header-button:focus-visible {
 .workflow-turn-body {
   display: grid;
   min-width: 0;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .turn-presentation-block {

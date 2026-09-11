@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 import { Columns2 } from "lucide-react";
 import type { KeyboardEvent } from "react";
-import { WorkflowComposerShell } from "../";
-import { WorkflowReadThreadTurnList } from "../";
+import { WorkflowComposerShell } from "../composer/ComposerShell";
+import { WorkflowReadThreadTurnList } from "../turns/ReadThreadTurnList";
 import { WorkflowScrollToBottomButton } from "../ScrollToBottomButton";
-import { WorkflowTurnList } from "../";
+import { WorkflowTurnList } from "../turns/WorkflowTurnList";
 import {
   workflowMessagesToWorkflowReadThreadResponse,
   type WorkflowMessageBlock,
