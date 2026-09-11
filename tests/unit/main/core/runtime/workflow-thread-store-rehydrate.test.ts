@@ -268,4 +268,76 @@ describe("WorkflowThreadStore.rehydrateFromStoredMessages", () => {
     expect(snapshot.turns).toHaveLength(1);
     expect(snapshot.turns[0].status).toBe("failed");
   });
+
+  it("normalizes persisted plan-mode tool calls to mode updates", () => {
+    const messages: StoredMessage[] = [
+      makeUserMessage("u1", "请进入计划模式", 1000),
+      {
+        id: "a1",
+        role: "assistant",
+        content: "已进入计划模式。",
+        timestamp: 2000,
+        items: [
+          {
+            type: "mcpToolCall",
+            id: "enter-plan",
+            tool: "EnterPlanMode",
+            status: "completed",
+          },
+          {
+            type: "modeUpdate",
+            id: "mode-plan",
+            modeKind: "plan",
+            modeId: "plan",
+            label: "Plan",
+          },
+          {
+            type: "dynamicToolCall",
+            id: "exit-plan",
+            tool: "ExitPlanMode",
+            status: "completed",
+          },
+          {
+            type: "modeUpdate",
+            id: "mode-default",
+            modeKind: "default",
+            modeId: "default",
+            label: "Default",
+          },
+          {
+            type: "mcpToolCall",
+            id: "read-file",
+            tool: "Read",
+            status: "completed",
+          },
+        ],
+      },
+    ];
+
+    workflowThreadStore.rehydrateFromStoredMessages(TEST_THREAD, messages);
+
+    const snapshot = workflowThreadStore.readThread({
+      threadId: TEST_THREAD,
+      limit: 100,
+    });
+
+    const items = snapshot.turns[0].items;
+    expect(items.map((item) => item.id)).toEqual([
+      "u1",
+      "mode-plan",
+      "mode-default",
+      "read-file",
+    ]);
+    expect(
+      items.some(
+        (item) => item.type === "mcpToolCall" && item.tool === "EnterPlanMode",
+      ),
+    ).toBe(false);
+    expect(
+      items.some(
+        (item) =>
+          item.type === "dynamicToolCall" && item.tool === "ExitPlanMode",
+      ),
+    ).toBe(false);
+  });
 });

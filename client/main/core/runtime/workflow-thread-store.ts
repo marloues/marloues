@@ -101,6 +101,13 @@ function planModeToolKey(
   return `${threadId}:${turnId}:${toolId}`;
 }
 
+function isPlanModeTransitionItem(item: WorkflowTurnItem): boolean {
+  return (
+    (item.type === "mcpToolCall" || item.type === "dynamicToolCall") &&
+    isPlanModeTransitionToolName(item.tool)
+  );
+}
+
 export class WorkflowThreadStore {
   private threads = new Map<string, WorkflowThreadStoreThread>();
   private listeners = new Set<ThreadListener>();
@@ -727,6 +734,7 @@ export class WorkflowThreadStore {
         currentTurn.modelName = message.modelName ?? currentTurn.modelName;
         currentTurn.usage = message.usage ?? currentTurn.usage;
         for (const item of message.items) {
+          if (isPlanModeTransitionItem(item)) continue;
           if (!currentTurn.items.has(item.id)) {
             currentTurn.itemOrder.push(item.id);
           }

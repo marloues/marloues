@@ -40,30 +40,48 @@ export function WorkflowAgentFlowSection({
   const mountedEntries = useRef<WorkflowFlowEntry[] | null>(null);
   if (expanded) mountedEntries.current = entries;
   const displayedEntries = expanded ? entries : mountedEntries.current;
-  if (!displayedEntries?.length) return null;
+
+  const semanticMarkers = expanded
+    ? []
+    : entries.filter(
+        (entry): entry is Extract<WorkflowFlowEntry, { kind: "activityItem" }> =>
+          entry.kind === "activityItem" && isPlanModeMarker(entry.item),
+      );
 
   return (
-    <div
-      className="workflow-agent-flow-section"
-      data-kind="agent-flow-section"
-      hidden={!expanded}
-    >
-      {displayedEntries.map((entry, index) => {
-        if (entry.kind === "assistantMessage")
-          return renderAssistantMessage(entry.item);
-        if (entry.kind === "activityItem")
-          return renderActivityItem(entry.item);
-        const headerState = codexActivityHeaderState(entry.group.items, {
-          isLatestGroup: index === displayedEntries.length - 1,
-          isTurnInProgress: isStreaming,
-        });
-        return renderActivityGroup(
-          entry.group,
-          false,
-          headerState.kind === "active",
-          headerState.kind === "thinking",
-        );
-      })}
-    </div>
+    <>
+      {semanticMarkers.map((entry) => renderActivityItem(entry.item))}
+      {displayedEntries?.length ? (
+        <div
+          className="workflow-agent-flow-section"
+          data-kind="agent-flow-section"
+          hidden={!expanded}
+        >
+          {displayedEntries.map((entry, index) => {
+            if (entry.kind === "assistantMessage")
+              return renderAssistantMessage(entry.item);
+            if (entry.kind === "activityItem")
+              return renderActivityItem(entry.item);
+            const headerState = codexActivityHeaderState(entry.group.items, {
+              isLatestGroup: index === displayedEntries.length - 1,
+              isTurnInProgress: isStreaming,
+            });
+            return renderActivityGroup(
+              entry.group,
+              false,
+              headerState.kind === "active",
+              headerState.kind === "thinking",
+            );
+          })}
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+function isPlanModeMarker(item: ProcessItem): boolean {
+  return (
+    item.type === "modeUpdate" &&
+    (item.modeKind === "plan" || item.modeKind === "default")
   );
 }

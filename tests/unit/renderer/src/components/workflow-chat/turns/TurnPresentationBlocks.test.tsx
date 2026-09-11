@@ -77,6 +77,44 @@ describe("TurnPresentationBlocks", () => {
     expect(html).not.toContain('data-activity-kind="permissionRequest"');
   });
 
+  it("keeps plan mode markers visible when a completed turn is collapsed", () => {
+    const html = render(
+      turn({
+        items: [
+          {
+            type: "modeUpdate",
+            id: "mode-plan",
+            modeId: "plan",
+            modeKind: "plan",
+            label: "Plan",
+            raw: {},
+          },
+          {
+            type: "commandExecution",
+            id: "command",
+            command: "npm test",
+            status: "completed",
+          },
+          {
+            type: "modeUpdate",
+            id: "mode-default",
+            modeId: "default",
+            modeKind: "default",
+            label: "Default",
+            raw: {},
+          },
+          { type: "agentMessage", id: "answer", text: "Plan complete." },
+        ],
+      }),
+      false,
+      false,
+    );
+
+    expect(html).toContain("已进入计划模式");
+    expect(html).toContain("已退出计划模式");
+    expect(html).not.toContain('data-activity-kind="commandExecution"');
+  });
+
   it("renders failed output through the error document", () => {
     const html = render(
       turn({
@@ -98,13 +136,17 @@ describe("TurnPresentationBlocks", () => {
   });
 });
 
-function render(message: WorkflowMessageBlock, isLastStreaming = false) {
+function render(
+  message: WorkflowMessageBlock,
+  isLastStreaming = false,
+  expanded = true,
+) {
   const model = buildTurnPresentationModel(message, { isLastStreaming });
   return renderToStaticMarkup(
     <WorkflowAssistantTurn
       model={model}
       duration="1s"
-      expanded
+      expanded={expanded}
       onToggle={() => undefined}
     />,
   );
