@@ -48,6 +48,7 @@ export function WorkflowFileChangeRow({ item }: Props) {
   return (
     <WorkflowActivityRow
       activityKind="fileChange"
+      dataTool="apply_patch"
       icon={<FileText />}
       iconTone={failed ? "danger" : "muted"}
       label={

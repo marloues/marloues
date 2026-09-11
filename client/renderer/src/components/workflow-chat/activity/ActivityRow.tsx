@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 
 interface WorkflowActivityRowProps {
   activityKind: string;
+  dataTool?: string;
   icon: ReactNode;
   label: ReactNode;
   meta?: ReactNode;
@@ -21,6 +22,7 @@ interface WorkflowActivityRowProps {
 
 export function WorkflowActivityRow({
   activityKind,
+  dataTool,
   icon,
   label,
   meta,
@@ -39,6 +41,7 @@ export function WorkflowActivityRow({
       className={cn("workflow-activity-row", className)}
       data-kind="activity-row"
       data-activity-kind={activityKind}
+      data-tool={dataTool}
       data-activity-state={activityState}
       data-activity-source={activitySource}
       icon={icon}
