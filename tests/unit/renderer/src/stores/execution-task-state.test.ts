@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { UIEvent } from "@shared/ui-protocol";
+import { createUIEventToACPAdapter } from "@shared/acp/provider-event-to-acp";
 import {
   upsertExecutionTask,
   restoreExecutionStateFromReadThread,
@@ -151,5 +152,48 @@ describe("SDK task history recovery", () => {
     const state = restoreExecutionStateFromReadThread(previous, history);
     expect(Object.keys(state["session-1"]!.tasks)).toEqual(["task-1"]);
     expect(state["session-1"]?.tasks["task-1"].status).toBe("running");
+  });
+
+  it("restores execution state from ACP com.marloues extensions", () => {
+    const provider = createUIEventToACPAdapter({ source: "claude" });
+    const [task] = provider.translate(
+      taskUpdate({
+        status: "running",
+        title: "调研 ACP",
+        detail: "整理协议映射",
+        timestamp: 2,
+      }),
+    );
+    const [subagent] = provider.translate({
+      type: "execution.subagent.start",
+      sessionId: "session-1",
+      turnId: "turn-1",
+      parentToolId: "tool-1",
+      subagentId: "sub-1",
+      agentType: "researcher",
+      description: "调研 ACP",
+      status: "running",
+      timestamp: 3,
+    });
+    const acpSnapshot = snapshot([]);
+    acpSnapshot.execution = {
+      events: [
+        { timestamp: 2, event: task },
+        { timestamp: 3, event: subagent },
+      ],
+    };
+
+    const state = restoreExecutionStateFromReadThread({}, acpSnapshot);
+
+    expect(state["session-1"]?.tasks["task-1"]).toMatchObject({
+      title: "调研 ACP",
+      detail: "整理协议映射",
+      status: "running",
+    });
+    expect(state["session-1"]?.subagents["sub-1"]).toMatchObject({
+      agentType: "researcher",
+      description: "调研 ACP",
+      status: "running",
+    });
   });
 });

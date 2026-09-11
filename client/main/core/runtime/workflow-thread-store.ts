@@ -2,7 +2,15 @@ import { observeConversationTiming } from "@shared/conversation-timing";
 import { workflowToolResult } from "@shared/workflow-tool-result";
 import type { ConversationTiming } from "@shared/conversation-timing";
 import type { RuntimeEvent, Thread } from "../../../shared/agent-runtime";
+import { translateRuntimeEventToUIEvent } from "../../../shared/runtime-event-adapter";
 import type { TokenUsage } from "../../../shared/types";
+import {
+  createUIEventToACPState,
+  providerEventToACPEvents,
+} from "../../../shared/acp/provider-event-to-acp";
+import type { ACPWorkflowEvent } from "../../../shared/acp/acp-types";
+import type { UIEventToACPState } from "../../../shared/acp/provider-event-to-acp";
+import { workflowTurnItemToACPEvents } from "../../../shared/acp/workflow-turn-item-to-acp";
 import type {
   WorkflowAgentMessageItem,
   WorkflowMcpToolCallItem,
@@ -17,7 +25,9 @@ import type {
   WorkflowThreadPatch,
 } from "../../../shared/workflow-thread-data-source";
 import {
+  compactExecutionEvents,
   serializeWorkflowThread,
+  WORKFLOW_THREAD_EXECUTION_EVENT_LIMIT,
   type WorkflowThreadStoreThread,
   type WorkflowThreadStoreTurn,
 } from "./read-thread-serializer";
@@ -85,6 +95,7 @@ function textOutput(text: string): WorkflowTextOutput {
 export class WorkflowThreadStore {
   private threads = new Map<string, WorkflowThreadStoreThread>();
   private listeners = new Set<ThreadListener>();
+  private acpState: UIEventToACPState = createUIEventToACPState();
 
   listThreads(): Thread[] {
     return [...this.threads.values()]
@@ -116,6 +127,7 @@ export class WorkflowThreadStore {
         turnOrder: [],
         turns: new Map(),
         displayTurnIds: new Map(),
+        executionEvents: [],
       };
       this.threads.set(threadId, thread);
     } else {
@@ -151,6 +163,7 @@ export class WorkflowThreadStore {
     thread.turnOrder = [];
     thread.turns.clear();
     thread.displayTurnIds.clear();
+    thread.executionEvents = [];
     thread.updatedAt = now();
     this.emit(threadId);
   }
@@ -200,6 +213,9 @@ export class WorkflowThreadStore {
     );
     target.preview = previewFromThread(target);
     target.status = { type: "idle" };
+    target.executionEvents = (source.executionEvents ?? []).slice(
+      -WORKFLOW_THREAD_EXECUTION_EVENT_LIMIT,
+    );
     target.updatedAt = now();
     this.emit(targetThreadId);
     return target;
@@ -263,6 +279,21 @@ export class WorkflowThreadStore {
     thread.preview = input.content.trim().slice(0, 160) || thread.preview;
     if (thread.title === defaultTitle())
       thread.title = input.content.trim().slice(0, 50) || thread.title;
+    const acpResult = providerEventToACPEvents(
+      {
+        type: "user.message",
+        sessionId: input.threadId,
+        turnId: input.turnId,
+        messageId: input.userMessageId,
+        content: input.content,
+        userContent: userContentFromInput(input.content, input.attachments),
+        timestamp: startedAt,
+      },
+      { source: "local" },
+      this.acpState,
+    );
+    this.acpState = acpResult.state;
+    this.recordACPEvents(thread, acpResult.events, startedAt);
     this.emit(input.threadId);
   }
 
@@ -273,6 +304,7 @@ export class WorkflowThreadStore {
     timestamp = now(),
   ): void {
     const thread = this.ensureThread(threadId);
+    this.recordRuntimeEvent(thread, turnId, event, timestamp);
 
     // A steer is a second user input that arrives while the SDK is still
     // executing the same runtime turn. The conversation UI must nevertheless
@@ -373,14 +405,17 @@ export class WorkflowThreadStore {
       ) {
         thread.preview = event.payload.item.text.trim().slice(0, 160);
       }
-    } else if (event.kind === "text-chunk") {
+    } else if (event.kind === "text-chunk" && !event.payload.parentToolId) {
       this.appendAgentText(turn, event.payload.content, timestamp);
       thread.preview = event.payload.content.trim()
         ? event.payload.content.trim().slice(0, 160)
         : thread.preview;
-    } else if (event.kind === "thinking-chunk") {
+    } else if (event.kind === "thinking-chunk" && !event.payload.parentToolId) {
       this.appendReasoning(turn, event.payload.content, timestamp);
-    } else if (event.kind === "tool-start" || event.kind === "tool-progress") {
+    } else if (
+      (event.kind === "tool-start" || event.kind === "tool-progress") &&
+      !event.payload.parentToolId
+    ) {
       const payload = event.payload;
       const existing = turn.items.get(payload.toolId)?.item;
       // A runtime may echo its tool start after sending the result. The same
@@ -411,7 +446,7 @@ export class WorkflowThreadStore {
         turn,
         existing?.type === "mcpToolCall" ? { ...existing, ...item } : item,
       );
-    } else if (event.kind === "tool-complete") {
+    } else if (event.kind === "tool-complete" && !event.payload.parentToolId) {
       const existing = turn.items.get(event.payload.toolId)?.item;
       const economy = compressToolResult(
         textOutputFromUnknown(event.payload.output)?.text ?? "",
@@ -446,7 +481,24 @@ export class WorkflowThreadStore {
           result: workflowToolResult(event.payload.output),
         });
       }
-    } else if (event.kind === "runtime-status") {
+    } else if (event.kind === "mode-update") {
+      this.upsertItem(turn, {
+        type: "modeUpdate",
+        id: `mode-${turn.id}-${event.payload.modeId}`,
+        modeId: event.payload.modeId,
+        modeKind: event.payload.modeId,
+        label: event.payload.label,
+        raw: event.payload,
+        settled: true,
+      });
+    } else if (event.kind === "plan-item") {
+      this.upsertItem(turn, {
+        type: "plan",
+        id: event.payload.itemId,
+        text: event.payload.content,
+        settled: true,
+      });
+    } else if (event.kind === "runtime-status" && !event.payload.parentToolId) {
       this.upsertItem(turn, {
         type: "unknown",
         id: `runtime-status-${turnId}-${turn.itemOrder.length}`,
@@ -710,6 +762,62 @@ export class WorkflowThreadStore {
 
   private emit(threadId: string): void {
     for (const listener of this.listeners) listener(threadId);
+  }
+
+  private recordRuntimeEvent(
+    thread: WorkflowThreadStoreThread,
+    turnId: string,
+    event: RuntimeEvent,
+    timestamp: number,
+  ): void {
+    if (event.kind === "item-updated") {
+      this.recordACPEvents(
+        thread,
+        workflowTurnItemToACPEvents(event.payload.item, {
+          sessionId: thread.id,
+          turnId: event.payload.turnId ?? turnId,
+          source: "local",
+          timestamp,
+        }),
+        timestamp,
+      );
+      return;
+    }
+    const uiEvent = translateRuntimeEventToUIEvent(event, thread.id, turnId, {
+      countTextChunks: false,
+    });
+    if (!uiEvent) return;
+    const acpResult = providerEventToACPEvents(
+      uiEvent,
+      { source: "local" },
+      this.acpState,
+    );
+    this.acpState = acpResult.state;
+    this.recordACPEvents(thread, acpResult.events, timestamp);
+  }
+
+  private recordACPEvents(
+    thread: WorkflowThreadStoreThread,
+    events: ACPWorkflowEvent[],
+    fallbackTimestamp: number,
+  ): void {
+    for (const event of events) {
+      thread.executionEvents ??= [];
+      thread.executionEvents.push({
+        timestamp: event.timestamp ?? fallbackTimestamp,
+        event,
+      });
+    }
+    if (
+      !thread.executionEvents ||
+      thread.executionEvents.length <= WORKFLOW_THREAD_EXECUTION_EVENT_LIMIT
+    ) {
+      return;
+    }
+    thread.executionEvents = compactExecutionEvents(
+      thread.executionEvents,
+      WORKFLOW_THREAD_EXECUTION_EVENT_LIMIT,
+    );
   }
 
   private ensureTurn(

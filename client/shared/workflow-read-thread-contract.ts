@@ -3,6 +3,7 @@ import type { WorkflowToolResult } from "./workflow-tool-result";
 import type { ContextUsageRecord } from "./types";
 import type { TokenUsage } from "./types";
 import type { AgentInputPart } from "./agent-input";
+import type { ACPWorkflowEvent } from "./acp/acp-types";
 export type { WorkflowDelegation } from "./agent-input";
 
 /**
@@ -12,6 +13,8 @@ export type { WorkflowDelegation } from "./agent-input";
  * 旧格式不兼容，无迁移代码。
  */
 export const WORKFLOW_READ_THREAD_SCHEMA_VERSION = 2 as const;
+
+export const WORKFLOW_THREAD_EXECUTION_SNAPSHOT_LIMIT = 200 as const;
 
 export type WorkflowReadThreadSchemaVersion =
   typeof WORKFLOW_READ_THREAD_SCHEMA_VERSION;
@@ -33,11 +36,13 @@ export interface WorkflowReadThreadResponse {
 
 export interface WorkflowThreadExecutionSnapshot {
   events: WorkflowThreadExecutionEvent[];
+  /** True when the returned event log is bounded rather than complete. */
+  truncated?: boolean;
 }
 
 export interface WorkflowThreadExecutionEvent {
   timestamp: number;
-  event: unknown;
+  event: ACPWorkflowEvent;
 }
 
 export interface WorkflowThreadInfo {
@@ -154,6 +159,7 @@ export type WorkflowTurnItem =
   | WorkflowEnteredReviewModeItem
   | WorkflowExitedReviewModeItem
   | WorkflowHookPromptItem
+  | WorkflowModeUpdateItem
   | WorkflowPermissionRequestItem
   | WorkflowContextCompactionItem
   | WorkflowUnknownItem;
@@ -296,6 +302,14 @@ export interface WorkflowHookPromptItem extends WorkflowTurnItemBase {
   fragmentCount: number;
 }
 
+export interface WorkflowModeUpdateItem extends WorkflowTurnItemBase {
+  type: "modeUpdate";
+  modeId: string;
+  modeKind: "plan" | "default" | (string & {});
+  label?: string;
+  raw?: unknown;
+}
+
 export interface WorkflowPermissionRequestItem extends WorkflowTurnItemBase {
   type: "permissionRequest";
   question?: import("./conversation-input").ConversationInputRequest;
@@ -340,6 +354,7 @@ export type WorkflowActivityItem = Extract<
       | "enteredReviewMode"
       | "exitedReviewMode"
       | "hookPrompt"
+      | "modeUpdate"
       | "permissionRequest"
       | "contextCompaction"
       | "unknown";
@@ -384,6 +399,7 @@ export const WORKFLOW_CANONICAL_TURN_ITEM_TYPES = [
   "enteredReviewMode",
   "exitedReviewMode",
   "hookPrompt",
+  "modeUpdate",
   "permissionRequest",
   "contextCompaction",
 ] as const satisfies readonly WorkflowCanonicalTurnItemType[];
@@ -412,6 +428,7 @@ export function isWorkflowActivityItem(
     case "enteredReviewMode":
     case "exitedReviewMode":
     case "hookPrompt":
+    case "modeUpdate":
     case "permissionRequest":
     case "contextCompaction":
     case "unknown":

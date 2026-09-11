@@ -3,14 +3,23 @@ import {
   serializeWorkflowThread,
   type WorkflowThreadStoreThread,
 } from "../../client/main/core/runtime/read-thread-serializer";
+import {
+  MARLOUES_ACP_EXTENSION_NAMESPACE,
+  MARLOUES_ACP_EXTENSION_NAMES,
+} from "../../client/shared/acp/acp-extensions";
 import type { WorkflowTurnItem } from "../../client/shared/workflow-read-thread-contract";
+import type { WorkflowThreadExecutionEvent } from "../../client/shared/workflow-read-thread-contract";
 
 function item(id: string): WorkflowTurnItem {
   return { id } as WorkflowTurnItem;
 }
 
 function makeThread(): WorkflowThreadStoreThread {
-  const turn = (id: string, itemIds: string[], overrides: Record<string, unknown> = {}) => ({
+  const turn = (
+    id: string,
+    itemIds: string[],
+    overrides: Record<string, unknown> = {},
+  ) => ({
     id,
     status: "completed",
     error: null,
@@ -38,6 +47,9 @@ function makeThread(): WorkflowThreadStoreThread {
       ["turn-2", turn("turn-2", ["i3"])],
       ["turn-3", turn("turn-3", ["i4", "i5", "i6"])],
     ]),
+    executionEvents: [
+      { timestamp: 1, event: { type: "extension", name: "session.info" } },
+    ] satisfies WorkflowThreadExecutionEvent[],
   };
 }
 
@@ -46,7 +58,11 @@ describe("read-thread-serializer", () => {
     const result = serializeWorkflowThread(makeThread());
     expect(result.thread.id).toBe("thread-1");
     expect(result.page.order).toBe("newest_first");
-    expect(result.turns.map((turn) => turn.id)).toEqual(["turn-3", "turn-2", "turn-1"]);
+    expect(result.turns.map((turn) => turn.id)).toEqual([
+      "turn-3",
+      "turn-2",
+      "turn-1",
+    ]);
     expect(result.page.hasMore).toBe(false);
     expect(result.page.nextCursor).toBeNull();
   });
@@ -59,14 +75,21 @@ describe("read-thread-serializer", () => {
   });
 
   it("pages with cursor offset", () => {
-    const result = serializeWorkflowThread(makeThread(), { limit: 1, cursor: "1" });
+    const result = serializeWorkflowThread(makeThread(), {
+      limit: 1,
+      cursor: "1",
+    });
     expect(result.turns.map((turn) => turn.id)).toEqual(["turn-2"]);
     expect(result.page.nextCursor).toBe("2");
   });
 
   it("treats invalid cursor as zero", () => {
     const result = serializeWorkflowThread(makeThread(), { cursor: "abc" });
-    expect(result.turns.map((turn) => turn.id)).toEqual(["turn-3", "turn-2", "turn-1"]);
+    expect(result.turns.map((turn) => turn.id)).toEqual([
+      "turn-3",
+      "turn-2",
+      "turn-1",
+    ]);
   });
 
   it("preserves turn metadata", () => {
@@ -83,6 +106,50 @@ describe("read-thread-serializer", () => {
     const result = serializeWorkflowThread(makeThread());
     const turn = result.turns[2];
     expect(turn.items.map((entry) => entry.id)).toEqual(["i1", "i2"]);
+  });
+
+  it("serializes the bounded execution event snapshot", () => {
+    const result = serializeWorkflowThread(makeThread());
+    expect(result.execution?.events).toEqual([
+      { timestamp: 1, event: { type: "extension", name: "session.info" } },
+    ]);
+  });
+
+  it("keeps execution-state extensions when the event snapshot is bounded", () => {
+    const thread = makeThread();
+    const taskEvent = {
+      timestamp: 1,
+      event: {
+        type: "extension",
+        namespace: MARLOUES_ACP_EXTENSION_NAMESPACE,
+        name: MARLOUES_ACP_EXTENSION_NAMES.taskUpdate,
+        sessionId: "thread-1",
+        turnId: "turn-1",
+        data: { type: "execution.task.update", taskId: "task-1" },
+      },
+    } satisfies WorkflowThreadExecutionEvent;
+    const noiseEvents = Array.from({ length: 249 }, (_, index) => ({
+      timestamp: index + 2,
+      event: {
+        type: "extension",
+        namespace: MARLOUES_ACP_EXTENSION_NAMESPACE,
+        name: "noise",
+        sessionId: "thread-1",
+        turnId: "turn-1",
+        data: { index },
+      },
+    })) satisfies WorkflowThreadExecutionEvent[];
+    thread.executionEvents = [taskEvent, ...noiseEvents];
+
+    const result = serializeWorkflowThread(thread);
+    const events = result.execution?.events ?? [];
+
+    expect(events).toHaveLength(200);
+    expect(result.execution?.truncated).toBe(true);
+    expect(events[0]).toEqual(taskEvent);
+    expect(events.slice(1).map((entry) => entry.timestamp)).toEqual(
+      Array.from({ length: 199 }, (_, index) => index + 52),
+    );
   });
 
   it("clamps limit to at least 1", () => {

@@ -7,6 +7,7 @@ import {
   WorkflowContextCompactionMarker,
   WorkflowHookPromptBlock,
   WorkflowImageViewRow,
+  WorkflowModeUpdateMarker,
   WorkflowReviewModeMarker,
   WorkflowUnknownRawJson,
 } from "./MarkerRows";
@@ -37,6 +38,7 @@ const renderers = {
   enteredReviewMode: WorkflowReviewModeMarker,
   exitedReviewMode: WorkflowReviewModeMarker,
   hookPrompt: WorkflowHookPromptBlock,
+  modeUpdate: WorkflowModeUpdateMarker,
   permissionRequest: WorkflowPermissionRequestRow,
   contextCompaction: WorkflowContextCompactionMarker,
   unknown: WorkflowUnknownRawJson,

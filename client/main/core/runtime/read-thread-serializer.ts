@@ -1,8 +1,11 @@
 import type { ConversationTiming } from "@shared/conversation-timing";
 import {
+  WORKFLOW_THREAD_EXECUTION_SNAPSHOT_LIMIT,
   WORKFLOW_READ_THREAD_SCHEMA_VERSION,
   type WorkflowReadThreadResponse,
   type WorkflowThreadInfo,
+  type WorkflowThreadExecutionSnapshot,
+  type WorkflowThreadExecutionEvent,
   type WorkflowTurn,
   type WorkflowTurnError,
   type WorkflowTurnItem,
@@ -10,6 +13,10 @@ import {
 } from "../../../shared/workflow-read-thread-contract";
 import type { WorkflowReadThreadInput } from "../../../shared/workflow-thread-data-source";
 import type { TokenUsage } from "../../../shared/types";
+import {
+  MARLOUES_ACP_EXTENSION_NAMES,
+  MARLOUES_ACP_EXTENSION_NAMESPACE,
+} from "../../../shared/acp/acp-extensions";
 
 export interface WorkflowThreadStoreItem {
   item: WorkflowTurnItem;
@@ -48,6 +55,45 @@ export interface WorkflowThreadStoreThread {
   turns: Map<string, WorkflowThreadStoreTurn>;
   /** Runtime turn id -> currently rendered conversation segment id. */
   displayTurnIds: Map<string, string>;
+  /** Bounded canonical ACP event log used to restore execution state. */
+  executionEvents?: WorkflowThreadExecutionEvent[];
+}
+
+export const WORKFLOW_THREAD_EXECUTION_EVENT_LIMIT = 500;
+
+function isExecutionStateEvent(event: WorkflowThreadExecutionEvent["event"]): boolean {
+  return (
+    event.type === "extension" &&
+    event.namespace === MARLOUES_ACP_EXTENSION_NAMESPACE &&
+    (event.name === MARLOUES_ACP_EXTENSION_NAMES.taskUpdate ||
+      event.name === MARLOUES_ACP_EXTENSION_NAMES.subagentStart ||
+      event.name === MARLOUES_ACP_EXTENSION_NAMES.subagentEvent ||
+      event.name === MARLOUES_ACP_EXTENSION_NAMES.subagentComplete)
+  );
+}
+
+export function compactExecutionEvents(
+  events: readonly WorkflowThreadExecutionEvent[],
+  limit: number,
+): WorkflowThreadExecutionEvent[] {
+  if (events.length <= limit) return [...events];
+
+  const rankedEvents = events.map((entry, index) => ({ entry, index }));
+  const stateEvents = rankedEvents.filter(({ entry }) =>
+    isExecutionStateEvent(entry.event),
+  );
+  const regularEvents = rankedEvents.filter(
+    ({ entry }) => !isExecutionStateEvent(entry.event),
+  );
+  const keptStateEvents =
+    stateEvents.length > limit ? stateEvents.slice(-limit) : stateEvents;
+  const keptRegularEvents = regularEvents.slice(
+    -Math.max(0, limit - keptStateEvents.length),
+  );
+
+  return [...keptStateEvents, ...keptRegularEvents]
+    .sort((left, right) => left.index - right.index)
+    .map(({ entry }) => entry);
 }
 
 export function serializeWorkflowThread(
@@ -81,6 +127,7 @@ export function serializeWorkflowThread(
         nextOffset < newestFirstTurns.length ? String(nextOffset) : null,
       hasMore: nextOffset < newestFirstTurns.length,
     },
+    execution: serializeExecutionEvents(thread.executionEvents ?? []),
     turns: pageTurns.map(serializeTurn),
   };
 }
@@ -103,6 +150,19 @@ function serializeTurn(turn: WorkflowThreadStoreTurn): WorkflowTurn {
     items: turn.itemOrder
       .map((itemId) => turn.items.get(itemId)?.item)
       .filter((item): item is WorkflowTurnItem => Boolean(item)),
+  };
+}
+
+function serializeExecutionEvents(
+  events: readonly WorkflowThreadExecutionEvent[],
+): Pick<WorkflowThreadExecutionSnapshot, "events" | "truncated"> {
+  const compacted = compactExecutionEvents(
+    events,
+    WORKFLOW_THREAD_EXECUTION_SNAPSHOT_LIMIT,
+  );
+  return {
+    events: compacted,
+    truncated: compacted.length < events.length,
   };
 }
 

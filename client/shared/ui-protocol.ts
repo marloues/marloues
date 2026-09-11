@@ -67,6 +67,13 @@ export type UIEvent =
       content: string;
     }
   | {
+      type: "mode.update";
+      sessionId: string;
+      turnId: string;
+      modeId: string;
+      label?: string;
+    }
+  | {
       type: "steer.message";
       sessionId: string;
       turnId: string;
@@ -121,6 +128,8 @@ export type UIEvent =
     }
   | {
       type: "approval.request";
+      sessionId?: string;
+      turnId?: string;
       requestId: string;
       toolName: string;
       reason: string;
@@ -130,6 +139,8 @@ export type UIEvent =
     }
   | {
       type: "approval.decision";
+      sessionId?: string;
+      turnId?: string;
       requestId: string;
       approved: boolean;
       scope?: "once" | "session";

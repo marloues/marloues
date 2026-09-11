@@ -298,6 +298,235 @@ describe("ClaudeRuntime context usage", () => {
       payload: { isReady: true, input: { command: "pwd" } },
     });
   });
+
+  it("maps plan mode and plan approval to execution state events", () => {
+    const session = "plan-state";
+    const turn = "plan-turn";
+    normalizeSdkMessage(session, turn, {
+      type: "assistant",
+      message: {
+        content: [
+          {
+            type: "tool_use",
+            id: "enter-plan",
+            name: "EnterPlanMode",
+            input: {},
+          },
+        ],
+      },
+    });
+    const enterEvents = normalizeSdkMessage(session, turn, {
+      type: "user",
+      message: {
+        content: [
+          {
+            type: "tool_result",
+            tool_use_id: "enter-plan",
+            content: "Plan mode enabled",
+          },
+        ],
+      },
+    });
+    expect(enterEvents).toContainEqual({
+      kind: "mode-update",
+      payload: { turnId: turn, modeId: "plan", label: "Plan" },
+    });
+
+    const exitStartEvents = normalizeSdkMessage(session, turn, {
+      type: "assistant",
+      message: {
+        content: [
+          {
+            type: "tool_use",
+            id: "exit-plan",
+            name: "ExitPlanMode",
+            input: { plan: "1. Read the runtime adapters" },
+          },
+        ],
+      },
+    });
+    expect(exitStartEvents).toContainEqual({
+      kind: "plan-item",
+      payload: {
+        turnId: turn,
+        itemId: "plan-exit-plan",
+        content: "1. Read the runtime adapters",
+      },
+    });
+    const exitEvents = normalizeSdkMessage(session, turn, {
+      type: "user",
+      message: {
+        content: [
+          {
+            type: "tool_result",
+            tool_use_id: "exit-plan",
+            content: "User approved the plan",
+          },
+        ],
+      },
+    });
+    expect(exitEvents).toContainEqual({
+      kind: "mode-update",
+      payload: { turnId: turn, modeId: "default", label: "Default" },
+    });
+  });
+
+  it("keeps delegated agent output inside the parent execution", () => {
+    const session = "subagent-state";
+    const turn = "subagent-turn";
+    const startEvents = normalizeSdkMessage(session, turn, {
+      type: "assistant",
+      message: {
+        content: [
+          {
+            type: "tool_use",
+            id: "delegate",
+            name: "Agent",
+            input: {
+              agent_type: "researcher",
+              description: "Inspect adapters",
+              prompt: "Inspect the runtime adapters",
+            },
+          },
+        ],
+      },
+    });
+    expect(startEvents).toContainEqual({
+      kind: "execution-subagent-start",
+      payload: expect.objectContaining({
+        turnId: turn,
+        parentToolId: "delegate",
+        subagentId: "delegate",
+        agentType: "researcher",
+        status: "running",
+      }),
+    });
+
+    const childEvents = normalizeSdkMessage(session, turn, {
+      type: "assistant",
+      parent_tool_use_id: "delegate",
+      message: { content: [{ type: "text", text: "Child agent output" }] },
+    });
+    expect(childEvents).toEqual([
+      {
+        kind: "text-chunk",
+        payload: {
+          turnId: turn,
+          content: "Child agent output",
+          parentToolId: "delegate",
+        },
+      },
+    ]);
+
+    const completeEvents = normalizeSdkMessage(session, turn, {
+      type: "user",
+      tool_use_result: "Child agent output",
+      message: {
+        content: [
+          {
+            type: "tool_result",
+            tool_use_id: "delegate",
+            content: "Child agent output",
+          },
+        ],
+      },
+    });
+    expect(completeEvents).toContainEqual({
+      kind: "execution-subagent-complete",
+      payload: expect.objectContaining({
+        turnId: turn,
+        parentToolId: "delegate",
+        subagentId: "delegate",
+        status: "completed",
+        output: "Child agent output",
+      }),
+    });
+  });
+
+  it("maps task create and update tool results to task state", () => {
+    const session = "task-state";
+    const turn = "task-turn";
+    normalizeSdkMessage(session, turn, {
+      type: "assistant",
+      message: {
+        content: [
+          {
+            type: "tool_use",
+            id: "create-task",
+            name: "TaskCreate",
+            input: {
+              subject: "Inspect adapters",
+              description: "Inspect provider adapters",
+            },
+          },
+        ],
+      },
+    });
+    const createEvents = normalizeSdkMessage(session, turn, {
+      type: "user",
+      tool_use_result: {
+        task: { id: "task-1", subject: "Inspect adapters", status: "pending" },
+      },
+      message: {
+        content: [
+          {
+            type: "tool_result",
+            tool_use_id: "create-task",
+            content: "Task #task-1 created successfully",
+          },
+        ],
+      },
+    });
+    expect(createEvents).toContainEqual({
+      kind: "execution-task-update",
+      payload: expect.objectContaining({
+        turnId: turn,
+        taskId: "task-1",
+        title: "Inspect adapters",
+        detail: "Inspect provider adapters",
+        status: "creating",
+        taskType: "claude-task",
+      }),
+    });
+
+    normalizeSdkMessage(session, turn, {
+      type: "assistant",
+      message: {
+        content: [
+          {
+            type: "tool_use",
+            id: "update-task",
+            name: "TaskUpdate",
+            input: { task_id: "task-1", status: "in_progress" },
+          },
+        ],
+      },
+    });
+    const updateEvents = normalizeSdkMessage(session, turn, {
+      type: "user",
+      tool_use_result: {
+        statusChange: { to: "completed" },
+        task: { id: "task-1", status: "completed" },
+      },
+      message: {
+        content: [
+          {
+            type: "tool_result",
+            tool_use_id: "update-task",
+            content: "Task task-1 updated successfully",
+          },
+        ],
+      },
+    });
+    expect(updateEvents).toContainEqual({
+      kind: "execution-task-update",
+      payload: expect.objectContaining({
+        turnId: turn,
+        taskId: "task-1",
+        status: "completed",
+      }),
+    });
+  });
   it("finalizes the workflow turn when the SDK fails before streaming starts", async () => {
     mocks.queryClaude.mockRejectedValueOnce(
       new Error("Claude executable is missing"),

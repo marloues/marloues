@@ -3,6 +3,32 @@ import type { UIEvent } from "./ui-protocol";
 
 const textChunkCounters = new Map<string, number>();
 
+type SubagentPayloadEvent = Extract<
+  UIEvent,
+  {
+    type:
+      | "text.chunk"
+      | "thinking.chunk"
+      | "tool.start"
+      | "tool.progress"
+      | "tool.complete"
+      | "runtime.status";
+  }
+>;
+
+type PayloadRuntimeEvent = Extract<
+  RuntimeEvent,
+  {
+    kind:
+      | "text-chunk"
+      | "thinking-chunk"
+      | "tool-start"
+      | "tool-progress"
+      | "tool-complete"
+      | "runtime-status";
+  }
+>;
+
 function turnCounterKey(sessionId: string, turnId: string): string {
   return `${sessionId}:${turnId}`;
 }
@@ -14,26 +40,46 @@ function nextTextChunkIndex(sessionId: string, turnId: string): number {
   return next;
 }
 
-export function translateRuntimeEventToUIEvent(
-  evt: RuntimeEvent,
+function subagentEvent(
   sessionId: string,
   turnId: string,
-): UIEvent | null {
-  const base = { sessionId, turnId };
+  parentToolId: string,
+  event: SubagentPayloadEvent,
+): UIEvent {
+  return {
+    type: "execution.subagent.event",
+    sessionId,
+    turnId,
+    parentToolId,
+    subagentId: parentToolId,
+    event,
+    timestamp: Date.now(),
+  };
+}
 
+function payloadEvent(
+  evt: PayloadRuntimeEvent,
+  base: { sessionId: string; turnId: string },
+  skipTextChunkCounter: boolean,
+): SubagentPayloadEvent {
   switch (evt.kind) {
-    case "turn-start":
-      textChunkCounters.set(turnCounterKey(sessionId, turnId), 0);
-      return { ...base, type: "turn.start", timestamp: evt.payload.timestamp };
     case "text-chunk":
       return {
         ...base,
         type: "text.chunk",
         content: evt.payload.content,
-        index: nextTextChunkIndex(sessionId, turnId),
+        index: skipTextChunkCounter
+          ? 0
+          : nextTextChunkIndex(base.sessionId, base.turnId),
+        parentToolId: evt.payload.parentToolId,
       };
     case "thinking-chunk":
-      return { ...base, type: "thinking.chunk", content: evt.payload.content };
+      return {
+        ...base,
+        type: "thinking.chunk",
+        content: evt.payload.content,
+        parentToolId: evt.payload.parentToolId,
+      };
     case "tool-start":
       return {
         ...base,
@@ -42,6 +88,7 @@ export function translateRuntimeEventToUIEvent(
         toolName: evt.payload.toolName,
         input: evt.payload.input,
         isReady: evt.payload.isReady,
+        parentToolId: evt.payload.parentToolId,
       };
     case "tool-progress":
       return {
@@ -52,6 +99,7 @@ export function translateRuntimeEventToUIEvent(
         partialInput: evt.payload.partialInput ?? "",
         input: evt.payload.input,
         isReady: evt.payload.isReady,
+        parentToolId: evt.payload.parentToolId,
       };
     case "tool-complete":
       return {
@@ -61,6 +109,101 @@ export function translateRuntimeEventToUIEvent(
         output: evt.payload.output,
         isError: evt.payload.isError,
         status: evt.payload.status,
+        parentToolId: evt.payload.parentToolId,
+      };
+    case "runtime-status":
+      return {
+        ...base,
+        type: "runtime.status",
+        id: evt.payload.id,
+        label: evt.payload.label,
+        detail: evt.payload.detail,
+        status: evt.payload.status,
+        parentToolId: evt.payload.parentToolId,
+      };
+  }
+}
+
+export function translateRuntimeEventToUIEvent(
+  evt: RuntimeEvent,
+  sessionId: string,
+  turnId: string,
+  options: { countTextChunks?: boolean } = {},
+): UIEvent | null {
+  const base = { sessionId, turnId };
+  const skipTextChunkCounter = options.countTextChunks === false;
+
+  switch (evt.kind) {
+    case "turn-start":
+      textChunkCounters.set(turnCounterKey(sessionId, turnId), 0);
+      return { ...base, type: "turn.start", timestamp: evt.payload.timestamp };
+    case "text-chunk":
+    case "thinking-chunk":
+    case "tool-start":
+    case "tool-progress":
+    case "tool-complete":
+    case "runtime-status": {
+      const event = payloadEvent(evt, base, skipTextChunkCounter);
+      return evt.payload.parentToolId
+        ? subagentEvent(sessionId, turnId, evt.payload.parentToolId, event)
+        : event;
+    }
+    case "mode-update":
+      return {
+        ...base,
+        type: "mode.update",
+        modeId: evt.payload.modeId,
+        label: evt.payload.label,
+      };
+    case "plan-item":
+      return {
+        ...base,
+        type: "plan.item",
+        itemId: evt.payload.itemId,
+        content: evt.payload.content,
+      };
+    case "execution-task-update":
+      return {
+        ...base,
+        type: "execution.task.update",
+        taskId: evt.payload.taskId,
+        parentToolId: evt.payload.parentToolId,
+        ordinal: evt.payload.ordinal,
+        title: evt.payload.title,
+        detail: evt.payload.detail,
+        status: evt.payload.status,
+        agentType: evt.payload.agentType,
+        prompt: evt.payload.prompt,
+        taskType: evt.payload.taskType,
+        blockedBy: evt.payload.blockedBy,
+        output: evt.payload.output,
+        timestamp: evt.payload.timestamp,
+      };
+    case "execution-subagent-start":
+      return {
+        ...base,
+        type: "execution.subagent.start",
+        parentToolId: evt.payload.parentToolId,
+        subagentId: evt.payload.subagentId,
+        agentType: evt.payload.agentType,
+        agentName: evt.payload.agentName,
+        description: evt.payload.description,
+        prompt: evt.payload.prompt,
+        title: evt.payload.title,
+        taskId: evt.payload.taskId,
+        ordinal: evt.payload.ordinal,
+        status: evt.payload.status,
+        timestamp: evt.payload.timestamp,
+      };
+    case "execution-subagent-complete":
+      return {
+        ...base,
+        type: "execution.subagent.complete",
+        parentToolId: evt.payload.parentToolId,
+        subagentId: evt.payload.subagentId,
+        status: evt.payload.status,
+        output: evt.payload.output,
+        timestamp: evt.payload.timestamp,
       };
     case "turn-complete":
       textChunkCounters.delete(turnCounterKey(sessionId, turnId));
@@ -83,15 +226,6 @@ export function translateRuntimeEventToUIEvent(
         content: evt.payload.content,
         status: evt.payload.status,
         timestamp: evt.payload.timestamp,
-      };
-    case "runtime-status":
-      return {
-        ...base,
-        type: "runtime.status",
-        id: evt.payload.id,
-        label: evt.payload.label,
-        detail: evt.payload.detail,
-        status: evt.payload.status,
       };
     case "session-info":
       return {
@@ -147,6 +281,8 @@ export function translateRuntimeEventToUIEvent(
     case "approval-request":
       return {
         type: "approval.request",
+        sessionId,
+        turnId,
         requestId: evt.payload.requestId,
         toolName: evt.payload.toolName,
         reason: evt.payload.reason,

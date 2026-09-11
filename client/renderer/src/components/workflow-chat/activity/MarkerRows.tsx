@@ -62,6 +62,31 @@ export function WorkflowHookPromptBlock({
   );
 }
 
+export function WorkflowModeUpdateMarker({
+  item,
+}: {
+  item: Extract<WorkflowTurnItem, { type: "modeUpdate" }>;
+}) {
+  const label =
+    item.label ??
+    (item.modeKind === "plan"
+      ? "已进入计划模式"
+      : item.modeKind === "default"
+        ? "已退出计划模式"
+        : `模式已切换：${item.label ?? item.modeId}`);
+
+  return (
+    <ExpandableMarkerRow
+      itemId={item.id}
+      icon="tool"
+      label={label}
+      activityKind="modeUpdate"
+      detailLabel="Mode"
+      payload={item.raw}
+    />
+  );
+}
+
 export function WorkflowContextCompactionMarker() {
   return (
     <MarkerRow

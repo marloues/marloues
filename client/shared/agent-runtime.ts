@@ -32,8 +32,14 @@ export type RuntimeEvent =
       payload: { turnId: string; item: WorkflowTurnItem };
     }
   // Incremental text only. Full snapshots must use item-updated.
-  | { kind: "text-chunk"; payload: { turnId: string; content: string } }
-  | { kind: "thinking-chunk"; payload: { turnId: string; content: string } }
+  | {
+      kind: "text-chunk";
+      payload: { turnId: string; content: string; parentToolId?: string };
+    }
+  | {
+      kind: "thinking-chunk";
+      payload: { turnId: string; content: string; parentToolId?: string };
+    }
   | {
       kind: "tool-start";
       payload: {
@@ -43,6 +49,8 @@ export type RuntimeEvent =
         input: unknown;
         /** False while the runtime is still streaming tool arguments. */
         isReady?: boolean;
+        /** SDK parent_tool_use_id for tools running inside a subagent. */
+        parentToolId?: string;
       };
     }
   | {
@@ -54,6 +62,7 @@ export type RuntimeEvent =
         partialInput?: string;
         input?: unknown;
         isReady?: boolean;
+        parentToolId?: string;
       };
     }
   | {
@@ -64,6 +73,69 @@ export type RuntimeEvent =
         output: unknown;
         isError: boolean;
         status?: "completed" | "error" | "cancelled";
+        parentToolId?: string;
+      };
+    }
+  | {
+      kind: "mode-update";
+      payload: {
+        turnId: string;
+        modeId: string;
+        label?: string;
+      };
+    }
+  | {
+      kind: "plan-item";
+      payload: {
+        turnId: string;
+        itemId: string;
+        content: string;
+      };
+    }
+  | {
+      kind: "execution-task-update";
+      payload: {
+        turnId: string;
+        taskId: string;
+        parentToolId?: string;
+        ordinal?: number;
+        title: string;
+        detail?: string;
+        status: "creating" | "running" | "completed" | "failed";
+        agentType?: string;
+        prompt?: string;
+        taskType?: string;
+        blockedBy?: string[];
+        output?: unknown;
+        timestamp: number;
+      };
+    }
+  | {
+      kind: "execution-subagent-start";
+      payload: {
+        turnId: string;
+        parentToolId: string;
+        subagentId: string;
+        agentType?: string;
+        agentName?: string;
+        description?: string;
+        prompt?: string;
+        title?: string;
+        taskId?: string;
+        ordinal?: number;
+        status: "creating" | "running";
+        timestamp: number;
+      };
+    }
+  | {
+      kind: "execution-subagent-complete";
+      payload: {
+        turnId: string;
+        parentToolId: string;
+        subagentId: string;
+        status: "completed" | "failed";
+        output?: unknown;
+        timestamp: number;
       };
     }
   | {
@@ -127,6 +199,7 @@ export type RuntimeEvent =
         label: string;
         detail?: string;
         status?: "pending" | "running" | "completed" | "error";
+        parentToolId?: string;
       };
     }
   | {

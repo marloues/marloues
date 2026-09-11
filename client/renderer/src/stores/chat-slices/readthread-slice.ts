@@ -11,6 +11,7 @@
  */
 
 import type { WorkflowReadThreadResponse } from "@shared/workflow-read-thread-contract";
+import { projectACPEventsToReadThread } from "@shared/acp/acp-events-to-read-thread";
 import { workflowMessagesToWorkflowReadThreadResponse } from "@shared/adapters/workflow-messages-to-read-thread";
 import { activeWorkflowMessages } from "../workflow-message-builders";
 import type { UnifiedChatStore } from "./types";
@@ -47,9 +48,12 @@ export function createReadThreadSlice(
         };
       });
       try {
-        const snapshot = await window.marloues.chat.readThread(sessionId, {
+        const response = await window.marloues.chat.readThread(sessionId, {
           limit: Math.max(100, get().readThreads[sessionId]?.turns.length ?? 0),
         });
+        const snapshot = response
+          ? projectACPEventsToReadThread(response)
+          : null;
         if (!snapshot) {
           set((state) => {
             const current = state.readThreadPaging[sessionId];
@@ -111,10 +115,13 @@ export function createReadThreadSlice(
       }));
 
       try {
-        const snapshot = await window.marloues.chat.readThread(sessionId, {
+        const response = await window.marloues.chat.readThread(sessionId, {
           cursor: paging.cursor,
           limit: 100,
         });
+        const snapshot = response
+          ? projectACPEventsToReadThread(response)
+          : null;
         if (!snapshot) {
           set((state) => ({
             readThreadPaging: {
@@ -187,13 +194,14 @@ export function createReadThreadSlice(
         // pages after the shared boundary, while replacing the authoritative
         // prefix (including removals). Without an overlap we must fetch the gap.
         const retainTail = snapshot.page.hasMore && anchor >= 0 && cached;
+        const projected = projectACPEventsToReadThread(snapshot);
         const next = retainTail
           ? {
-              ...snapshot,
-              turns: [...snapshot.turns, ...cached.turns.slice(anchor + 1)],
+              ...projected,
+              turns: [...projected.turns, ...cached.turns.slice(anchor + 1)],
               page: cached.page,
             }
-          : snapshot;
+          : projected;
         const reconciled = reconcileReadThreadSnapshot(state, next);
         return {
           ...reconciled,

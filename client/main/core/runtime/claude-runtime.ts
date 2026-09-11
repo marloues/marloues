@@ -32,6 +32,11 @@ import type {
   TokenUsage,
 } from "@shared/types";
 import { applySecurityMode } from "@shared/security-policy";
+import {
+  isSubagentDelegationToolName,
+  isTaskCreateToolName,
+  isTaskUpdateToolName,
+} from "@shared/execution-tools";
 import type { WorkflowUserMessageContent } from "@shared/workflow-read-thread-contract";
 import {
   queryClaude,
@@ -141,9 +146,16 @@ interface StreamingToolBlock {
   id: string;
   name: string;
   partialInput: string;
+  parentToolId?: string;
+}
+
+interface ToolUseMetadata {
+  name: string;
+  input: Record<string, unknown>;
 }
 
 const streamingToolBlocks = new Map<string, StreamingToolBlock>();
+const toolUseMetadata = new Map<string, ToolUseMetadata>();
 const completedToolCalls = new Map<string, Set<string>>();
 const turnsWithStreamedText = new Set<string>();
 const turnsWithStreamedThinking = new Set<string>();
@@ -160,11 +172,22 @@ function turnStreamKey(sessionId: string, turnId: string): string {
   return `${sessionId}:${turnId}`;
 }
 
+function toolUseMetadataKey(
+  sessionId: string,
+  turnId: string,
+  toolUseId: string,
+): string {
+  return `${sessionId}:${turnId}:${toolUseId}`;
+}
+
 function clearTurnStreamState(sessionId: string, turnId: string): void {
   const keyPrefix = `${sessionId}:${turnId}:`;
   turnsWithStreamedText.delete(turnStreamKey(sessionId, turnId));
   turnsWithStreamedThinking.delete(turnStreamKey(sessionId, turnId));
   completedToolCalls.delete(turnStreamKey(sessionId, turnId));
+  for (const key of toolUseMetadata.keys()) {
+    if (key.startsWith(keyPrefix)) toolUseMetadata.delete(key);
+  }
   for (const key of streamingToolBlocks.keys()) {
     if (key.startsWith(keyPrefix)) streamingToolBlocks.delete(key);
   }
@@ -386,6 +409,217 @@ function normalizeTaskRuntimeStatus(
   return null;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+function readString(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+function parentToolIdFromMessage(
+  message: Record<string, unknown>,
+): string | undefined {
+  const direct = readString(message.parent_tool_use_id);
+  if (direct) return direct;
+  return readString(asRecord(message.message)?.parent_tool_use_id);
+}
+
+function rememberToolUse(
+  sessionId: string,
+  turnId: string,
+  toolUseId: string,
+  toolName: string,
+  input: unknown,
+): void {
+  toolUseMetadata.set(toolUseMetadataKey(sessionId, turnId, toolUseId), {
+    name: toolName,
+    input: asRecord(input) ?? {},
+  });
+}
+
+function toolUseMeta(
+  sessionId: string,
+  turnId: string,
+  toolUseId: string,
+): ToolUseMetadata | undefined {
+  return toolUseMetadata.get(toolUseMetadataKey(sessionId, turnId, toolUseId));
+}
+
+function claudeTaskStatus(
+  value: unknown,
+): "creating" | "running" | "completed" | "failed" {
+  const status = typeof value === "string" ? value : "";
+  if (status === "completed") return "completed";
+  if (status === "failed" || status === "error" || status === "killed")
+    return "failed";
+  if (status === "in_progress" || status === "running") return "running";
+  return "creating";
+}
+
+function taskIdFromToolResult(
+  input: Record<string, unknown>,
+  result: unknown,
+  resultText: string | undefined,
+): string | undefined {
+  const task = asRecord(asRecord(result)?.task);
+  return (
+    readString(input.taskId) ??
+    readString(input.task_id) ??
+    readString(asRecord(result)?.taskId) ??
+    readString(task?.id) ??
+    resultText?.match(/\bTask\s+#([^\s:]+)/i)?.[1] ??
+    resultText?.match(/\bTask\s+([^\s:]+)\s+(?:updated|created)/i)?.[1]
+  );
+}
+
+function taskUpdateFromToolInput(
+  turnId: string,
+  toolUseId: string,
+  toolName: string,
+  input: Record<string, unknown>,
+  result: unknown,
+  resultText: string | undefined,
+  parentToolId: string | undefined,
+): RuntimeEvent | undefined {
+  const isCreate = isTaskCreateToolName(toolName);
+  const taskId = taskIdFromToolResult(input, result, resultText);
+  if (!taskId) return undefined;
+  if (!isCreate && !isTaskUpdateToolName(toolName)) return undefined;
+
+  const resultRecord = asRecord(result);
+  const statusChange = asRecord(resultRecord?.statusChange);
+  const task = asRecord(resultRecord?.task);
+  const rawStatus =
+    statusChange?.to ?? task?.status ?? input.status ?? input.task_status;
+  return {
+    kind: "execution-task-update",
+    payload: {
+      turnId,
+      taskId: taskId ?? `pending:${toolUseId}`,
+      parentToolId,
+      title:
+        readString(input.subject) ??
+        readString(input.activeForm) ??
+        readString(task?.subject) ??
+        `Task ${taskId ?? toolUseId}`,
+      detail: readString(input.description) ?? readString(task?.description),
+      status: claudeTaskStatus(rawStatus),
+      taskType: "claude-task",
+      timestamp: now(),
+    },
+  };
+}
+
+function subagentStartFromToolInput(
+  turnId: string,
+  toolUseId: string,
+  toolName: string,
+  input: Record<string, unknown>,
+): RuntimeEvent | undefined {
+  if (!isSubagentDelegationToolName(toolName)) return undefined;
+  return {
+    kind: "execution-subagent-start",
+    payload: {
+      turnId,
+      parentToolId: toolUseId,
+      subagentId: toolUseId,
+      agentType:
+        readString(input.agent_type) ??
+        readString(input.subagent_type) ??
+        readString(input.agentType),
+      agentName: readString(input.agent_name) ?? readString(input.agentName),
+      description: readString(input.description),
+      prompt: readString(input.prompt),
+      title:
+        readString(input.description) ??
+        readString(input.agent_name) ??
+        readString(input.agentName) ??
+        `${toolName} ${toolUseId}`,
+      status: "running",
+      timestamp: now(),
+    },
+  };
+}
+
+function subagentCompleteFromToolResult(
+  turnId: string,
+  toolUseId: string,
+  output: unknown,
+  isError: boolean,
+): RuntimeEvent {
+  return {
+    kind: "execution-subagent-complete",
+    payload: {
+      turnId,
+      parentToolId: toolUseId,
+      subagentId: toolUseId,
+      status: isError ? "failed" : "completed",
+      output,
+      timestamp: now(),
+    },
+  };
+}
+
+function modeUpdateEvent(
+  turnId: string,
+  modeId: string,
+  label: string,
+): RuntimeEvent {
+  return {
+    kind: "mode-update",
+    payload: { turnId, modeId, label },
+  };
+}
+
+function planItemFromToolInput(
+  turnId: string,
+  toolUseId: string,
+  input: Record<string, unknown>,
+): RuntimeEvent | undefined {
+  const plan = readString(input.plan);
+  return plan
+    ? {
+        kind: "plan-item",
+        payload: { turnId, itemId: `plan-${toolUseId}`, content: plan },
+      }
+    : undefined;
+}
+
+function executionEventsForToolInput(
+  sessionId: string,
+  turnId: string,
+  toolUseId: string,
+  toolName: string,
+  input: Record<string, unknown>,
+  parentToolId: string | undefined,
+): RuntimeEvent[] {
+  const events: RuntimeEvent[] = [];
+  const subagent = subagentStartFromToolInput(
+    turnId,
+    toolUseId,
+    toolName,
+    input,
+  );
+  if (subagent) events.push(subagent);
+  const task = taskUpdateFromToolInput(
+    turnId,
+    toolUseId,
+    toolName,
+    input,
+    undefined,
+    undefined,
+    parentToolId,
+  );
+  if (task) events.push(task);
+  const plan = planItemFromToolInput(turnId, toolUseId, input);
+  if (plan) events.push(plan);
+  void sessionId;
+  return events;
+}
+
 // ========================
 // SDK message normalization helpers.
 // ========================
@@ -400,6 +634,7 @@ export function normalizeSdkMessage(
 ): RuntimeEvent[] {
   const events: RuntimeEvent[] = [];
   const msg = message as Record<string, unknown>;
+  const parentToolId = parentToolIdFromMessage(msg);
 
   // ---------- System events ----------
   if (msg.type === "system") {
@@ -447,7 +682,7 @@ export function normalizeSdkMessage(
     if (runtimeStatus) {
       events.push({
         kind: "runtime-status",
-        payload: { ...runtimeStatus, turnId },
+        payload: { ...runtimeStatus, turnId, parentToolId },
       });
     }
 
@@ -455,7 +690,7 @@ export function normalizeSdkMessage(
     if (taskStatus) {
       events.push({
         kind: "runtime-status",
-        payload: { ...taskStatus, turnId },
+        payload: { ...taskStatus, turnId, parentToolId },
       });
     }
 
@@ -467,6 +702,7 @@ export function normalizeSdkMessage(
       kind: "runtime-status",
       payload: {
         turnId,
+        parentToolId,
         id: String(
           msg.task_id ?? msg.tool_use_id ?? `tool-progress-${Date.now()}`,
         ),
@@ -483,6 +719,7 @@ export function normalizeSdkMessage(
       kind: "runtime-status",
       payload: {
         turnId,
+        parentToolId,
         label: "Tool use summary",
         detail: typeof msg.summary === "string" ? msg.summary : undefined,
         status: "completed",
@@ -506,6 +743,11 @@ export function normalizeSdkMessage(
   if (msg.type === "stream_event") {
     const event = msg.event as Record<string, unknown> | undefined;
     if (!event) return events;
+    const streamParentToolId =
+      parentToolId ??
+      (event.type === "content_block_start"
+        ? readString(asRecord(event.content_block)?.parent_tool_use_id)
+        : undefined);
 
     // Flatten stream_event payloads that may be nested by SDK transport.
     if (event.type === "content_block_delta") {
@@ -514,7 +756,11 @@ export function normalizeSdkMessage(
         turnsWithStreamedText.add(turnStreamKey(sessionId, turnId));
         events.push({
           kind: "text-chunk",
-          payload: { turnId, content: String(delta.text ?? "") },
+          payload: {
+            turnId,
+            content: String(delta.text ?? ""),
+            parentToolId: streamParentToolId,
+          },
         });
       }
       // thinking delta
@@ -522,7 +768,11 @@ export function normalizeSdkMessage(
         turnsWithStreamedThinking.add(turnStreamKey(sessionId, turnId));
         events.push({
           kind: "thinking-chunk",
-          payload: { turnId, content: String(delta.thinking ?? "") },
+          payload: {
+            turnId,
+            content: String(delta.thinking ?? ""),
+            parentToolId: streamParentToolId,
+          },
         });
       }
       // tool input delta
@@ -550,6 +800,7 @@ export function normalizeSdkMessage(
             partialInput: block.partialInput,
             input: tryParseJson(block.partialInput),
             isReady: false,
+            parentToolId: block.parentToolId,
           },
         });
       }
@@ -566,12 +817,21 @@ export function normalizeSdkMessage(
           return events;
         const toolName = String(block.name ?? "unknown");
         const initialInput = stringifyToolInput(block.input);
+        const parsedInitialInput = tryParseJson(initialInput) ?? {};
+        rememberToolUse(
+          sessionId,
+          turnId,
+          toolId,
+          toolName,
+          parsedInitialInput,
+        );
         streamingToolBlocks.set(
           streamingToolKey(sessionId, turnId, event.index),
           {
             id: toolId,
             name: toolName,
             partialInput: initialInput,
+            parentToolId: streamParentToolId,
           },
         );
         events.push({
@@ -580,10 +840,21 @@ export function normalizeSdkMessage(
             turnId,
             toolId,
             toolName,
-            input: tryParseJson(initialInput) ?? {},
+            input: parsedInitialInput,
             isReady: false,
+            parentToolId: streamParentToolId,
           },
         });
+        events.push(
+          ...executionEventsForToolInput(
+            sessionId,
+            turnId,
+            toolId,
+            toolName,
+            asRecord(parsedInitialInput) ?? {},
+            streamParentToolId,
+          ),
+        );
       }
     }
 
@@ -606,8 +877,27 @@ export function normalizeSdkMessage(
             partialInput: block.partialInput,
             input: tryParseJson(block.partialInput),
             isReady: true,
+            parentToolId: block.parentToolId,
           },
         });
+        const parsedInput = tryParseJson(block.partialInput);
+        if (
+          parsedInput &&
+          typeof parsedInput === "object" &&
+          !Array.isArray(parsedInput)
+        ) {
+          rememberToolUse(sessionId, turnId, block.id, block.name, parsedInput);
+          events.push(
+            ...executionEventsForToolInput(
+              sessionId,
+              turnId,
+              block.id,
+              block.name,
+              parsedInput as Record<string, unknown>,
+              block.parentToolId,
+            ),
+          );
+        }
         streamingToolBlocks.delete(
           streamingToolKey(sessionId, turnId, event.index),
         );
@@ -624,6 +914,8 @@ export function normalizeSdkMessage(
       : undefined;
     const streamKey = turnStreamKey(sessionId, turnId);
     if (Array.isArray(content)) {
+      const messageParentToolId =
+        parentToolId ?? readString(asRecord(msg.message)?.parent_tool_use_id);
       for (const block of content as Array<Record<string, unknown>>) {
         if (
           block.type === "text" &&
@@ -632,7 +924,11 @@ export function normalizeSdkMessage(
         ) {
           events.push({
             kind: "text-chunk",
-            payload: { turnId, content: String(block.text) },
+            payload: {
+              turnId,
+              content: String(block.text),
+              parentToolId: messageParentToolId,
+            },
           });
         }
         if (
@@ -642,7 +938,11 @@ export function normalizeSdkMessage(
         ) {
           events.push({
             kind: "thinking-chunk",
-            payload: { turnId, content: String(block.thinking) },
+            payload: {
+              turnId,
+              content: String(block.thinking),
+              parentToolId: messageParentToolId,
+            },
           });
         }
         if (block.type === "tool_use") {
@@ -650,15 +950,30 @@ export function normalizeSdkMessage(
           // That late echo must not reopen an already completed invocation.
           if (completedToolCalls.get(streamKey)?.has(String(block.id)))
             continue;
+          const toolId = String(block.id ?? genId());
+          const toolName = String(block.name ?? "unknown");
+          const input = asRecord(block.input) ?? {};
+          rememberToolUse(sessionId, turnId, toolId, toolName, input);
           events.push({
             kind: "tool-start",
             payload: {
               turnId,
-              toolId: String(block.id ?? genId()),
-              toolName: String(block.name ?? "unknown"),
-              input: block.input ?? {},
+              toolId,
+              toolName,
+              input,
+              parentToolId: messageParentToolId,
             },
           });
+          events.push(
+            ...executionEventsForToolInput(
+              sessionId,
+              turnId,
+              toolId,
+              toolName,
+              input,
+              messageParentToolId,
+            ),
+          );
         }
       }
     }
@@ -676,25 +991,61 @@ export function normalizeSdkMessage(
           const streamKey = turnStreamKey(sessionId, turnId);
           const completed =
             completedToolCalls.get(streamKey) ?? new Set<string>();
-          completed.add(String(block.tool_use_id ?? "unknown"));
+          const toolUseId = String(block.tool_use_id ?? "unknown");
+          const metadata = toolUseMeta(sessionId, turnId, toolUseId);
+          const toolName = metadata?.name ?? "unknown";
+          const toolInput = metadata?.input ?? {};
+          const output =
+            content.filter((value) => value && value.type === "tool_result")
+              .length === 1
+              ? (workflowToolResult(msg.tool_use_result) ?? block.content ?? "")
+              : (block.content ?? "");
+          const isError = Boolean(block.is_error);
+          const resultText =
+            typeof output === "string" ? output : stringifyStatusDetail(output);
+          completed.add(toolUseId);
           completedToolCalls.set(streamKey, completed);
           events.push({
             kind: "tool-complete",
             payload: {
               turnId,
-              toolId: String(
-                (block as Record<string, unknown>).tool_use_id ?? "unknown",
-              ),
-              output:
-                content.filter((value) => value && value.type === "tool_result")
-                  .length === 1
-                  ? (workflowToolResult(msg.tool_use_result) ??
-                    block.content ??
-                    "")
-                  : (block.content ?? ""),
-              isError: Boolean((block as Record<string, unknown>).is_error),
+              toolId: toolUseId,
+              output,
+              isError,
+              parentToolId,
             },
           });
+
+          if (toolName === "EnterPlanMode" && !isError) {
+            events.push(modeUpdateEvent(turnId, "plan", "Plan"));
+          }
+          if (
+            toolName === "ExitPlanMode" &&
+            !isError &&
+            /approved/i.test(resultText ?? "")
+          ) {
+            events.push(modeUpdateEvent(turnId, "default", "Default"));
+          }
+          const taskUpdate = taskUpdateFromToolInput(
+            turnId,
+            toolUseId,
+            toolName,
+            toolInput,
+            msg.tool_use_result,
+            resultText,
+            parentToolId,
+          );
+          if (taskUpdate) events.push(taskUpdate);
+          if (isSubagentDelegationToolName(toolName)) {
+            events.push(
+              subagentCompleteFromToolResult(
+                turnId,
+                toolUseId,
+                output,
+                isError,
+              ),
+            );
+          }
         }
       }
     }

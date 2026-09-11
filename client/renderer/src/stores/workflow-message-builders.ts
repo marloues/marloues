@@ -8,6 +8,11 @@ import {
 } from "../components/workflow-chat/adapter/workflow-consumption-model";
 import type { ChatSessionRecord, TimelineItem } from "@shared/types";
 import type { UIEvent } from "@shared/ui-protocol";
+import type { ACPWorkflowEvent } from "@shared/acp/acp-types";
+import {
+  MARLOUES_ACP_EXTENSION_NAMES,
+  MARLOUES_ACP_EXTENSION_NAMESPACE,
+} from "@shared/acp/acp-extensions";
 import type { WorkflowReadThreadResponse } from "@shared/workflow-read-thread-contract";
 import type { Message } from "../types";
 import { restoreSdkTaskProgress, SDK_TASK_TYPE } from "./sdk-task-progress";
@@ -130,8 +135,10 @@ export function restoreExecutionStateFromReadThread(
   snapshot: WorkflowReadThreadResponse,
 ): Record<string, ExecutionSessionState | undefined> {
   const events = (snapshot.execution?.events ?? [])
+    .map((entry) => restoreExecutionEventFromEntry(entry, snapshot.thread.id))
     .filter(
       (entry): entry is { timestamp: number; event: UIEvent } =>
+        entry !== null &&
         typeof entry.timestamp === "number" &&
         isExecutionRestoreEvent(entry.event),
     )
@@ -179,7 +186,60 @@ export function restoreExecutionStateFromReadThread(
   return next;
 }
 
-export function isExecutionRestoreEvent(value: unknown): value is UIEvent {
+function restoreExecutionEventFromEntry(
+  entry: { timestamp: number; event: unknown },
+  fallbackSessionId: string,
+): { timestamp: number; event: UIEvent } | null {
+  const container = asACPExtensionEvent(entry.event);
+  const source = container ? container.data : entry.event;
+  if (!isExecutionRestoreEvent(source)) return null;
+
+  return {
+    timestamp: source.timestamp ?? entry.timestamp,
+    event: {
+      ...source,
+      sessionId: source.sessionId ?? container?.sessionId ?? fallbackSessionId,
+      turnId: source.turnId ?? container?.turnId,
+      timestamp: source.timestamp ?? entry.timestamp,
+    },
+  };
+}
+
+function asACPExtensionEvent(
+  value: unknown,
+): Extract<ACPWorkflowEvent, { type: "extension" }> | null {
+  if (!value || typeof value !== "object") return null;
+  const event = value as Partial<
+    Extract<ACPWorkflowEvent, { type: "extension" }>
+  >;
+  const extensionNames = new Set<string>(
+    Object.values(MARLOUES_ACP_EXTENSION_NAMES),
+  );
+  if (
+    event.type !== "extension" ||
+    event.namespace !== MARLOUES_ACP_EXTENSION_NAMESPACE ||
+    typeof event.name !== "string" ||
+    !extensionNames.has(event.name)
+  ) {
+    return null;
+  }
+  return event as Extract<ACPWorkflowEvent, { type: "extension" }>;
+}
+
+type ExecutionRestoreUIEvent = Extract<
+  UIEvent,
+  {
+    type:
+      | "execution.task.update"
+      | "execution.subagent.start"
+      | "execution.subagent.event"
+      | "execution.subagent.complete";
+  }
+>;
+
+export function isExecutionRestoreEvent(
+  value: unknown,
+): value is ExecutionRestoreUIEvent {
   if (!value || typeof value !== "object") return false;
   const type = (value as { type?: unknown }).type;
   return (
